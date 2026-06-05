@@ -1,0 +1,114 @@
+.finance-report {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.finance-report__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.finance-report__title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+}
+
+.finance-report__section-title {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  margin-bottom: var(--space-md);
+}
+
+.finance-report__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+}
+
+.finance-report__category-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.finance-report__category-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 40px 100px;
+  gap: var(--space-sm);
+  align-items: center;
+  font-size: var(--font-size-sm);
+}
+
+.finance-report__category-name {
+  font-weight: 500;
+}
+
+.finance-report__category-bar-wrap {
+  height: 8px;
+  background-color: var(--color-bg);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.finance-report__category-bar {
+  height: 100%;
+  background-color: var(--color-primary);
+  border-radius: var(--radius-full);
+  transition: width 0.3s;
+}
+
+.finance-report__category-pct {
+  color: var(--color-muted);
+  text-align: right;
+}
+
+.finance-report__category-amount {
+  font-weight: 600;
+  text-align: right;
+}
+
+.finance-report__ai-text {
+  font-size: var(--font-size-md);
+  color: var(--color-text-sub);
+  line-height: 1.7;
+}
+
+.finance-report__card-rec-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+/* Locked state */
+.finance-report--locked {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.finance-report__lock-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  text-align: center;
+  max-width: 400px;
+  padding: var(--space-xl);
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.finance-report__lock-box h2 {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+}
+
+.finance-report__lock-box p {
+  font-size: var(--font-size-md);
+  color: var(--color-text-sub);
+}

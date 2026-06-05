@@ -1,0 +1,104 @@
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f7f9fb;
+  padding: var(--space-md);
+}
+
+.login-box {
+  width: 100%;
+  max-width: 400px;
+  background-color: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  box-shadow: 0 8px 24px rgba(23, 34, 56, 0.045);
+  padding: var(--space-xl);
+}
+
+.login-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+  justify-content: center;
+}
+
+.login-logo__mark {
+  width: 32px;
+  height: 32px;
+  background-color: var(--color-primary);
+  color: #fff;
+  font-size: var(--font-size-base);
+  font-weight: 800;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-logo__text {
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.login-title {
+  font-size: var(--font-size-xl);
+  font-weight: 800;
+  color: var(--color-text);
+  margin-bottom: var(--space-lg);
+  text-align: center;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.login-remember {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: fit-content;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-sub);
+  cursor: pointer;
+}
+
+.login-remember input {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  accent-color: var(--color-primary);
+}
+
+.login-error {
+  font-size: var(--font-size-sm);
+  color: var(--color-danger);
+  padding: 10px 12px;
+  background-color: var(--color-danger-light);
+  border-radius: var(--radius-sm);
+}
+
+.login-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+}
+
+.login-links a {
+  color: var(--color-primary-dark);
+  font-weight: 700;
+}
+
+.login-links__sep {
+  color: var(--color-border);
+}

@@ -1,0 +1,8 @@
+{
+  "root": "samgim_updated",
+  "css_targets": [
+    "src/styles/global.css",
+    "src/index.css",
+    "src/App.css"
+  ]
+}

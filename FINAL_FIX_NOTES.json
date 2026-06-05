@@ -1,0 +1,14 @@
+{
+  "fixed": [
+    "Removed broad global button/input CSS overrides that broke icon buttons and chart controls.",
+    "Fixed Login Input component so only the wrapper gets focus styling; inner input has no border or box shadow.",
+    "Restored icon buttons such as password eye/header icons so they no longer become large mint circles.",
+    "Kept soft pill styling only on the shared Button component and intended navigation buttons.",
+    "Reduced shadows and kept white/light-gray background with mint point color.",
+    "Improved landing CTA text contrast."
+  ],
+  "verified": [
+    "npm install completed successfully",
+    "npm run build completed successfully"
+  ]
+}

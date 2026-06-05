@@ -1,0 +1,50 @@
+:root {
+  /* 컬러 */
+  --color-primary: #5b9d99;
+  --color-primary-dark: #3e7773;
+  --color-primary-light: #f2f8f6;
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-text: #111827;
+  --color-text-sub: #374151;
+  --color-muted: #6b7280;
+  --color-border: #e5e7eb;
+  --color-danger: #ef4444;
+  --color-danger-light: #fef2f2;
+  --color-success: #22c55e;
+  --color-success-light: #f0fdf4;
+  --color-warning: #f59e0b;
+  --color-pro: #7c3aed;
+  --color-pro-light: #f5f3ff;
+
+  /* 레이아웃 */
+  --sidebar-width: 220px;
+  --header-height: 60px;
+
+  /* 형태 */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-full: 9999px;
+
+  /* 그림자 */
+  --shadow-card: 0 2px 8px rgba(15, 23, 42, 0.06);
+  --shadow-modal: 0 8px 32px rgba(15, 23, 42, 0.16);
+  --shadow-dropdown: 0 4px 16px rgba(15, 23, 42, 0.10);
+
+  /* 타이포그래피 */
+  --font-base: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-md: 14px;
+  --font-size-base: 15px;
+  --font-size-lg: 18px;
+  --font-size-xl: 22px;
+
+  /* 간격 */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+}

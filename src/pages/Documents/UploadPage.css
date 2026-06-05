@@ -1,0 +1,541 @@
+.documate-upload-page {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 32px;
+  color: #0f172a;
+}
+
+.upload-page-header {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.upload-back-button {
+  width: fit-content;
+  padding: 8px 12px;
+  border: 1px solid #dbe3ef;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #334155;
+  font-weight: 700;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+}
+
+.upload-page-header h1 {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.15;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.upload-page-header p {
+  margin: 6px 0 0;
+  color: #64748b;
+}
+
+.eyebrow {
+  margin: 0 0 8px !important;
+  color: #5b9d99 !important;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.upload-step-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  padding: 8px;
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 10px 35px rgba(15, 23, 42, 0.05);
+}
+
+.step-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #64748b;
+  padding: 10px 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.step-pill span {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.step-pill.active {
+  background: #111827;
+  color: #ffffff;
+}
+
+.step-pill.active span {
+  background: #5b9d99;
+  color: #ffffff;
+}
+
+.step-line {
+  width: 40px;
+  height: 1px;
+  background: #cbd5e1;
+}
+
+.upload-workspace,
+.analysis-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+  align-items: start;
+}
+
+.upload-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 28px;
+  background: #ffffff;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.06);
+}
+
+.upload-card.primary,
+.upload-card.preview {
+  padding: 28px;
+}
+
+.upload-card.compact {
+  padding: 22px;
+}
+
+.upload-card.compact + .upload-card.compact {
+  margin-top: 16px;
+}
+
+.upload-card.compact.dark {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.upload-card.compact.dark p {
+  color: #cbd5e1;
+}
+
+.upload-card-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.upload-card-title h2,
+.upload-card.compact h3,
+.category-table-card h2 {
+  margin: 0;
+  color: #0f172a;
+  font-weight: 900;
+}
+
+.upload-card.compact.dark h3 {
+  color: #ffffff;
+}
+
+.upload-card-title p,
+.upload-card.compact p {
+  margin: 8px 0 0;
+  color: #64748b;
+  line-height: 1.55;
+}
+
+.section-number {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-bottom: 10px;
+  border-radius: 999px;
+  background: #f2f8f6;
+  color: #5b9d99;
+  font-weight: 900;
+}
+
+.upload-card button {
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 16px;
+  background: #111827;
+  color: #ffffff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.figma-upload-zone {
+  display: grid;
+  place-items: center;
+  min-height: 260px;
+  margin-bottom: 22px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 24px;
+  background: #f8fafc;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.figma-upload-zone:hover {
+  border-color: #5b9d99;
+  background: #f2f8f6;
+}
+
+.figma-upload-zone input {
+  display: none;
+}
+
+.upload-arrow {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 12px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #5b9d99;
+  font-size: 28px;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.12);
+}
+
+.figma-upload-zone strong {
+  color: #0f172a;
+}
+
+.figma-upload-zone small {
+  margin-top: 6px;
+  color: #64748b;
+}
+
+.list-heading,
+.figma-file-row,
+.document-counter,
+.form-actions,
+.masking-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.list-heading {
+  margin-bottom: 12px;
+  color: #64748b;
+}
+
+.list-heading strong {
+  color: #0f172a;
+}
+
+.figma-file-row {
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.figma-file-row + .figma-file-row {
+  margin-top: 10px;
+}
+
+.file-icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: #f2f8f6;
+  color: #5b9d99;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.file-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-meta strong {
+  display: block;
+  color: #0f172a;
+}
+
+.file-meta span {
+  display: block;
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.progress-track {
+  height: 6px;
+  margin-top: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #e2e8f0;
+}
+
+.progress-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #111827;
+}
+
+.status {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.status.complete {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status.loading {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.upload-card.compact ul {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: #475569;
+  line-height: 1.8;
+}
+
+.upload-category-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.upload-category-grid span {
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #334155;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.document-counter button {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.document-counter span {
+  color: #64748b;
+  font-weight: 800;
+}
+
+.figma-preview-box {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 460px;
+  border-radius: 24px;
+  background: #eef2f7;
+  overflow: hidden;
+  text-align: center;
+}
+
+.preview-mountain {
+  position: absolute;
+  inset: auto 0 0;
+  height: 48%;
+  background:
+    linear-gradient(135deg, transparent 45%, #cbd5e1 46% 60%, transparent 61%),
+    linear-gradient(45deg, transparent 35%, #94a3b8 36% 58%, transparent 59%);
+  opacity: 0.8;
+}
+
+.figma-preview-box span,
+.figma-preview-box strong {
+  position: relative;
+  display: block;
+}
+
+.figma-preview-box span {
+  color: #64748b;
+}
+
+.figma-preview-box strong {
+  margin-top: 8px;
+  color: #0f172a;
+}
+
+.preview-helper {
+  margin-top: 14px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.analysis-form {
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+}
+
+.form-label {
+  display: grid;
+  gap: 8px;
+  color: #334155;
+  font-weight: 900;
+}
+
+.form-label input,
+.form-label select {
+  width: 100%;
+  border: 1px solid #dbe3ef;
+  border-radius: 14px;
+  padding: 12px 14px;
+  color: #0f172a;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.branch-box {
+  padding: 16px;
+  border-radius: 18px;
+  line-height: 1.55;
+}
+
+.branch-box p {
+  margin: 6px 0 0;
+}
+
+.branch-box.document {
+  border: 1px solid #bfdbfe;
+  background: #f2f8f6;
+  color: #1e3a8a;
+}
+
+.branch-box.receipt {
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.extracted-fields {
+  display: grid;
+  gap: 12px;
+}
+
+.extracted-fields h3 {
+  margin: 0;
+}
+
+.masking-panel {
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.masking-head span {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #ede9fe;
+  color: #7c3aed;
+  font-weight: 900;
+  font-size: 12px;
+}
+
+.masking-panel p {
+  margin: 8px 0 12px;
+  color: #64748b;
+}
+
+.masking-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.masking-grid label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #475569;
+  font-size: 14px;
+}
+
+.form-actions button.secondary {
+  border: 1px solid #dbe3ef;
+  background: #ffffff;
+  color: #334155;
+}
+
+
+
+
+
+
+
+@media (max-width: 1040px) {
+  .upload-workspace,
+  .analysis-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .upload-step-card {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 720px) {
+  .documate-upload-page {
+    padding: 24px 16px 48px;
+  }
+
+  .upload-card-title,
+  .figma-file-row,
+  .form-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .step-line {
+    display: none;
+  }
+
+  .upload-step-card {
+    align-items: stretch;
+    flex-direction: column;
+    border-radius: 24px;
+  }
+
+  .masking-grid {
+    grid-template-columns: 1fr;
+  }
+}
