@@ -13,7 +13,9 @@ import Card from "../../components/common/Card";
 import Button from "../../components/common/Button";
 import Badge from "../../components/common/Badge";
 import MonthlyLineChart from "../../components/chart/MonthlyLineChart";
-import CategoryPieChart from "../../components/chart/CategoryPieChart";
+import CategoryPieChart, {
+  getCategoryColor,
+} from "../../components/chart/CategoryPieChart";
 import { mockCurrentUser } from "../../data/mockUsers";
 import { mockReceipts, mockSpendCategories } from "../../data/mockReceipts";
 import { sumByCategory } from "../../utils/filterUtils";
@@ -104,6 +106,8 @@ const FinanceReport: React.FC = () => {
     return monthReceipts.filter((r) => r.purchase_date === selectedDate);
   }, [monthReceipts, selectedDate]);
 
+  const reportKey = selectedDate || selectedMonth;
+
   const totalSpend = reportReceipts.reduce((sum, r) => sum + r.total_amount, 0);
 
   const monthTotalSpend = monthReceipts.reduce(
@@ -151,31 +155,36 @@ const FinanceReport: React.FC = () => {
     };
   });
 
-  const receiptDateOptions = [
-    ...new Set(monthReceipts.map((r) => r.purchase_date)),
-  ].sort((a, b) => b.localeCompare(a));
+  const categoryData = useMemo(() => {
+    return sumByCategory(reportReceipts, mockSpendCategories);
+  }, [reportReceipts]);
 
-  const categoryData = sumByCategory(reportReceipts, mockSpendCategories);
-
-  const sortedCategoryData = [...categoryData].sort(
-    (a, b) => b.value - a.value,
-  );
+  const sortedCategoryData = useMemo(() => {
+    return [...categoryData].sort((a, b) => b.value - a.value);
+  }, [categoryData]);
 
   const categoryTotal = categoryData.reduce((sum, c) => sum + c.value, 0);
 
   const topCategory = sortedCategoryData[0];
 
-  const recentReceipts = [...reportReceipts]
-    .sort((a, b) => b.purchase_date.localeCompare(a.purchase_date))
-    .slice(0, 5);
+  const recentReceipts = useMemo(() => {
+    return [...reportReceipts]
+      .sort((a, b) => b.purchase_date.localeCompare(a.purchase_date))
+      .slice(0, 5);
+  }, [reportReceipts]);
 
   const aiAnalysisText = useMemo(() => {
     if (reportReceipts.length === 0) {
-      return "선택한 기준에 해당하는 소비 데이터가 없습니다. 영수증을 등록하면 AI 소비패턴 분석을 확인할 수 있습니다.";
+      return selectedDate
+        ? "선택한 날짜에는 소비 데이터가 없습니다. 다른 날짜를 선택하거나 월 전체 보기로 돌아가 소비패턴을 확인해보세요."
+        : "선택한 기준에 해당하는 소비 데이터가 없습니다. 영수증을 등록하면 AI 소비패턴 분석을 확인할 수 있습니다.";
     }
 
-    const compareText =
-      monthChangeRate >= 0
+    const compareText = selectedDate
+      ? `${formatDate(selectedDate)}에는 총 ${formatKRW(
+          totalSpend,
+        )}를 지출했습니다.`
+      : monthChangeRate >= 0
         ? `전월 대비 소비가 ${monthChangeRate.toFixed(1)}% 증가했습니다.`
         : `전월 대비 소비가 ${Math.abs(monthChangeRate).toFixed(1)}% 감소했습니다.`;
 
@@ -188,11 +197,20 @@ const FinanceReport: React.FC = () => {
       : "주요 소비 카테고리를 분석할 데이터가 부족합니다.";
 
     const adviceText = topCategory
-      ? `${topCategory.name} 관련 소비 횟수나 금액을 한 번만 줄여도 다음 달 지출 관리에 도움이 됩니다.`
+      ? selectedDate
+        ? `${topCategory.name} 지출이 집중된 날입니다. 같은 유형의 소비가 반복되는지 월 전체 기준으로도 확인해보세요.`
+        : `${topCategory.name} 관련 소비 횟수나 금액을 한 번만 줄여도 다음 달 지출 관리에 도움이 됩니다.`
       : "소비 데이터를 더 등록하면 맞춤형 절약 제안을 받을 수 있습니다.";
 
     return `${compareText} ${categoryText} ${adviceText}`;
-  }, [categoryTotal, monthChangeRate, reportReceipts.length, topCategory]);
+  }, [
+    categoryTotal,
+    monthChangeRate,
+    reportReceipts.length,
+    selectedDate,
+    topCategory,
+    totalSpend,
+  ]);
 
   const handlePreviousMonth = () => {
     setSelectedMonth((prev) => getPreviousMonth(prev));
@@ -248,7 +266,7 @@ const FinanceReport: React.FC = () => {
       {selectedDate && (
         <div className="finance-report__selected-date">
           <span>
-            {formatDate(selectedDate)} 기준으로 리포트를 확인 중입니다.
+            {formatDate(selectedDate)} 기준으로 일별 리포트를 확인 중입니다.
           </span>
           <button type="button" onClick={() => setSelectedDate(null)}>
             월 전체 보기
@@ -265,11 +283,14 @@ const FinanceReport: React.FC = () => {
             {formatKRW(totalSpend)}
           </p>
           <p className="finance-report__summary-label">
-            {selectedDate ? "선택 날짜 총 지출" : "월별 소비 요약"}
+            {selectedDate ? "일별 소비 요약" : "월별 소비 요약"}
           </p>
           <p className="finance-report__summary-sub">
-            전월 대비 {monthChangeRate >= 0 ? "+" : ""}
-            {monthChangeRate.toFixed(1)}%
+            {selectedDate
+              ? "선택 날짜 기준"
+              : `전월 대비 ${
+                  monthChangeRate >= 0 ? "+" : ""
+                }${monthChangeRate.toFixed(1)}%`}
           </p>
         </Card>
 
@@ -284,7 +305,9 @@ const FinanceReport: React.FC = () => {
             {selectedDate ? "선택 날짜 영수증" : "영수증 등록 건수"}
           </p>
           <p className="finance-report__summary-sub">
-            지난 달 {previousMonthReceipts.length}건
+            {selectedDate
+              ? `${getMonthLabel(selectedMonth)} 전체 ${monthReceipts.length}건 중`
+              : `지난 달 ${previousMonthReceipts.length}건`}
           </p>
         </Card>
 
@@ -309,53 +332,40 @@ const FinanceReport: React.FC = () => {
               {getMonthLabel(selectedMonth)} 지출 추이
             </h3>
             <p className="finance-report__section-desc">
-              소비가 발생한 날짜를 선택해 상세 리포트를 확인할 수 있습니다.
+              그래프의 날짜를 클릭해 해당 날짜의 상세 리포트를 확인할 수
+              있습니다.
             </p>
           </div>
         </div>
 
-        <MonthlyLineChart data={lineData} />
-
-        <div className="finance-report__date-chip-row">
-          <button
-            type="button"
-            className={
-              !selectedDate
-                ? "finance-report__date-chip active"
-                : "finance-report__date-chip"
-            }
-            onClick={() => setSelectedDate(null)}
-          >
-            월 전체
-          </button>
-
-          {receiptDateOptions.map((date) => (
-            <button
-              key={date}
-              type="button"
-              className={
-                selectedDate === date
-                  ? "finance-report__date-chip active"
-                  : "finance-report__date-chip"
-              }
-              onClick={() => setSelectedDate(date)}
-            >
-              {Number(date.slice(8, 10))}일
-            </button>
-          ))}
-        </div>
+        <MonthlyLineChart
+          data={lineData}
+          selectedDate={selectedDate}
+          onPointClick={setSelectedDate}
+        />
       </Card>
 
-      <div className="finance-report__grid">
+      <div className="finance-report__grid" key={`category-grid-${reportKey}`}>
         <Card>
-          <h3 className="finance-report__section-title">카테고리별 지출</h3>
-          <CategoryPieChart data={categoryData} />
+          <h3 className="finance-report__section-title">
+            {selectedDate ? "선택 날짜 카테고리별 지출" : "카테고리별 지출"}
+          </h3>
+
+          {categoryTotal === 0 ? (
+            <p className="finance-report__empty-text">
+              선택한 기준에 해당하는 카테고리 데이터가 없습니다.
+            </p>
+          ) : (
+            <CategoryPieChart key={`pie-${reportKey}`} data={categoryData} />
+          )}
         </Card>
 
         <Card>
-          <h3 className="finance-report__section-title">카테고리별 상세</h3>
+          <h3 className="finance-report__section-title">
+            {selectedDate ? "선택 날짜 카테고리별 상세" : "카테고리별 상세"}
+          </h3>
           <div className="finance-report__category-list">
-            {sortedCategoryData.length === 0 ? (
+            {sortedCategoryData.length === 0 || categoryTotal === 0 ? (
               <p className="finance-report__empty-text">
                 선택한 기준에 해당하는 카테고리 데이터가 없습니다.
               </p>
@@ -366,15 +376,39 @@ const FinanceReport: React.FC = () => {
                     ? Math.round((c.value / categoryTotal) * 100)
                     : 0;
 
+                const categoryColor = getCategoryColor(c.name);
+
                 return (
-                  <div key={c.name} className="finance-report__category-row">
-                    <span className="finance-report__category-name">
+                  <div
+                    key={`${reportKey}-${c.name}`}
+                    className="finance-report__category-row"
+                  >
+                    <span
+                      className="finance-report__category-name"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          backgroundColor: categoryColor,
+                          flexShrink: 0,
+                        }}
+                      />
                       {c.name}
                     </span>
                     <div className="finance-report__category-bar-wrap">
                       <div
                         className="finance-report__category-bar"
-                        style={{ width: `${pct}%` }}
+                        style={{
+                          width: `${pct}%`,
+                          backgroundColor: categoryColor,
+                        }}
                       />
                     </div>
                     <span className="finance-report__category-pct">{pct}%</span>
@@ -389,12 +423,16 @@ const FinanceReport: React.FC = () => {
         </Card>
       </div>
 
-      <Card>
+      <Card key={`receipt-list-${reportKey}`}>
         <div className="finance-report__section-header">
           <div>
-            <h3 className="finance-report__section-title">최근 영수증 목록</h3>
+            <h3 className="finance-report__section-title">
+              {selectedDate ? "선택 날짜 영수증 목록" : "최근 영수증 목록"}
+            </h3>
             <p className="finance-report__section-desc">
-              선택한 기준에 해당하는 최근 영수증을 확인할 수 있습니다.
+              {selectedDate
+                ? "선택한 날짜에 등록된 영수증을 확인할 수 있습니다."
+                : "선택한 기준에 해당하는 최근 영수증을 확인할 수 있습니다."}
             </p>
           </div>
 
@@ -420,7 +458,7 @@ const FinanceReport: React.FC = () => {
 
               return (
                 <button
-                  key={receipt.receipt_id}
+                  key={`${reportKey}-${receipt.receipt_id}`}
                   type="button"
                   className="finance-report__receipt-row"
                   onClick={() => navigate(`/receipts/${receipt.receipt_id}`)}
@@ -436,8 +474,10 @@ const FinanceReport: React.FC = () => {
         )}
       </Card>
 
-      <Card>
-        <h3 className="finance-report__section-title">AI 소비패턴 분석</h3>
+      <Card key={`ai-${reportKey}`}>
+        <h3 className="finance-report__section-title">
+          {selectedDate ? "선택 날짜 AI 소비패턴 분석" : "AI 소비패턴 분석"}
+        </h3>
         <p className="finance-report__ai-text">{aiAnalysisText}</p>
       </Card>
 

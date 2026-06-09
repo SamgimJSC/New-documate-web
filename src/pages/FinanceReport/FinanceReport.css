@@ -71,6 +71,7 @@
   padding: 12px 16px;
   background-color: var(--color-primary-light);
   color: var(--color-primary);
+  border: 1px solid rgba(91, 157, 153, 0.18);
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   font-weight: 600;
@@ -85,6 +86,7 @@
   font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
 }
 
 .finance-report__summary-grid {
@@ -162,46 +164,16 @@
   color: var(--color-muted);
 }
 
-.finance-report__date-chip-row {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: var(--space-sm);
-  margin-top: var(--space-md);
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 4px;
-}
-
-.finance-report__date-chip-row::-webkit-scrollbar {
-  height: 6px;
-}
-
-.finance-report__date-chip-row::-webkit-scrollbar-thumb {
-  background-color: var(--color-border);
-  border-radius: var(--radius-full);
-}
-
-.finance-report__date-chip {
-  flex: 0 0 auto;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-full);
-  padding: 6px 12px;
-  background-color: var(--color-surface);
-  color: var(--color-text);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
+.monthly-line-chart {
   cursor: pointer;
 }
 
-.finance-report__date-chip:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-}
-
-.finance-report__date-chip.active {
-  border-color: var(--color-primary);
-  background-color: var(--color-primary);
-  color: #fff;
+.monthly-line-chart:focus,
+.monthly-line-chart *:focus,
+.monthly-line-chart svg:focus,
+.monthly-line-chart .recharts-wrapper:focus,
+.monthly-line-chart .recharts-surface:focus {
+  outline: none;
 }
 
 .finance-report__grid {

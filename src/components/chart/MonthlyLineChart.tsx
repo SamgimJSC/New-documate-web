@@ -19,6 +19,8 @@ interface MonthlyData {
 
 interface MonthlyLineChartProps {
   data: MonthlyData[];
+  selectedDate?: string | null;
+  onPointClick?: (date: string) => void;
 }
 
 interface CustomTooltipProps {
@@ -68,12 +70,20 @@ const MonthlyTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
   );
 };
 
-const MonthlyLineChart: React.FC<MonthlyLineChartProps> = ({ data }) => {
+const MonthlyLineChart: React.FC<MonthlyLineChartProps> = ({
+  data,
+  selectedDate,
+  onPointClick,
+}) => {
   const maxData = data.reduce<MonthlyData | null>((max, current) => {
     if (!max) return current;
 
     return current.amount > max.amount ? current : max;
   }, null);
+
+  const selectedData = selectedDate
+    ? data.find((item) => item.date === selectedDate)
+    : null;
 
   const formatXAxisTick = (value: string, index: number) => {
     const day = getDayNumber(value);
@@ -86,51 +96,83 @@ const MonthlyLineChart: React.FC<MonthlyLineChartProps> = ({ data }) => {
     return "";
   };
 
+  const handleChartClick = (state: any) => {
+    const activeLabel = state?.activeLabel;
+
+    if (!activeLabel) return;
+
+    const clickedData = data.find((item) => item.month === activeLabel);
+
+    if (!clickedData?.date) return;
+
+    onPointClick?.(clickedData.date);
+  };
   return (
-    <ResponsiveContainer width="100%" height={220}>
-      <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-        <CartesianGrid
-          strokeDasharray="3 3"
-          stroke="#f8fafc"
-          vertical={false}
-        />
-        <XAxis
-          dataKey="month"
-          tickFormatter={formatXAxisTick}
-          tick={{ fontSize: 11, fill: "#6b7280" }}
-          axisLine={false}
-          tickLine={false}
-          interval={0}
-        />
-        <YAxis hide />
-        <Tooltip content={<MonthlyTooltip />} />
-
-        <Line
-          type="monotone"
-          dataKey="amount"
-          stroke="#5b9d99"
-          strokeWidth={2.5}
-          dot={false}
-          activeDot={{
-            r: 6,
-            fill: "#5b9d99",
-            stroke: "#fff",
-            strokeWidth: 2,
-          }}
-        />
-
-        {maxData && maxData.amount > 0 && (
-          <ReferenceDot
-            x={maxData.month}
-            y={maxData.amount}
-            r={6}
-            fill="#5b9d99"
-            stroke="#fff"
-            strokeWidth={2}
+    <div className="monthly-line-chart">
+      <ResponsiveContainer width="100%" height={220}>
+        <LineChart
+          data={data}
+          margin={{ top: 12, right: 42, left: 42, bottom: 0 }}
+          onClick={handleChartClick}
+        >
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="#f8fafc"
+            vertical={false}
           />
-        )}
-      </LineChart>
-    </ResponsiveContainer>
+
+          <XAxis
+            dataKey="month"
+            tickFormatter={formatXAxisTick}
+            tick={{ fontSize: 11, fill: "#6b7280" }}
+            axisLine={false}
+            tickLine={false}
+            interval={0}
+            padding={{ left: 16, right: 16 }}
+          />
+
+          <YAxis hide />
+
+          <Tooltip content={<MonthlyTooltip />} />
+
+          <Line
+            type="monotone"
+            dataKey="amount"
+            stroke="#5b9d99"
+            strokeWidth={2.5}
+            dot={false}
+            activeDot={{
+              r: 6,
+              fill: "#5b9d99",
+              stroke: "#fff",
+              strokeWidth: 2,
+            }}
+          />
+
+          {maxData && maxData.amount > 0 && maxData.date !== selectedDate && (
+            <ReferenceDot
+              x={maxData.month}
+              y={maxData.amount}
+              r={6}
+              fill="#5b9d99"
+              stroke="#fff"
+              strokeWidth={2}
+            />
+          )}
+
+          {selectedData && (
+            <ReferenceDot
+              x={selectedData.month}
+              y={selectedData.amount}
+              r={7}
+              fill="#5b9d99"
+              stroke="#fff"
+              strokeWidth={2}
+            />
+          )}
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
   );
 };
 
