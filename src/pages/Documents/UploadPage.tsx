@@ -47,29 +47,32 @@ export function UploadPage() {
   const addFiles = (fileList: FileList | File[]) => {
     const errors: string[] = [];
 
-    const validFiles = Array.from(fileList).reduce<StudioFile[]>((acc, file) => {
-      const mb = fileSizeMb(file);
+    const validFiles = Array.from(fileList).reduce<StudioFile[]>(
+      (acc, file) => {
+        const mb = fileSizeMb(file);
 
-      if (!ACCEPTED_UPLOAD_TYPES.includes(file.type)) {
-        errors.push(`${file.name}은 JPG/PNG 파일이 아니에요.`);
+        if (!ACCEPTED_UPLOAD_TYPES.includes(file.type)) {
+          errors.push(`${file.name}은 JPG/PNG 파일이 아니에요.`);
+          return acc;
+        }
+
+        if (mb > MAX_UPLOAD_FILE_SIZE_MB) {
+          errors.push(`${file.name}은 10MB를 초과했어요.`);
+          return acc;
+        }
+
+        acc.push({
+          id: makeId(),
+          fileName: file.name,
+          sizeMb: mb,
+          fileSizeBytes: file.size,
+          uploadedAt: nowText(),
+        });
+
         return acc;
-      }
-
-      if (mb > MAX_UPLOAD_FILE_SIZE_MB) {
-        errors.push(`${file.name}은 10MB를 초과했어요.`);
-        return acc;
-      }
-
-      acc.push({
-        id: makeId(),
-        fileName: file.name,
-        sizeMb: mb,
-        fileSizeBytes: file.size,
-        uploadedAt: nowText(),
-      });
-
-      return acc;
-    }, []);
+      },
+      [],
+    );
 
     setStudioFiles((current) => {
       const availableSlots = MAX_UPLOAD_FILE_COUNT - current.length;
@@ -172,7 +175,9 @@ export function UploadPage() {
     setUploadError("");
     setShowAnalysisModal(false);
     setView("studio");
-    setToastMessage("AI 분석을 시작했어요. 상단바 처리 센터에서 상태를 확인할 수 있어요.");
+    setToastMessage(
+      "AI 분석을 시작했어요. 상단바 처리 센터에서 상태를 확인할 수 있어요.",
+    );
 
     window.setTimeout(() => setToastMessage(""), 2400);
   };
@@ -185,8 +190,14 @@ export function UploadPage() {
         <div className="upload-studio-card__title">
           <div>
             <p className="upload-page__kicker">1. 업로드 스튜디오 · 시작</p>
-            <h1>{view === "uploaded" ? "업로드한 문서를 확인하세요" : "문서 이미지를 업로드하세요"}</h1>
-            <p>문서 이미지를 업로드하거나 직접 등록하여 AI 분석을 시작하세요.</p>
+            <h1>
+              {view === "uploaded"
+                ? "업로드한 문서를 확인하세요"
+                : "문서 이미지를 업로드하세요"}
+            </h1>
+            <p>
+              문서 이미지를 업로드하거나 직접 등록하여 AI 분석을 시작하세요.
+            </p>
           </div>
 
           {view === "uploaded" && (
@@ -204,7 +215,11 @@ export function UploadPage() {
           <section className="upload-studio-card__main">
             {view === "studio" && (
               <div
-                className={dragActive ? "upload-dropzone upload-dropzone--active" : "upload-dropzone"}
+                className={
+                  dragActive
+                    ? "upload-dropzone upload-dropzone--active"
+                    : "upload-dropzone"
+                }
                 role="button"
                 tabIndex={0}
                 onDragEnter={(event) => {
@@ -241,7 +256,10 @@ export function UploadPage() {
                     <strong>업로드가 완료되었습니다.</strong>
                     <p>파일 순서를 확인한 뒤 AI 분석을 시작해 주세요.</p>
                   </div>
-                  <button type="button" onClick={() => fileInputRef.current?.click()}>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
                     파일 추가
                   </button>
                   <input
@@ -288,7 +306,10 @@ export function UploadPage() {
                         >
                           ↓
                         </button>
-                        <button type="button" onClick={() => removeFile(file.id)}>
+                        <button
+                          type="button"
+                          onClick={() => removeFile(file.id)}
+                        >
                           삭제
                         </button>
                       </div>
@@ -298,14 +319,24 @@ export function UploadPage() {
 
                 <div className="upload-ready-panel__actions">
                   <div>
-                    <strong>{studioFiles.length}개 파일이 분석 대기 중입니다.</strong>
+                    <strong>
+                      {studioFiles.length}개 파일이 분석 대기 중입니다.
+                    </strong>
                     <span>파일 순서를 확인한 뒤 AI 분석을 시작해 주세요.</span>
                   </div>
                   <div className="upload-ready-panel__action-buttons">
-                    <button type="button" className="upload-ready-panel__clear" onClick={clearFiles}>
+                    <button
+                      type="button"
+                      className="upload-ready-panel__clear"
+                      onClick={clearFiles}
+                    >
                       전체 삭제
                     </button>
-                    <button type="button" className="upload-ready-panel__start" onClick={openAnalysisModal}>
+                    <button
+                      type="button"
+                      className="upload-ready-panel__start"
+                      onClick={openAnalysisModal}
+                    >
                       AI 분석하기
                     </button>
                   </div>
@@ -340,7 +371,9 @@ export function UploadPage() {
                   <span key={guide.category}>{guide.category}</span>
                 ))}
               </div>
-              <p className="upload-side-card__note">다양한 문서를 업로드하면 더 정확한 분석이 가능합니다.</p>
+              <p className="upload-side-card__note">
+                다양한 문서를 업로드하면 더 정확한 분석이 가능합니다.
+              </p>
             </section>
 
             {studioFiles.length > 0 && (
@@ -387,19 +420,29 @@ export function UploadPage() {
 
         {view === "studio" && (
           <>
-            <div className="upload-divider"><span>또는</span></div>
+            <div className="upload-divider">
+              <span>또는</span>
+            </div>
             <section className="upload-manual-cta">
               <div className="upload-manual-cta__icon">✎</div>
               <div>
-                <strong>빠른 수기 등록</strong>
-                <p>문서를 직접 입력하여 등록할 수 있습니다. AI 분석 없이 바로 저장됩니다.</p>
+                <strong>수기 등록</strong>
+                <p>
+                  문서를 직접 입력하여 등록할 수 있습니다. AI 분석 없이 바로
+                  저장됩니다.
+                </p>
               </div>
-              <button type="button" onClick={() => navigate("/upload/manual")}>수기로 등록하기</button>
+              <button type="button" onClick={() => navigate("/upload/manual")}>
+                수기로 등록하기
+              </button>
             </section>
           </>
         )}
 
-        <p className="upload-page__security">♡ 업로드한 파일은 안전하게 보호되며, 분석 목적 외에는 사용되지 않습니다.</p>
+        <p className="upload-page__security">
+          ♡ 업로드한 파일은 안전하게 보호되며, 분석 목적 외에는 사용되지
+          않습니다.
+        </p>
       </main>
 
       {showAnalysisModal && (
