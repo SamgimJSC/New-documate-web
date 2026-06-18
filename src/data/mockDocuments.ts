@@ -3,35 +3,43 @@ import type { DocumentCategory, Document, Tag, DocumentTag, DocumentAlert } from
 export const mockDocumentCategories: DocumentCategory[] = [
   {
     category_id: 1,
-    code: "LEASE",
-    name: "임대차계약서",
+    code: "CONTRACT",
+    name: "계약서",
     default_notify_offset_days: 90,
     is_secured: true,
-    description: "전월세 임대차 계약 관련 문서",
+    description: "임대차계약서, 근로계약서, 통신계약서 등 계약 관련 문서",
   },
   {
     category_id: 2,
-    code: "PRESCRIPTION",
-    name: "처방전",
-    default_notify_offset_days: 365,
+    code: "RECEIPT",
+    name: "영수증",
+    default_notify_offset_days: 0,
     is_secured: false,
-    description: "병원 처방전 및 의료 관련 문서",
+    description: "카드 영수증, 현금영수증, 결제내역 문서",
   },
   {
     category_id: 3,
-    code: "WARRANTY",
-    name: "보증서",
-    default_notify_offset_days: 30,
+    code: "MEDICAL",
+    name: "병원/약국",
+    default_notify_offset_days: 365,
     is_secured: false,
-    description: "제품 보증서 및 품질 보증 문서",
+    description: "처방전, 진료비 영수증, 약국 영수증 등 의료 관련 문서",
   },
   {
     category_id: 4,
+    code: "WARRANTY_AS",
+    name: "보증서/A·S",
+    default_notify_offset_days: 30,
+    is_secured: false,
+    description: "제품 보증서, 수리 접수증, A/S 내역서",
+  },
+  {
+    category_id: 5,
     code: "OTHER",
     name: "기타",
     default_notify_offset_days: 180,
     is_secured: false,
-    description: "기타 문서",
+    description: "분류 불가 문서, 일반 안내문, 메모",
   },
 ];
 
@@ -67,7 +75,7 @@ export const mockDocuments: Document[] = [
   {
     document_id: "doc-002",
     user_id: "user-001",
-    category_id: 2,
+    category_id: 3,
     title: "세브란스병원 처방전 2026-04",
     file_url: "",
     file_name: "prescription_202604.jpg",
@@ -94,7 +102,7 @@ export const mockDocuments: Document[] = [
   {
     document_id: "doc-003",
     user_id: "user-001",
-    category_id: 3,
+    category_id: 4,
     title: "삼성 TV 제품 보증서",
     file_url: "",
     file_name: "samsung_tv_warranty.png",
@@ -147,7 +155,7 @@ export const mockDocuments: Document[] = [
   {
     document_id: "doc-005",
     user_id: "user-001",
-    category_id: 4,
+    category_id: 5,
     title: "자동차 보험증권",
     file_url: "",
     file_name: "car_insurance.png",
@@ -173,7 +181,7 @@ export const mockDocuments: Document[] = [
   {
     document_id: "doc-006",
     user_id: "user-001",
-    category_id: 2,
+    category_id: 3,
     title: "건강검진 결과서",
     file_url: "",
     file_name: "health_checkup_2026.jpg",
@@ -193,8 +201,8 @@ export const mockDocuments: Document[] = [
 
 export const mockTags: Tag[] = [
   { tag_id: "tag-001", user_id: "user-001", name: "계약서", created_at: "2025-02-01T10:00:00+09:00" },
-  { tag_id: "tag-002", user_id: "user-001", name: "의료", created_at: "2026-04-15T14:00:00+09:00" },
-  { tag_id: "tag-003", user_id: "user-001", name: "보증", created_at: "2025-11-20T16:00:00+09:00" },
+  { tag_id: "tag-002", user_id: "user-001", name: "병원/약국", created_at: "2026-04-15T14:00:00+09:00" },
+  { tag_id: "tag-003", user_id: "user-001", name: "보증서/A·S", created_at: "2025-11-20T16:00:00+09:00" },
   { tag_id: "tag-004", user_id: "user-001", name: "중요", created_at: "2025-02-01T10:00:00+09:00" },
 ];
 
