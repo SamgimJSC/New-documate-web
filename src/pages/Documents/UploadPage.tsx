@@ -3,9 +3,11 @@ import type { ChangeEvent, DragEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { uploadCategoryGuide } from "../../data/uploadCategories";
 import { AnalysisStartModal } from "../../components/upload/AnalysisStartModal";
-import { uploadLocalService } from "../../services/uploadLocalService";
+import { uploadLocalService, type UploadProcessStatus } from "../../services/uploadLocalService";
+import { uploadService } from "../../services/uploadService";
 import {
   ACCEPTED_UPLOAD_TYPES,
+  categoryToId,
   fileSizeMb,
   formatUploadedAt,
   inferUploadCategory,
@@ -24,6 +26,7 @@ type StudioFile = {
   sizeMb: number;
   fileSizeBytes: number;
   uploadedAt: string;
+  file: File;
 };
 
 const makeId = () => `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
@@ -38,6 +41,7 @@ export function UploadPage() {
   const [uploadError, setUploadError] = useState("");
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
 
   const totalSizeMb = useMemo(
     () => studioFiles.reduce((sum, file) => sum + file.sizeMb, 0),
@@ -66,6 +70,7 @@ export function UploadPage() {
         sizeMb: mb,
         fileSizeBytes: file.size,
         uploadedAt: nowText(),
+        file,
       });
 
       return acc;
@@ -147,39 +152,68 @@ export function UploadPage() {
     setShowAnalysisModal(true);
   };
 
-  const startAnalysis = () => {
-    const nextItems = studioFiles.map((file, index) => {
-      const category = inferUploadCategory(file.fileName);
+  const startAnalysis = async () => {
+    setShowAnalysisModal(false);
+    setIsUploading(true);
 
-      return {
-        ...uploadLocalService.buildProcessDocument({
-          fileName: file.fileName,
-          sizeMb: file.sizeMb,
-          fileSizeBytes: file.fileSizeBytes,
-          category,
-          extractedFields: makeExtractedFields(category, file.fileName, index),
-          status: "analyzing",
-        }),
-        progress: 20 + index * 8,
-        confidence: 0,
-      };
-    });
-
-    const currentItems = uploadLocalService.readProcessItems();
-    uploadLocalService.writeProcessItems([...nextItems, ...currentItems]);
-
+    const filesToProcess = [...studioFiles];
     setStudioFiles([]);
     setUploadError("");
-    setShowAnalysisModal(false);
     setView("studio");
-    setToastMessage("AI 분석을 시작했어요. 상단바 처리 센터에서 상태를 확인할 수 있어요.");
 
+    const newItems: ReturnType<typeof uploadLocalService.buildProcessDocument>[] = [];
+
+    for (let i = 0; i < filesToProcess.length; i++) {
+      const studioFile = filesToProcess[i];
+      const category = inferUploadCategory(studioFile.fileName);
+      const title = studioFile.fileName.replace(/\.(jpg|jpeg|png)$/i, "");
+
+      let status: UploadProcessStatus = "analyzing";
+      let errorMessage: string | undefined;
+      let savedRecordId: string | undefined;
+
+      try {
+        const tempDocumentId = await uploadService.startSession();
+        await uploadService.uploadPage(tempDocumentId, studioFile.file, 1);
+        savedRecordId = await uploadService.createDocument({
+          inputMethod: "OCR",
+          categoryId: categoryToId(category),
+          title,
+        });
+      } catch {
+        status = "failed";
+        errorMessage = "서버 업로드에 실패했어요.";
+      }
+
+      newItems.push({
+        ...uploadLocalService.buildProcessDocument({
+          fileName: studioFile.fileName,
+          sizeMb: studioFile.sizeMb,
+          fileSizeBytes: studioFile.fileSizeBytes,
+          category,
+          extractedFields: makeExtractedFields(category, studioFile.fileName, i),
+          status,
+        }),
+        savedRecordId,
+        errorMessage,
+      });
+    }
+
+    const currentItems = uploadLocalService.readProcessItems();
+    uploadLocalService.writeProcessItems([...newItems, ...currentItems]);
+
+    setIsUploading(false);
+    setToastMessage("AI 분석을 시작했어요. 상단바 처리 센터에서 상태를 확인할 수 있어요.");
     window.setTimeout(() => setToastMessage(""), 2400);
   };
 
   return (
     <section className="upload-page">
-      {toastMessage && <div className="upload-page__toast">{toastMessage}</div>}
+      {(toastMessage || isUploading) && (
+        <div className="upload-page__toast">
+          {isUploading ? "서버에 업로드 중..." : toastMessage}
+        </div>
+      )}
 
       <main className={`upload-studio-card upload-studio-card--${view}`}>
         <div className="upload-studio-card__title">

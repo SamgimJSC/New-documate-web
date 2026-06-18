@@ -1,13 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Star, Download, Trash2, Plus } from "lucide-react";
 import Badge from "../../components/common/Badge";
 import Button from "../../components/common/Button";
 import AlertSettingModal from "../../components/modal/AlertSettingModal";
 import CategoryEditModal from "../../components/modal/CategoryEditModal";
-import { mockDocuments, mockDocumentCategories, mockDocumentTags, mockTags, mockDocumentAlerts } from "../../data/mockDocuments";
+import { mockDocumentCategories, mockDocumentTags, mockTags, mockDocumentAlerts } from "../../data/mockDocuments";
+import { documentService } from "../../services/documentService";
 import { formatDate } from "../../utils/formatDate";
 import { useToast } from "../../components/common/Toast";
+import type { Document } from "../../types/document";
 import type { AiStatus } from "../../types/common";
 import "./DocumentDetail.css";
 
@@ -25,8 +27,20 @@ const DocumentDetail: React.FC = () => {
   const [alertOpen, setAlertOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [doc, setDoc] = useState<Document | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const doc = mockDocuments.find((d) => d.document_id === document_id);
+  useEffect(() => {
+    if (!document_id) return;
+    documentService.getDocument(document_id)
+      .then((d) => { setDoc(d); setIsFavorite(d.is_favorite); })
+      .catch(() => setDoc(null))
+      .finally(() => setLoading(false));
+  }, [document_id]);
+
+  if (loading) {
+    return <div style={{ padding: 48, textAlign: "center", color: "var(--color-muted)" }}>문서를 불러오는 중...</div>;
+  }
 
   if (!doc) {
     return (

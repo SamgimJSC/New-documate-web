@@ -1,13 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Star, Grid, List, Upload } from "lucide-react";
 import FilterChip from "../../components/common/FilterChip";
 import Select from "../../components/common/Select";
 import Badge from "../../components/common/Badge";
 import EmptyState from "../../components/common/EmptyState";
-import { mockDocuments, mockDocumentCategories } from "../../data/mockDocuments";
+import { mockDocumentCategories } from "../../data/mockDocuments";
+import { documentService } from "../../services/documentService";
 import { filterDocuments } from "../../utils/filterUtils";
 import { formatDate, getDday } from "../../utils/formatDate";
+import type { Document } from "../../types/document";
 import type { AiStatus } from "../../types/common";
 import "./Documents.css";
 
@@ -31,13 +33,26 @@ const Documents: React.FC = () => {
   const [categoryId, setCategoryId] = useState<number | undefined>();
   const [sort, setSort] = useState("latest");
   const [viewMode, setViewMode] = useState<"card" | "list">("card");
+  const [allDocs, setAllDocs] = useState<Document[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const docs = filterDocuments(mockDocuments, query, categoryId);
+  useEffect(() => {
+    documentService.getDocuments()
+      .then(setAllDocs)
+      .catch(() => setAllDocs([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const docs = filterDocuments(allDocs, query, categoryId);
 
   const sorted = [...docs].sort((a, b) => {
     if (sort === "latest") return b.created_at.localeCompare(a.created_at);
     return a.title.localeCompare(b.title, "ko");
   });
+
+  if (loading) {
+    return <div className="documents" style={{ padding: 48, textAlign: "center", color: "var(--color-muted)" }}>문서를 불러오는 중...</div>;
+  }
 
   return (
     <div className="documents">

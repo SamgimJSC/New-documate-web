@@ -3,15 +3,14 @@ import type { ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { uploadCategoryGuide } from "../../data/uploadCategories";
 import { RegistrationSuccessModal } from "../../components/upload/RegistrationSuccessModal";
-import {
-  uploadLocalService,
-  type ManualRegistrationInput,
-} from "../../services/uploadLocalService";
+import type { ManualRegistrationInput } from "../../services/uploadLocalService";
 import type { UploadDocumentCategory } from "../../types/upload";
 import {
+  categoryToId,
   MANUAL_UPLOAD_DRAFT_KEY,
   getSaveLocationLabel,
 } from "../../utils/uploadWorkflow";
+import { uploadService } from "../../services/uploadService";
 import "./ManualRegisterPage.css";
 
 const emptyManualForm: ManualRegistrationInput = {
@@ -42,6 +41,7 @@ export function ManualRegisterPage() {
   );
   const [manualErrors, setManualErrors] = useState<string[]>([]);
   const [toastMessage, setToastMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [successCategory, setSuccessCategory] = useState<UploadDocumentCategory | null>(null);
 
   const selectedGuide = useMemo(
@@ -72,7 +72,7 @@ export function ManualRegisterPage() {
     window.localStorage.removeItem(MANUAL_UPLOAD_DRAFT_KEY);
   };
 
-  const saveManualDocument = () => {
+  const saveManualDocument = async () => {
     const errors: string[] = [];
 
     if (!manualForm.title.trim()) errors.push("문서 이름을 입력해 주세요.");
@@ -85,14 +85,28 @@ export function ManualRegisterPage() {
     setManualErrors(errors);
     if (errors.length > 0) return;
 
-    if (manualForm.category === "영수증") {
-      uploadLocalService.saveReceipt(uploadLocalService.manualToReceipt(manualForm));
-    } else {
-      uploadLocalService.saveDocument(uploadLocalService.manualToDocument(manualForm));
-    }
+    setIsSubmitting(true);
+    try {
+      const extractedData: Record<string, string> = {};
+      if (manualForm.issuer) extractedData["발행처"] = manualForm.issuer;
+      if (manualForm.amount) extractedData["금액"] = manualForm.amount;
+      if (manualForm.memo) extractedData["메모"] = manualForm.memo;
 
-    window.localStorage.removeItem(MANUAL_UPLOAD_DRAFT_KEY);
-    setSuccessCategory(manualForm.category);
+      await uploadService.createDocument({
+        inputMethod: "MANUAL",
+        categoryId: categoryToId(manualForm.category),
+        title: manualForm.title.trim(),
+        issueDate: manualForm.documentDate || undefined,
+        extractedData,
+      });
+
+      window.localStorage.removeItem(MANUAL_UPLOAD_DRAFT_KEY);
+      setSuccessCategory(manualForm.category);
+    } catch {
+      setManualErrors(["서버 저장에 실패했어요. 잠시 후 다시 시도해 주세요."]);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleAttachment = (event: ChangeEvent<HTMLInputElement>) => {
@@ -229,7 +243,9 @@ export function ManualRegisterPage() {
             <div className="manual-form-actions">
               <button type="button" className="manual-form-actions__ghost" onClick={resetManualForm}>초기화</button>
               <button type="button" className="manual-form-actions__ghost" onClick={saveManualDraft}>임시 저장</button>
-              <button type="submit" className="manual-form-actions__primary">작성 완료 후 등록</button>
+              <button type="submit" className="manual-form-actions__primary" disabled={isSubmitting}>
+                {isSubmitting ? "저장 중..." : "작성 완료 후 등록"}
+              </button>
             </div>
           </form>
         </main>

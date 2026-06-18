@@ -7,6 +7,7 @@ import {
   type UploadProcessItem,
   type UploadProcessStatus,
 } from "../../services/uploadLocalService";
+import { uploadService } from "../../services/uploadService";
 import type { UploadDocumentCategory } from "../../types/upload";
 import {
   formatUploadedAt,
@@ -110,46 +111,36 @@ export function ProcessingCenterPage() {
   }, [processItems, selectedItemId]);
 
   useEffect(() => {
-    if (!processItems.some((item) => item.status === "analyzing")) return;
+    const analyzingItems = processItems.filter(
+      (item) => item.status === "analyzing" && item.savedRecordId,
+    );
+
+    if (analyzingItems.length === 0) return;
 
     const timer = window.setInterval(() => {
-      setProcessItems((current) =>
-        current.map((item, index) => {
-          if (item.status !== "analyzing") return item;
-
-          const progress = Math.min(item.progress + 25, 100);
-          const isRetry = item.memo?.includes("재분석");
-          const shouldFail =
-            progress >= 100 &&
-            !isRetry &&
-            (item.fileName.includes("흐림") ||
-              item.fileName.toLowerCase().includes("fail") ||
-              index === 2);
-
-          if (shouldFail) {
-            return {
-              ...item,
-              status: "failed",
-              progress: 0,
-              confidence: 0,
-              errorMessage: "이미지가 흐리거나 필수 정보를 읽지 못했어요.",
-            };
-          }
-
-          if (progress >= 100) {
-            return {
-              ...item,
-              status: "waitingSave",
-              progress: 100,
-              confidence: 0.88,
-              memo: "AI 분석이 완료되었습니다. 저장 전 내용을 확인해 주세요.",
-            };
-          }
-
-          return { ...item, progress };
-        }),
-      );
-    }, 900);
+      analyzingItems.forEach((item) => {
+        uploadService
+          .getAiStatus(item.savedRecordId!)
+          .then((aiStatus) => {
+            if (aiStatus === "DONE") {
+              updateItem(item.id, {
+                status: "waitingSave",
+                progress: 100,
+                confidence: 0.88,
+                memo: "AI 분석이 완료되었습니다. 저장 전 내용을 확인해 주세요.",
+              });
+            } else if (aiStatus === "FAILED") {
+              updateItem(item.id, {
+                status: "failed",
+                progress: 0,
+                confidence: 0,
+                errorMessage: "AI 분석에 실패했어요.",
+              });
+            }
+          })
+          .catch(() => {/* 네트워크 오류는 다음 폴링에서 재시도 */});
+      });
+    }, 3000);
 
     return () => window.clearInterval(timer);
   }, [processItems]);
