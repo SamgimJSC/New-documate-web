@@ -960,3 +960,19 @@ body:has(.processing-center-page) button[class*="fab"] {
   .processing-center-page { max-width: 1520px; }
   .processing-center-layout { grid-template-columns: minmax(0, 1fr) 400px; }
 }
+
+
+/* Step3 compact status cards */
+.process-status-grid,
+.processing-status-grid,
+.processing-center__summary-grid {
+  gap: 12px;
+}
+
+.process-stat-card,
+.processing-stat-card,
+.processing-center__summary-card {
+  min-height: 74px !important;
+  padding: 14px 16px !important;
+  box-shadow: var(--shadow-card-soft, 0 1px 2px rgba(34,48,70,.016), 0 3px 9px rgba(34,48,70,.022)) !important;
+}

@@ -1,26 +1,25 @@
 .main-layout {
   display: flex;
   min-height: 100vh;
-  background: var(--color-bg);
+  background-color: var(--color-bg);
 }
 
 .main-layout__content {
-  flex: 1;
   display: flex;
+  flex: 1;
   flex-direction: column;
   min-width: 0;
 }
 
 .main-layout__main {
   flex: 1;
-  padding: var(--content-padding-y) var(--content-padding-x);
-  background:
-    radial-gradient(circle at 90% 0%, rgba(21, 144, 131, 0.04), transparent 28%),
-    var(--color-bg);
+  min-width: 0;
+  padding: 28px 32px 48px;
+  background: var(--color-bg);
 }
 
-@media (max-width: 960px) {
+@media (max-width: 900px) {
   .main-layout__main {
-    padding: 20px 18px 40px;
+    padding: 20px 16px 40px;
   }
 }

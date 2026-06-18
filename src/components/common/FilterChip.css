@@ -1,31 +1,32 @@
 .filter-chip {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 34px;
   padding: 0 14px;
   border: 1px solid transparent;
   border-radius: var(--radius-full);
-  background-color: #f3f6f8;
-  color: var(--color-muted);
+  background-color: #F1F5F7;
+  color: var(--color-text-sub);
   font-size: var(--font-size-sm);
-  font-weight: 900;
+  font-weight: 800;
   cursor: pointer;
-  transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
   white-space: nowrap;
+  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
 }
 
 .filter-chip:hover {
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
+  background-color: var(--color-chip-bg);
+  color: var(--color-primary-dark);
 }
 
 .filter-chip--selected {
-  background-color: var(--color-primary-light);
-  border-color: #bde2de;
-  color: var(--color-primary);
+  background-color: var(--color-chip-bg);
+  border-color: var(--color-primary-border);
+  color: var(--color-primary-dark);
+  box-shadow: inset 0 0 0 1px rgba(91, 157, 153, 0.05);
 }
 
 .filter-chip--selected:hover {
-  background-color: #e4f4f1;
-  border-color: #9bd8d2;
+  background-color: var(--color-primary-light);
 }

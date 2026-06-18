@@ -1,60 +1,80 @@
 :root {
   /* Brand */
-  --color-primary: #159083;
-  --color-primary-dark: #062033;
-  --color-primary-hover: #0b2f4d;
-  --color-primary-light: #eef8f6;
-  --color-primary-soft: #f6fbfa;
+  --color-primary: #5B9D99;
+  --color-primary-dark: #3E7773;
+  --color-primary-soft: #8BBCB9;
+  --color-primary-border: #B7D2CF;
+  --color-primary-light: #EDF7F6;
+  --color-chip-bg: #F2FBF9;
 
-  /* Base */
-  --color-bg: #f5f8fa;
-  --color-bg-soft: #f8fafc;
-  --color-surface: #ffffff;
-  --color-surface-soft: #fbfdfd;
-  --color-text: #0f172a;
-  --color-text-sub: #334155;
-  --color-muted: #64748b;
-  --color-muted-light: #94a3b8;
-  --color-border: #dbe7eb;
-  --color-border-soft: #e8eff2;
+  /* Base UI */
+  --color-bg: #F7F9FB;
+  --color-bg-cool: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-surface-soft: #FBFDFD;
+  --color-bg-soft: #F2F6F7;
+  --color-border: #E2E8F0;
+  --color-border-soft: #EDF2F5;
+  --color-border-strong: #CBD9DE;
+
+  /* Text */
+  --color-text: #223046;
+  --color-text-sub: #3D4B63;
+  --color-muted: #657084;
+  --color-placeholder: #9AA6B5;
+
+  /* CTA / Dark section */
+  --color-dark: #172238;
+  --color-dark-hover: #22324E;
+  --color-dark-sub: #D7E3EA;
 
   /* Status */
-  --color-danger: #ef4444;
-  --color-danger-dark: #b91c1c;
-  --color-danger-light: #fef2f2;
-  --color-success: #22c55e;
-  --color-success-dark: #166534;
-  --color-success-light: #f0fdf4;
-  --color-warning: #f59e0b;
-  --color-warning-dark: #c2410c;
-  --color-warning-light: #fff7ed;
-  --color-info: #2563eb;
-  --color-info-light: #eff6ff;
-  --color-pro: #7c3aed;
-  --color-pro-light: #f5f3ff;
+  --color-danger: #C97F7F;
+  --color-danger-dark: #A85353;
+  --color-danger-light: #FFF1F1;
+  --color-success: #7FA58D;
+  --color-success-dark: #5E856A;
+  --color-success-light: #EFF8F2;
+  --color-warning: #C49A6C;
+  --color-warning-dark: #9B7447;
+  --color-warning-light: #FFF7EC;
+  --color-info: #6F8FB8;
+  --color-info-light: #EEF4FA;
+  --color-pro: #8E7DBE;
+  --color-pro-light: #F4F0FF;
+
+  /* Category colors */
+  --category-food: #5B9D99;
+  --category-cafe: #C49A6C;
+  --category-shopping: #8E7DBE;
+  --category-transport: #6F8FB8;
+  --category-living: #7FA58D;
+  --category-medical: #C97F7F;
+  --category-etc: #7B8798;
 
   /* Layout */
-  --sidebar-width: 200px;
-  --header-height: 58px;
-  --content-max-width: 1480px;
-  --content-padding-x: 34px;
-  --content-padding-y: 28px;
+  --sidebar-width: 220px;
+  --header-height: 60px;
+  --content-max-width: 1460px;
 
   /* Radius */
-  --radius-xs: 8px;
+  --radius-xs: 6px;
   --radius-sm: 10px;
   --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 24px;
-  --radius-full: 9999px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --radius-card: 18px;
+  --radius-card-lg: 22px;
+  --radius-control: 12px;
+  --radius-full: 999px;
 
-  /* Shadow */
-  --shadow-card: 0 8px 28px rgba(15, 23, 42, 0.055);
-  --shadow-card-soft: 0 4px 14px rgba(15, 23, 42, 0.035);
-  --shadow-hover: 0 14px 34px rgba(15, 23, 42, 0.08);
-  --shadow-modal: 0 24px 80px rgba(15, 23, 42, 0.18);
-  --shadow-dropdown: 0 12px 34px rgba(15, 23, 42, 0.12);
-  --shadow-primary: 0 9px 20px rgba(7, 43, 73, 0.15);
+  /* Shadow: 카드 구분은 보더 중심, 그림자는 아주 약하게 */
+  --shadow-card: 0 1px 2px rgba(34, 48, 70, 0.018), 0 4px 12px rgba(34, 48, 70, 0.026);
+  --shadow-card-soft: 0 1px 2px rgba(34, 48, 70, 0.016), 0 3px 9px rgba(34, 48, 70, 0.022);
+  --shadow-card-hover: 0 4px 12px rgba(34, 48, 70, 0.045);
+  --shadow-floating: 0 10px 24px rgba(34, 48, 70, 0.10);
+  --shadow-modal: 0 18px 48px rgba(34, 48, 70, 0.18);
+  --shadow-dropdown: 0 10px 28px rgba(34, 48, 70, 0.11);
 
   /* Typography */
   --font-base: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -74,13 +94,4 @@
   --space-lg: 24px;
   --space-xl: 32px;
   --space-2xl: 40px;
-
-  /* Category colors */
-  --category-food: #5b9d99;
-  --category-cafe: #f59e0b;
-  --category-shopping: #8b5cf6;
-  --category-transport: #3b82f6;
-  --category-life: #22c55e;
-  --category-medical: #ef4444;
-  --category-etc: #94a3b8;
 }
