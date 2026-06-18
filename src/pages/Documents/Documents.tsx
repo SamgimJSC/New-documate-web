@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Star, Grid, List, Upload } from "lucide-react";
+import { Search, Star, Grid, List } from "lucide-react";
 import FilterChip from "../../components/common/FilterChip";
 import Select from "../../components/common/Select";
 import Badge from "../../components/common/Badge";
@@ -65,8 +65,7 @@ const Documents: React.FC = () => {
       </div>
 
       <p className="documents__policy-note">
-        JPG / PNG 이미지만 업로드할 수 있으며, PDF는 내려받기 기능에서만
-        사용합니다. 영수증은 영수증 관리 페이지에서 별도로 관리됩니다.
+        계약서, 영수증, 병원/약국, 보증서/A·S, 기타 문서를 한 곳에서 확인할 수 있습니다.
       </p>
 
       <div className="documents__filters">

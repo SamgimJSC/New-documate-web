@@ -23,3 +23,21 @@
     padding: 20px 16px 40px;
   }
 }
+/* =========================================
+   Global page width reset
+   디지털 캐비닛처럼 메인 페이지들이 화면 폭을 꽉 쓰도록 통일
+========================================= */
+
+.main-layout__main {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* main 안에 들어오는 각 페이지 루트의 max-width/margin-auto를 한 번에 해제 */
+.main-layout__main > * {
+  width: 100% !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box;
+}

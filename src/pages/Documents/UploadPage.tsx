@@ -3,6 +3,7 @@ import type { ChangeEvent, DragEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { uploadCategoryGuide } from "../../data/uploadCategories";
 import { AnalysisStartModal } from "../../components/upload/AnalysisStartModal";
+import { AnalysisStartedModal } from "../../components/upload/AnalysisStartedModal";
 import { uploadLocalService } from "../../services/uploadLocalService";
 import {
   ACCEPTED_UPLOAD_TYPES,
@@ -37,6 +38,8 @@ export function UploadPage() {
   const [dragActive, setDragActive] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [showStartedModal, setShowStartedModal] = useState(false);
+  const [startedFileCount, setStartedFileCount] = useState(0);
   const [toastMessage, setToastMessage] = useState("");
 
   const totalSizeMb = useMemo(
@@ -112,20 +115,6 @@ export function UploadPage() {
     addFiles(event.dataTransfer.files);
   };
 
-  const moveFile = (fileId: string, direction: "up" | "down") => {
-    setStudioFiles((current) => {
-      const index = current.findIndex((file) => file.id === fileId);
-      const target = direction === "up" ? index - 1 : index + 1;
-
-      if (index < 0 || target < 0 || target >= current.length) {
-        return current;
-      }
-
-      const next = [...current];
-      [next[index], next[target]] = [next[target], next[index]];
-      return next;
-    });
-  };
 
   const removeFile = (fileId: string) => {
     setStudioFiles((current) => {
@@ -171,15 +160,13 @@ export function UploadPage() {
     const currentItems = uploadLocalService.readProcessItems();
     uploadLocalService.writeProcessItems([...nextItems, ...currentItems]);
 
+    setStartedFileCount(studioFiles.length);
     setStudioFiles([]);
     setUploadError("");
+    setToastMessage("");
     setShowAnalysisModal(false);
+    setShowStartedModal(true);
     setView("studio");
-    setToastMessage(
-      "AI 분석을 시작했어요. 상단바 처리 센터에서 상태를 확인할 수 있어요.",
-    );
-
-    window.setTimeout(() => setToastMessage(""), 2400);
   };
 
   return (
@@ -199,16 +186,6 @@ export function UploadPage() {
               문서 이미지를 업로드하거나 직접 등록하여 AI 분석을 시작하세요.
             </p>
           </div>
-
-          {view === "uploaded" && (
-            <button
-              type="button"
-              className="upload-page__text-button"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              파일 더 추가
-            </button>
-          )}
         </div>
 
         <div className="upload-studio-card__grid">
@@ -254,7 +231,7 @@ export function UploadPage() {
                   <span>✓</span>
                   <div>
                     <strong>업로드가 완료되었습니다.</strong>
-                    <p>파일 순서를 확인한 뒤 AI 분석을 시작해 주세요.</p>
+                    <p>업로드된 파일을 확인한 뒤 AI 분석을 시작해 주세요.</p>
                   </div>
                   <button
                     type="button"
@@ -292,22 +269,6 @@ export function UploadPage() {
                       <div className="upload-file-row__actions">
                         <button
                           type="button"
-                          onClick={() => moveFile(file.id, "up")}
-                          disabled={index === 0}
-                          aria-label="위로 이동"
-                        >
-                          ↑
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => moveFile(file.id, "down")}
-                          disabled={index === studioFiles.length - 1}
-                          aria-label="아래로 이동"
-                        >
-                          ↓
-                        </button>
-                        <button
-                          type="button"
                           onClick={() => removeFile(file.id)}
                         >
                           삭제
@@ -322,7 +283,7 @@ export function UploadPage() {
                     <strong>
                       {studioFiles.length}개 파일이 분석 대기 중입니다.
                     </strong>
-                    <span>파일 순서를 확인한 뒤 AI 분석을 시작해 주세요.</span>
+                    <span>업로드된 파일을 확인한 뒤 AI 분석을 시작해 주세요.</span>
                   </div>
                   <div className="upload-ready-panel__action-buttons">
                     <button
@@ -331,13 +292,6 @@ export function UploadPage() {
                       onClick={clearFiles}
                     >
                       전체 삭제
-                    </button>
-                    <button
-                      type="button"
-                      className="upload-ready-panel__start"
-                      onClick={openAnalysisModal}
-                    >
-                      AI 분석하기
                     </button>
                   </div>
                 </div>
@@ -401,18 +355,6 @@ export function UploadPage() {
                     AI 분석하기
                   </button>
                 </section>
-
-                <section className="upload-side-card upload-next-card">
-                  <div className="upload-side-card__title">
-                    <span>→</span>
-                    <h2>다음 단계</h2>
-                  </div>
-                  <ol>
-                    <li>AI가 문서 유형과 주요 정보를 분석합니다.</li>
-                    <li>결과는 상단바의 처리 센터에서 확인합니다.</li>
-                    <li>저장 대기 문서는 확인 후 저장할 수 있습니다.</li>
-                  </ol>
-                </section>
               </>
             )}
           </aside>
@@ -450,6 +392,14 @@ export function UploadPage() {
           fileCount={studioFiles.length}
           onCancel={() => setShowAnalysisModal(false)}
           onConfirm={startAnalysis}
+        />
+      )}
+
+      {showStartedModal && (
+        <AnalysisStartedModal
+          fileCount={startedFileCount}
+          onStay={() => setShowStartedModal(false)}
+          onMoveCenter={() => navigate("/processing-center")}
         />
       )}
     </section>

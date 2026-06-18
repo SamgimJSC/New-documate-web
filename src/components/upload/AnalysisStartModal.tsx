@@ -33,7 +33,9 @@ export function AnalysisStartModal({
 
         <div className="upload-flow-modal__info">
           <strong>업로드 페이지를 벗어나도 괜찮아요.</strong>
-          <span>분석 상태는 상단바의 처리 센터에서 다시 확인할 수 있습니다.</span>
+          <span>
+            분석 상태는 상단바의 처리 센터에서 다시 확인할 수 있습니다.
+          </span>
         </div>
 
         <div className="upload-flow-modal__actions">
