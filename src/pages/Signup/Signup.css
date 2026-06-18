@@ -105,3 +105,126 @@
   color: var(--color-primary);
   font-weight: 500;
 }
+
+.signup-box {
+  max-width: 520px;
+}
+
+.signup-section {
+  padding: 16px;
+  border: 1px solid #e7edf1;
+  border-radius: 18px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.signup-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.signup-section__head strong {
+  color: var(--color-text);
+  font-size: var(--font-size-base);
+}
+
+.signup-section__head span {
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-success-light);
+  color: #15803d;
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+}
+
+.signup-helper {
+  margin-top: -4px;
+  font-size: var(--font-size-xs);
+  line-height: 1.6;
+  color: var(--color-muted);
+}
+
+.signup-helper--success {
+  color: #15803d;
+  font-weight: 700;
+}
+
+.signup-eye-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-muted);
+  display: flex;
+}
+
+.signup-password-rules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: -8px;
+}
+
+.signup-password-rules span {
+  padding: 5px 8px;
+  border-radius: var(--radius-full);
+  background: #f1f5f9;
+  color: var(--color-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.signup-password-rules span.is-ok {
+  background: var(--color-success-light);
+  color: #15803d;
+}
+
+.signup-pin-action-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-sm);
+  align-items: end;
+}
+
+.signup-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-sub);
+  cursor: pointer;
+}
+
+.signup-checkbox input {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  accent-color: var(--color-primary);
+}
+
+.signup-checkbox strong {
+  color: var(--color-danger);
+  font-size: var(--font-size-xs);
+}
+
+.signup-checkbox em,
+.signup-checkbox span {
+  color: var(--color-muted);
+  font-style: normal;
+  font-size: var(--font-size-xs);
+}
+
+.signup-checkbox--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 520px) {
+  .signup-email-row,
+  .signup-pin-action-row {
+    grid-template-columns: 1fr;
+  }
+}

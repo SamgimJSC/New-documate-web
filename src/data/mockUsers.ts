@@ -11,7 +11,7 @@ export const mockUsers: User[] = [
     role: "MEMBER",
     plan: "PRO",
     storage_used_bytes: 524288000,
-    storage_quota_bytes: 10737418240,
+    storage_quota_bytes: 5368709120,
     is_email_verified: true,
     last_login_at: "2026-05-28T09:00:00+09:00",
     created_at: "2025-01-10T12:00:00+09:00",

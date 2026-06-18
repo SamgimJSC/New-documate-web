@@ -1,6 +1,7 @@
 .main-layout {
   display: flex;
   min-height: 100vh;
+  background: var(--color-bg);
 }
 
 .main-layout__content {
@@ -12,6 +13,14 @@
 
 .main-layout__main {
   flex: 1;
-  padding: var(--space-xl);
-  background-color: var(--color-bg);
+  padding: var(--content-padding-y) var(--content-padding-x);
+  background:
+    radial-gradient(circle at 90% 0%, rgba(21, 144, 131, 0.04), transparent 28%),
+    var(--color-bg);
+}
+
+@media (max-width: 960px) {
+  .main-layout__main {
+    padding: 20px 18px 40px;
+  }
 }

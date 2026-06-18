@@ -26,9 +26,18 @@
   margin-bottom: var(--space-xs);
 }
 
-.receipts__summary-icon--blue { background-color: var(--color-primary-light); color: var(--color-primary); }
-.receipts__summary-icon--purple { background-color: var(--color-pro-light); color: var(--color-pro); }
-.receipts__summary-icon--orange { background-color: #fff7ed; color: #ea580c; }
+.receipts__summary-icon--blue {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+.receipts__summary-icon--purple {
+  background-color: var(--color-pro-light);
+  color: var(--color-pro);
+}
+.receipts__summary-icon--orange {
+  background-color: #fff7ed;
+  color: #ea580c;
+}
 
 .receipts__summary-value {
   font-size: var(--font-size-xl);
@@ -149,7 +158,9 @@
   box-shadow: var(--shadow-card);
   padding: var(--space-md);
   cursor: pointer;
-  transition: box-shadow 0.15s, background-color 0.15s;
+  transition:
+    box-shadow 0.15s,
+    background-color 0.15s;
 }
 
 .receipt-card:hover {
@@ -195,4 +206,79 @@
   font-weight: 700;
   color: var(--color-text);
   white-space: nowrap;
+}
+.receipts__summary-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.receipts__summary-dropdown {
+  position: relative;
+}
+
+.receipts__summary-dropdown-button {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.receipts__summary-dropdown-button:hover {
+  background-color: var(--color-bg);
+}
+
+.receipts__summary-dropdown-menu {
+  position: absolute;
+  top: 32px;
+  right: 0;
+  width: 130px;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.14);
+  z-index: 20;
+}
+
+.receipts__summary-dropdown-menu button {
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.receipts__summary-dropdown-menu button:hover {
+  background-color: var(--color-bg);
+}
+
+.receipts__summary-change {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted);
+}
+.receipts__toolbar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.receipts__search {
+  min-width: 0;
+}
+
+.receipts__date-filter {
+  justify-content: flex-end;
 }

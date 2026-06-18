@@ -11,11 +11,16 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
-  const [remember, setRemember] = useState(false);
+  const [remember] = useState(true);
 
   const handleLogin = () => {
     if (!email || !password) return;
     setError("");
+    localStorage.setItem(
+      "documate_access_token",
+      "demo-jwt-token-without-expiry",
+    );
+    localStorage.setItem("documate_login_device", window.navigator.userAgent);
     navigate("/dashboard");
   };
 
@@ -44,24 +49,37 @@ const Login: React.FC = () => {
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
             suffix={
-              <button type="button" onClick={() => setShowPw(!showPw)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-muted)", display: "flex" }}>
+              <button
+                type="button"
+                onClick={() => setShowPw(!showPw)}
+                className="login-eye-button"
+              >
                 {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             }
           />
-          <label className="login-remember">
-            <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
-            로그인 상태 유지
+          <label className="login-remember login-remember--fixed">
+            <input type="checkbox" checked={remember} readOnly />
+            로그인 상태 계속 유지
           </label>
+          <p className="login-helper">
+            JWT 토큰은 시연 정책상 컴퓨터 변경 전까지 유지됩니다. 웹/앱 로그인
+            정책은 동일하게 적용됩니다.
+          </p>
           {error && <p className="login-error">{error}</p>}
-          <Button variant="primary" fullWidth disabled={!email || !password} onClick={handleLogin}>
+          <Button
+            variant="primary"
+            fullWidth
+            disabled={!email || !password}
+            onClick={handleLogin}
+          >
             로그인
           </Button>
         </div>
         <div className="login-links">
           <Link to="/signup">회원가입</Link>
           <span className="login-links__sep">·</span>
-          <a href="#">비밀번호 찾기</a>
+          <Link to="/reset-password">비밀번호 재설정</Link>
         </div>
       </div>
     </div>

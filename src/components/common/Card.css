@@ -1,15 +1,19 @@
 .card {
   background-color: var(--color-surface);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   padding: var(--space-lg);
+  box-sizing: border-box;
 }
 
 .card--hoverable {
   cursor: pointer;
-  transition: box-shadow 0.15s, transform 0.15s;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
 }
+
 .card--hoverable:hover {
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.1);
+  border-color: #cfe3e6;
+  box-shadow: var(--shadow-hover);
   transform: translateY(-1px);
 }
