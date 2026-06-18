@@ -1,7 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { uploadCategoryGuide } from "../../data/uploadCategories";
 import { RegistrationSuccessModal } from "../../components/upload/RegistrationSuccessModal";
 import {
   uploadLocalService,
@@ -14,7 +13,233 @@ import {
 } from "../../utils/uploadWorkflow";
 import "./ManualRegisterPage.css";
 
-const emptyManualForm: ManualRegistrationInput = {
+type ManualExtraKey =
+  | "contractDate"
+  | "expiryDate"
+  | "renewalDate"
+  | "contractor"
+  | "items"
+  | "medicineName"
+  | "productName"
+  | "warrantyPeriod"
+  | "repairDate";
+
+type ManualFormState = ManualRegistrationInput &
+  Partial<Record<ManualExtraKey, string>>;
+
+type FieldConfig = {
+  key: keyof ManualFormState;
+  label: string;
+  placeholder: string;
+  required?: boolean;
+  type?: "text" | "date" | "amount";
+};
+
+type CategoryConfig = {
+  category: UploadDocumentCategory;
+  examples: string;
+  extractedData: string;
+  saveHint: string;
+  fields: FieldConfig[];
+  tip: string;
+};
+
+const CATEGORY_CONFIGS: CategoryConfig[] = [
+  {
+    category: "계약서",
+    examples: "임대차계약서, 근로계약서, 통신계약서",
+    extractedData: "계약일, 만료일, 갱신일, 계약자",
+    saveHint: "디지털 캐비닛 > 계약서",
+    tip: "만료일이나 갱신일을 입력하면 나중에 기한 관리가 쉬워요.",
+    fields: [
+      {
+        key: "title",
+        label: "문서 이름",
+        placeholder: "예: 임대차계약서_202606",
+        required: true,
+      },
+      {
+        key: "contractor",
+        label: "계약자",
+        placeholder: "예: 김민준 / ○○부동산",
+        required: true,
+      },
+      { key: "issuer", label: "거래처 / 발행처", placeholder: "예: ○○부동산" },
+      {
+        key: "contractDate",
+        label: "계약일",
+        placeholder: "연도-월-일",
+        required: true,
+        type: "date",
+      },
+      {
+        key: "expiryDate",
+        label: "만료일",
+        placeholder: "연도-월-일",
+        required: true,
+        type: "date",
+      },
+      {
+        key: "renewalDate",
+        label: "갱신일",
+        placeholder: "연도-월-일",
+        type: "date",
+      },
+      {
+        key: "amount",
+        label: "계약 금액",
+        placeholder: "예: 500000",
+        type: "amount",
+      },
+    ],
+  },
+  {
+    category: "영수증",
+    examples: "카드 영수증, 현금영수증, 결제내역",
+    extractedData: "날짜, 가게명, 금액, 품목",
+    saveHint: "영수증 보드",
+    tip: "가맹점명, 결제일, 금액을 정확히 입력하면 소비 리포트에 바로 반영하기 좋아요.",
+    fields: [
+      {
+        key: "title",
+        label: "문서 이름",
+        placeholder: "예: 2026년 6월 생활비 영수증",
+        required: true,
+      },
+      {
+        key: "issuer",
+        label: "가게명",
+        placeholder: "예: 스타벅스 코리아",
+        required: true,
+      },
+      {
+        key: "documentDate",
+        label: "날짜",
+        placeholder: "연도-월-일",
+        required: true,
+        type: "date",
+      },
+      {
+        key: "amount",
+        label: "금액",
+        placeholder: "예: 25000",
+        required: true,
+        type: "amount",
+      },
+      { key: "items", label: "품목", placeholder: "예: 아메리카노, 샌드위치" },
+    ],
+  },
+  {
+    category: "병원/약국",
+    examples: "처방전, 진료비 영수증, 약국 영수증",
+    extractedData: "병원명, 진료일, 금액, 약품명",
+    saveHint: "디지털 캐비닛 > 의료 문서",
+    tip: "진료일과 약품명을 적어두면 나중에 의료 기록을 찾기 쉬워요.",
+    fields: [
+      {
+        key: "title",
+        label: "문서 이름",
+        placeholder: "예: 감기 진료비 영수증",
+        required: true,
+      },
+      {
+        key: "issuer",
+        label: "병원명 / 약국명",
+        placeholder: "예: 세브란스병원",
+        required: true,
+      },
+      {
+        key: "documentDate",
+        label: "진료일",
+        placeholder: "연도-월-일",
+        required: true,
+        type: "date",
+      },
+      {
+        key: "amount",
+        label: "금액",
+        placeholder: "예: 12800",
+        required: true,
+        type: "amount",
+      },
+      {
+        key: "medicineName",
+        label: "약품명 / 진료 내용",
+        placeholder: "예: 감기약, 내과 진료",
+      },
+    ],
+  },
+  {
+    category: "보증서/A·S",
+    examples: "제품 보증서, 수리 접수증, A/S 내역서",
+    extractedData: "제품명, 구매일, 보증기간, 수리일",
+    saveHint: "디지털 캐비닛 > 보증서/A·S",
+    tip: "구매일과 보증기간을 입력하면 보증 만료 전에 확인하기 좋아요.",
+    fields: [
+      {
+        key: "title",
+        label: "문서 이름",
+        placeholder: "예: 노트북 보증서",
+        required: true,
+      },
+      {
+        key: "productName",
+        label: "제품명",
+        placeholder: "예: LG gram 16",
+        required: true,
+      },
+      {
+        key: "issuer",
+        label: "구매처 / 서비스센터",
+        placeholder: "예: 하이마트 강남점",
+      },
+      {
+        key: "documentDate",
+        label: "구매일",
+        placeholder: "연도-월-일",
+        required: true,
+        type: "date",
+      },
+      {
+        key: "warrantyPeriod",
+        label: "보증기간",
+        placeholder: "예: 2년 / 2028-06-18까지",
+        required: true,
+      },
+      {
+        key: "repairDate",
+        label: "수리일",
+        placeholder: "연도-월-일",
+        type: "date",
+      },
+    ],
+  },
+  {
+    category: "기타",
+    examples: "분류 불가 문서, 일반 안내문, 메모",
+    extractedData: "제목, 업로드일",
+    saveHint: "디지털 캐비닛 > 기타",
+    tip: "나중에 찾기 쉽도록 제목과 발행처를 구체적으로 적어두면 좋아요.",
+    fields: [
+      {
+        key: "title",
+        label: "제목",
+        placeholder: "예: 학교 안내문",
+        required: true,
+      },
+      { key: "issuer", label: "발행처", placeholder: "예: 관리사무소" },
+      {
+        key: "documentDate",
+        label: "업로드일",
+        placeholder: "연도-월-일",
+        required: true,
+        type: "date",
+      },
+    ],
+  },
+];
+
+const emptyManualForm: ManualFormState = {
   category: "계약서",
   title: "",
   issuer: "",
@@ -22,9 +247,18 @@ const emptyManualForm: ManualRegistrationInput = {
   amount: "",
   memo: "",
   attachmentName: "",
+  contractDate: "",
+  expiryDate: "",
+  renewalDate: "",
+  contractor: "",
+  items: "",
+  medicineName: "",
+  productName: "",
+  warrantyPeriod: "",
+  repairDate: "",
 };
 
-const readManualDraft = (): ManualRegistrationInput => {
+const readManualDraft = (): ManualFormState => {
   try {
     const raw = window.localStorage.getItem(MANUAL_UPLOAD_DRAFT_KEY);
     return raw ? { ...emptyManualForm, ...JSON.parse(raw) } : emptyManualForm;
@@ -33,27 +267,65 @@ const readManualDraft = (): ManualRegistrationInput => {
   }
 };
 
+const formatExtraMemo = (form: ManualFormState, config: CategoryConfig) => {
+  const extraLines = config.fields
+    .filter(
+      (field) =>
+        !["title", "issuer", "documentDate", "amount"].includes(
+          String(field.key),
+        ),
+    )
+    .map((field) => {
+      const value = String(form[field.key] ?? "").trim();
+      return value ? `${field.label}: ${value}` : "";
+    })
+    .filter(Boolean);
+
+  const memo = form.memo.trim();
+
+  if (extraLines.length === 0) return memo;
+
+  return [memo, "[수기 등록 추가 정보]", ...extraLines]
+    .filter(Boolean)
+    .join("\n");
+};
+
 export function ManualRegisterPage() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [manualForm, setManualForm] = useState<ManualRegistrationInput>(() =>
+  const [manualForm, setManualForm] = useState<ManualFormState>(() =>
     readManualDraft(),
   );
   const [manualErrors, setManualErrors] = useState<string[]>([]);
   const [toastMessage, setToastMessage] = useState("");
-  const [successCategory, setSuccessCategory] = useState<UploadDocumentCategory | null>(null);
+  const [successCategory, setSuccessCategory] =
+    useState<UploadDocumentCategory | null>(null);
 
-  const selectedGuide = useMemo(
-    () => uploadCategoryGuide.find((guide) => guide.category === manualForm.category),
+  const selectedConfig = useMemo(
+    () =>
+      CATEGORY_CONFIGS.find(
+        (config) => config.category === manualForm.category,
+      ) ?? CATEGORY_CONFIGS[0],
     [manualForm.category],
   );
 
-  const updateManual = <K extends keyof ManualRegistrationInput>(
+  const updateManual = <K extends keyof ManualFormState>(
     key: K,
-    value: ManualRegistrationInput[K],
+    value: ManualFormState[K],
   ) => {
     setManualForm((current) => ({ ...current, [key]: value }));
+  };
+
+  const changeCategory = (category: UploadDocumentCategory) => {
+    setManualForm((current) => ({
+      ...emptyManualForm,
+      category,
+      title: current.title,
+      attachmentName: current.attachmentName,
+      memo: current.memo,
+    }));
+    setManualErrors([]);
   };
 
   const showToast = (message: string) => {
@@ -62,33 +334,59 @@ export function ManualRegisterPage() {
   };
 
   const saveManualDraft = () => {
-    window.localStorage.setItem(MANUAL_UPLOAD_DRAFT_KEY, JSON.stringify(manualForm));
+    window.localStorage.setItem(
+      MANUAL_UPLOAD_DRAFT_KEY,
+      JSON.stringify(manualForm),
+    );
     showToast("수기 작성 내용을 임시 저장했어요.");
   };
 
   const resetManualForm = () => {
-    setManualForm(emptyManualForm);
+    setManualForm({ ...emptyManualForm, category: manualForm.category });
     setManualErrors([]);
     window.localStorage.removeItem(MANUAL_UPLOAD_DRAFT_KEY);
   };
 
   const saveManualDocument = () => {
-    const errors: string[] = [];
-
-    if (!manualForm.title.trim()) errors.push("문서 이름을 입력해 주세요.");
-    if (!manualForm.issuer.trim()) errors.push("발행처/거래처를 입력해 주세요.");
-    if (!manualForm.documentDate) errors.push("문서 날짜를 선택해 주세요.");
-    if (manualForm.category === "영수증" && !manualForm.amount.trim()) {
-      errors.push("영수증은 금액을 입력해 주세요.");
-    }
+    const errors = selectedConfig.fields
+      .filter((field) => field.required)
+      .filter((field) => !String(manualForm[field.key] ?? "").trim())
+      .map((field) => `${field.label}을(를) 입력해 주세요.`);
 
     setManualErrors(errors);
     if (errors.length > 0) return;
 
+    const normalizedDate =
+      manualForm.documentDate ||
+      manualForm.contractDate ||
+      manualForm.expiryDate ||
+      manualForm.repairDate ||
+      "";
+
+    const normalizedIssuer =
+      manualForm.issuer ||
+      manualForm.contractor ||
+      manualForm.productName ||
+      "";
+
+    const persistableForm: ManualRegistrationInput = {
+      category: manualForm.category,
+      title: manualForm.title,
+      issuer: normalizedIssuer,
+      documentDate: normalizedDate,
+      amount: manualForm.amount,
+      memo: formatExtraMemo(manualForm, selectedConfig),
+      attachmentName: manualForm.attachmentName,
+    };
+
     if (manualForm.category === "영수증") {
-      uploadLocalService.saveReceipt(uploadLocalService.manualToReceipt(manualForm));
+      uploadLocalService.saveReceipt(
+        uploadLocalService.manualToReceipt(persistableForm),
+      );
     } else {
-      uploadLocalService.saveDocument(uploadLocalService.manualToDocument(manualForm));
+      uploadLocalService.saveDocument(
+        uploadLocalService.manualToDocument(persistableForm),
+      );
     }
 
     window.localStorage.removeItem(MANUAL_UPLOAD_DRAFT_KEY);
@@ -101,19 +399,44 @@ export function ManualRegisterPage() {
     event.target.value = "";
   };
 
+  const renderField = (field: FieldConfig) => {
+    const value = String(manualForm[field.key] ?? "");
+
+    if (field.type === "amount") {
+      return (
+        <label key={String(field.key)}>
+          {field.label} {field.required ? "*" : ""}
+          <div className="manual-amount-input">
+            <input
+              value={value}
+              inputMode="numeric"
+              onChange={(event) => updateManual(field.key, event.target.value)}
+              placeholder={field.placeholder}
+            />
+            <b>원</b>
+          </div>
+        </label>
+      );
+    }
+
+    return (
+      <label key={String(field.key)}>
+        {field.label} {field.required ? "*" : ""}
+        <input
+          type={field.type === "date" ? "date" : "text"}
+          value={value}
+          onChange={(event) => updateManual(field.key, event.target.value)}
+          placeholder={field.placeholder}
+        />
+      </label>
+    );
+  };
+
   return (
     <section className="manual-register-page">
-      <header className="manual-register-page__topbar">
-        <nav className="manual-register-page__breadcrumb" aria-label="현재 위치">
-          <button type="button" onClick={() => navigate("/documents")}>문서 관리</button>
-          <span>/</span>
-          <button type="button" onClick={() => navigate("/upload")}>업로드 스튜디오</button>
-          <span>/</span>
-          <b>빠른 수기 등록</b>
-        </nav>
-      </header>
-
-      {toastMessage && <div className="manual-register-page__toast">{toastMessage}</div>}
+      {toastMessage && (
+        <div className="manual-register-page__toast">{toastMessage}</div>
+      )}
 
       <div className="manual-register-layout">
         <main className="manual-register-card">
@@ -123,26 +446,39 @@ export function ManualRegisterPage() {
               <h1>문서 정보를 직접 입력하세요</h1>
               <p>AI 분석 없이 사용자가 입력한 정보 그대로 저장됩니다.</p>
             </div>
-            <button type="button" onClick={() => navigate("/upload")}>업로드로 돌아가기</button>
           </div>
 
-          <div className="manual-category-selector" aria-label="문서 유형 선택">
-            {uploadCategoryGuide.map((guide) => (
-              <button
-                key={guide.category}
-                type="button"
-                className={manualForm.category === guide.category ? "is-selected" : ""}
-                onClick={() => updateManual("category", guide.category)}
-              >
-                {guide.category}
-              </button>
-            ))}
-          </div>
+          <section
+            className="manual-category-block"
+            aria-label="문서 유형 선택"
+          >
+            <div className="manual-category-block__label">
+              <strong>문서 유형 선택</strong>
+              <span>저장할 문서의 종류를 먼저 선택해 주세요.</span>
+            </div>
+
+            <div className="manual-category-selector">
+              {CATEGORY_CONFIGS.map((config) => (
+                <button
+                  key={config.category}
+                  type="button"
+                  className={
+                    manualForm.category === config.category ? "is-selected" : ""
+                  }
+                  onClick={() => changeCategory(config.category)}
+                >
+                  {config.category}
+                </button>
+              ))}
+            </div>
+          </section>
 
           <div className="manual-selected-guide">
-            <strong>저장 위치</strong>
-            <span>{getSaveLocationLabel(manualForm.category)}</span>
-            {selectedGuide && <p>필수 확인 항목: {selectedGuide.extractedData}</p>}
+            <div>
+              <strong>저장 위치</strong>
+              <span>{getSaveLocationLabel(manualForm.category)}</span>
+            </div>
+            <p>주요 추출 데이터: {selectedConfig.extractedData}</p>
           </div>
 
           <form
@@ -152,45 +488,8 @@ export function ManualRegisterPage() {
               saveManualDocument();
             }}
           >
-            <label>
-              문서 이름 *
-              <input
-                value={manualForm.title}
-                onChange={(event) => updateManual("title", event.target.value)}
-                placeholder="예: 2026년 6월 생활비 영수증"
-              />
-            </label>
-
-            <label>
-              발행처 / 거래처 *
-              <input
-                value={manualForm.issuer}
-                onChange={(event) => updateManual("issuer", event.target.value)}
-                placeholder="예: 스타벅스 코리아"
-              />
-            </label>
-
-            <div className="manual-form__two-columns">
-              <label>
-                문서 날짜 *
-                <input
-                  type="date"
-                  value={manualForm.documentDate}
-                  onChange={(event) => updateManual("documentDate", event.target.value)}
-                />
-              </label>
-
-              <label>
-                금액 {manualForm.category === "영수증" ? "*" : ""}
-                <div className="manual-amount-input">
-                  <input
-                    value={manualForm.amount}
-                    onChange={(event) => updateManual("amount", event.target.value)}
-                    placeholder="예: 25000"
-                  />
-                  <b>원</b>
-                </div>
-              </label>
+            <div className="manual-form__dynamic-grid">
+              {selectedConfig.fields.map(renderField)}
             </div>
 
             <label>
@@ -213,7 +512,10 @@ export function ManualRegisterPage() {
               />
               <span>{manualForm.attachmentName || "첨부 이미지 선택"}</span>
               <i>선택 사항 · JPG/PNG 최대 10MB</i>
-              <button type="button" onClick={() => fileInputRef.current?.click()}>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+              >
                 이미지 첨부
               </button>
             </label>
@@ -227,36 +529,74 @@ export function ManualRegisterPage() {
             )}
 
             <div className="manual-form-actions">
-              <button type="button" className="manual-form-actions__ghost" onClick={resetManualForm}>초기화</button>
-              <button type="button" className="manual-form-actions__ghost" onClick={saveManualDraft}>임시 저장</button>
-              <button type="submit" className="manual-form-actions__primary">작성 완료 후 등록</button>
+              <button
+                type="button"
+                className="manual-form-actions__ghost"
+                onClick={resetManualForm}
+              >
+                초기화
+              </button>
+              <button
+                type="button"
+                className="manual-form-actions__ghost"
+                onClick={saveManualDraft}
+              >
+                임시 저장
+              </button>
+              <button type="submit" className="manual-form-actions__primary">
+                저장하고 완료하기
+              </button>
             </div>
           </form>
         </main>
 
         <aside className="manual-guide-panel">
-          <h2>작성 안내</h2>
-          <article>
-            <b>01</b>
+          <div className="manual-guide-panel__headline">
+            <span className="manual-guide-panel__info-icon">i</span>
             <div>
-              <strong>카테고리에 따라 저장 위치가 달라져요.</strong>
-              <p>영수증은 영수증 보드로, 그 외 문서는 디지털 캐비닛으로 저장됩니다.</p>
+              <h2>
+                수기 등록은 AI 분석 없이
+                <br />
+                바로 저장됩니다.
+              </h2>
+              <p>
+                직접 입력한 정보로 문서를 등록하며,
+                <br />
+                AI 분석 및 자동 분류는 적용되지 않습니다.
+              </p>
             </div>
-          </article>
-          <article>
-            <b>02</b>
-            <div>
-              <strong>임시 저장을 사용할 수 있어요.</strong>
-              <p>작성 중인 내용은 브라우저에 보관되고 다시 열었을 때 불러와집니다.</p>
+          </div>
+
+          <div className="manual-guide-divider" />
+
+          <section
+            className="manual-guide-checklist"
+            aria-label="수기 등록 안내"
+          >
+            <h3>수기 등록 안내</h3>
+            <ul>
+              <li>직접 입력한 정보로 즉시 등록됩니다.</li>
+              <li>AI 분석, 자동 분류, 데이터 추출은 적용되지 않습니다.</li>
+              <li>
+                정확한 분류 및 검색을 위해 필수 항목을 빠짐없이 입력해 주세요.
+              </li>
+              <li>등록 후에도 문서 정보는 수정할 수 있습니다.</li>
+            </ul>
+          </section>
+
+          <div className="manual-guide-tip">
+            <div className="manual-guide-tip__title">
+              <span>💡</span>
+              <strong>Tip</strong>
             </div>
-          </article>
-          <article>
-            <b>03</b>
-            <div>
-              <strong>AI 분석 없이 바로 저장돼요.</strong>
-              <p>수기 등록은 사용자가 입력한 정보 그대로 저장됩니다.</p>
-            </div>
-          </article>
+            <p>
+              파일이 있다면 업로드 후 AI 분석을 이용하면 더 빠르고 정확하게
+              등록할 수 있어요.
+            </p>
+            <button type="button" onClick={() => navigate("/upload")}>
+              업로드 페이지로 이동
+            </button>
+          </div>
         </aside>
       </div>
 

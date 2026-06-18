@@ -41,7 +41,7 @@ const getHeaderBreadcrumb = (pathname: string): HeaderBreadcrumb | null => {
     return {
       parentLabel: "문서 관리",
       parentPath: "/documents",
-      currentLabel: "빠른 수기 등록",
+      currentLabel: "수기 등록",
     };
   }
 
@@ -71,7 +71,10 @@ const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
       <header className="header">
         {breadcrumb ? (
           <nav className="header__breadcrumb" aria-label="현재 위치">
-            <button type="button" onClick={() => navigate(breadcrumb.parentPath)}>
+            <button
+              type="button"
+              onClick={() => navigate(breadcrumb.parentPath)}
+            >
               {breadcrumb.parentLabel}
             </button>
             <span>/</span>
