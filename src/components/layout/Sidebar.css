@@ -15,64 +15,65 @@
 .sidebar__logo {
   display: flex;
   align-items: center;
-  gap: 10px;
+  flex-shrink: 0;
+  gap: 9px;
   height: var(--header-height);
-  padding: 0 14px;
+  padding: 0 16px;
   border-bottom: 1px solid var(--color-border);
   cursor: pointer;
-  flex-shrink: 0;
 }
 
 .sidebar__logo-mark {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 9px;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
   background-color: var(--color-primary);
   color: #fff;
   font-size: var(--font-size-md);
-  font-weight: 950;
+  font-weight: 900;
+  box-shadow: 0 4px 10px rgba(91, 157, 153, 0.16);
 }
 
 .sidebar__logo-text {
   color: var(--color-text);
   font-size: var(--font-size-base);
-  font-weight: 950;
+  font-weight: 850;
   letter-spacing: -0.02em;
 }
 
 .sidebar__nav {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 16px 8px;
+  gap: 4px;
+  padding: 16px 10px;
 }
 
 .sidebar__nav-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 40px;
+  min-height: 42px;
   padding: 0 10px;
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   color: var(--color-text-sub);
   font-size: var(--font-size-md);
   font-weight: 750;
   text-decoration: none;
-  transition: background-color 0.15s, color 0.15s, transform 0.15s;
+  transition: background-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
 }
 
 .sidebar__nav-item:hover {
-  background-color: var(--color-bg-soft);
-  color: var(--color-primary);
+  background-color: var(--color-bg-cool);
+  color: var(--color-primary-dark);
 }
 
 .sidebar__nav-item--active {
   background-color: var(--color-primary-light);
   color: var(--color-primary-dark);
-  font-weight: 950;
+  font-weight: 850;
 }
 
 .sidebar__nav-icon {

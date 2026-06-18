@@ -6,44 +6,17 @@
   align-items: center;
   justify-content: space-between;
   height: var(--header-height);
-  padding: 0 var(--space-lg);
+  padding: 0 28px;
   border-bottom: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(14px);
+  background-color: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(10px);
 }
 
 .header__page-name {
   color: var(--color-text);
   font-size: var(--font-size-lg);
-  font-weight: 950;
-  letter-spacing: -0.03em;
-}
-
-.header__breadcrumb {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--color-muted-light);
-  font-size: var(--font-size-md);
-  font-weight: 800;
-}
-
-.header__breadcrumb button {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--color-muted);
-  font: inherit;
-  cursor: pointer;
-}
-
-.header__breadcrumb button:hover {
-  color: var(--color-primary);
-}
-
-.header__breadcrumb b {
-  color: var(--color-text);
-  font-weight: 950;
+  font-weight: 850;
+  letter-spacing: -0.02em;
 }
 
 .header__actions {
@@ -58,14 +31,14 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   color: var(--color-text-sub);
-  transition: background-color 0.15s, color 0.15s, transform 0.15s;
+  transition: background-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
 }
 
 .header__icon-btn:hover {
   background-color: var(--color-primary-light);
-  color: var(--color-primary);
+  color: var(--color-primary-dark);
   transform: translateY(-1px);
 }
 
@@ -84,12 +57,40 @@
   color: #fff;
   font-size: 26px;
   line-height: 1;
-  box-shadow: 0 14px 30px rgba(21, 144, 131, 0.26);
-  transition: background-color 0.15s, transform 0.15s, box-shadow 0.15s;
+  box-shadow: var(--shadow-floating);
+  transition: background-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
 }
 
 .fab:hover {
-  background-color: #117e75;
-  transform: scale(1.06);
-  box-shadow: 0 18px 38px rgba(21, 144, 131, 0.32);
+  background-color: var(--color-primary-dark);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.header__breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-muted);
+  font-size: var(--font-size-md);
+  font-weight: 750;
+}
+
+.header__breadcrumb button {
+  padding: 0;
+  color: var(--color-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.header__breadcrumb button:hover {
+  color: var(--color-primary-dark);
+}
+
+.header__breadcrumb span {
+  color: #B4BEC9;
+}
+
+.header__breadcrumb b {
+  color: var(--color-text);
+  font-weight: 850;
 }

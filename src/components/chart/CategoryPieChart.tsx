@@ -9,17 +9,17 @@ import {
 } from "recharts";
 
 export const CATEGORY_COLOR_MAP: Record<string, string> = {
-  식비: "#6DB6B1",
-  카페: "#F8B84E",
-  쇼핑: "#9B6BEE",
-  교통: "#4A90F2",
-  생활: "#4FD08B",
-  의료: "#FF6B6B",
-  기타: "#94A3B8",
+  식비: "#5B9D99",
+  카페: "#C49A6C",
+  쇼핑: "#8E7DBE",
+  교통: "#6F8FB8",
+  생활: "#7FA58D",
+  의료: "#C97F7F",
+  기타: "#7B8798",
 };
 
 export const getCategoryColor = (categoryName: string) => {
-  return CATEGORY_COLOR_MAP[categoryName] || "#94a3b8";
+  return CATEGORY_COLOR_MAP[categoryName] || CATEGORY_COLOR_MAP.기타;
 };
 
 interface CategoryData {
@@ -61,17 +61,19 @@ const CategoryPieChart: React.FC<CategoryPieChartProps> = ({ data }) => {
             "지출",
           ]}
           contentStyle={{
-            borderRadius: 8,
-            border: "1px solid #e5e7eb",
+            borderRadius: 12,
+            border: "1px solid #E2E8F0",
+            boxShadow: "0 8px 20px rgba(34, 48, 70, 0.08)",
+            color: "#223046",
             fontSize: 13,
           }}
         />
 
         <Legend
           iconType="circle"
-          iconSize={10}
+          iconSize={9}
           formatter={(value) => (
-            <span style={{ fontSize: 12, color: "#374151" }}>{value}</span>
+            <span style={{ fontSize: 12, color: "#3D4B63" }}>{value}</span>
           )}
         />
       </PieChart>
