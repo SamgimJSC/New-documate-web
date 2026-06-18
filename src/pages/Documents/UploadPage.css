@@ -187,7 +187,10 @@ body:has(.upload-page) button[class*="fab"] {
   cursor: pointer;
   box-sizing: border-box;
   box-shadow: var(--upload-shadow);
-  transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    transform 0.16s ease;
 }
 
 .upload-dropzone:hover,
@@ -747,3 +750,117 @@ body:has(.upload-page) button[class*="fab"] {
     flex: 1;
   }
 }
+/* 업로드 드롭존 내부 간격 압축 */
+.upload-dropzone {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.upload-cloud-icon,
+.upload-dropzone__icon {
+  margin-bottom: 0 !important;
+}
+
+.upload-dropzone strong {
+  margin: 4px 0 0;
+}
+
+.upload-dropzone span {
+  margin: 0 0 10px !important;
+}
+
+.upload-dropzone button {
+  margin-top: 0;
+}
+
+
+/* =========================================
+   Uploaded file table alignment final
+   파일 목록 헤더/행의 컬럼 폭과 정렬 기준 통일
+========================================= */
+
+.upload-file-list {
+  --upload-file-table-columns: minmax(0, 1fr) 96px 152px 118px 64px;
+  gap: 10px;
+}
+
+/* 헤더와 행이 무조건 같은 컬럼 기준을 쓰도록 통일 */
+.upload-file-list__head,
+.upload-file-row {
+  grid-template-columns: var(--upload-file-table-columns) !important;
+  gap: 12px !important;
+}
+
+/* 헤더/행 내부 좌우 패딩도 동일하게 */
+.upload-file-list__head {
+  padding: 0 14px 4px !important;
+}
+
+.upload-file-row {
+  padding: 13px 14px !important;
+}
+
+/* 파일명만 왼쪽, 나머지는 각 컬럼 중앙 기준 */
+.upload-file-list__head span:first-child,
+.upload-file-row__name {
+  justify-self: stretch;
+  text-align: left;
+}
+
+.upload-file-list__head span:nth-child(n + 2),
+.upload-file-row > span,
+.upload-file-row em,
+.upload-file-row__actions {
+  justify-self: center;
+  text-align: center;
+}
+
+/* 상태 뱃지는 가운데에 딱 놓이도록 */
+.upload-file-row em {
+  min-width: 76px;
+  width: max-content;
+  box-sizing: border-box;
+}
+
+/* 관리 컬럼: 삭제 버튼 하나만 가운데 정렬 */
+.upload-file-row__actions {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  width: 100%;
+}
+
+.upload-file-row__actions button {
+  min-width: 46px !important;
+  height: 34px !important;
+  padding: 0 10px !important;
+}
+
+/* 긴 파일명이 컬럼을 밀지 않도록 */
+.upload-file-row__name {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.upload-file-row b {
+  max-width: 100%;
+}
+
+/* 좁은 화면에서는 기존 모바일 1열 유지 */
+@media (max-width: 760px) {
+  .upload-file-list {
+    --upload-file-table-columns: 1fr;
+  }
+
+  .upload-file-row__actions {
+    justify-content: stretch !important;
+  }
+
+  .upload-file-row__actions button {
+    width: 100%;
+  }
+}
+

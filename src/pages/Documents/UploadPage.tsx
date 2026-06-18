@@ -3,8 +3,13 @@ import type { ChangeEvent, DragEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { uploadCategoryGuide } from "../../data/uploadCategories";
 import { AnalysisStartModal } from "../../components/upload/AnalysisStartModal";
-import { uploadLocalService, type UploadProcessStatus } from "../../services/uploadLocalService";
+import {
+  uploadLocalService,
+  type UploadProcessStatus,
+} from "../../services/uploadLocalService";
 import { uploadService } from "../../services/uploadService";
+import { AnalysisStartedModal } from "../../components/upload/AnalysisStartedModal";
+import { uploadLocalService } from "../../services/uploadLocalService";
 import {
   ACCEPTED_UPLOAD_TYPES,
   categoryToId,
@@ -40,6 +45,8 @@ export function UploadPage() {
   const [dragActive, setDragActive] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [showStartedModal, setShowStartedModal] = useState(false);
+  const [startedFileCount, setStartedFileCount] = useState(0);
   const [toastMessage, setToastMessage] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
@@ -51,30 +58,33 @@ export function UploadPage() {
   const addFiles = (fileList: FileList | File[]) => {
     const errors: string[] = [];
 
-    const validFiles = Array.from(fileList).reduce<StudioFile[]>((acc, file) => {
-      const mb = fileSizeMb(file);
+    const validFiles = Array.from(fileList).reduce<StudioFile[]>(
+      (acc, file) => {
+        const mb = fileSizeMb(file);
 
-      if (!ACCEPTED_UPLOAD_TYPES.includes(file.type)) {
-        errors.push(`${file.name}은 JPG/PNG 파일이 아니에요.`);
+        if (!ACCEPTED_UPLOAD_TYPES.includes(file.type)) {
+          errors.push(`${file.name}은 JPG/PNG 파일이 아니에요.`);
+          return acc;
+        }
+
+        if (mb > MAX_UPLOAD_FILE_SIZE_MB) {
+          errors.push(`${file.name}은 10MB를 초과했어요.`);
+          return acc;
+        }
+
+        acc.push({
+          id: makeId(),
+          fileName: file.name,
+          sizeMb: mb,
+          fileSizeBytes: file.size,
+          uploadedAt: nowText(),
+          file,
+        });
+
         return acc;
-      }
-
-      if (mb > MAX_UPLOAD_FILE_SIZE_MB) {
-        errors.push(`${file.name}은 10MB를 초과했어요.`);
-        return acc;
-      }
-
-      acc.push({
-        id: makeId(),
-        fileName: file.name,
-        sizeMb: mb,
-        fileSizeBytes: file.size,
-        uploadedAt: nowText(),
-        file,
-      });
-
-      return acc;
-    }, []);
+      },
+      [],
+    );
 
     setStudioFiles((current) => {
       const availableSlots = MAX_UPLOAD_FILE_COUNT - current.length;
@@ -114,21 +124,6 @@ export function UploadPage() {
     addFiles(event.dataTransfer.files);
   };
 
-  const moveFile = (fileId: string, direction: "up" | "down") => {
-    setStudioFiles((current) => {
-      const index = current.findIndex((file) => file.id === fileId);
-      const target = direction === "up" ? index - 1 : index + 1;
-
-      if (index < 0 || target < 0 || target >= current.length) {
-        return current;
-      }
-
-      const next = [...current];
-      [next[index], next[target]] = [next[target], next[index]];
-      return next;
-    });
-  };
-
   const removeFile = (fileId: string) => {
     setStudioFiles((current) => {
       const next = current.filter((file) => file.id !== fileId);
@@ -156,55 +151,13 @@ export function UploadPage() {
     setShowAnalysisModal(false);
     setIsUploading(true);
 
-    const filesToProcess = [...studioFiles];
+    setStartedFileCount(studioFiles.length);
     setStudioFiles([]);
     setUploadError("");
+    setToastMessage("");
+    setShowAnalysisModal(false);
+    setShowStartedModal(true);
     setView("studio");
-
-    const newItems: ReturnType<typeof uploadLocalService.buildProcessDocument>[] = [];
-
-    for (let i = 0; i < filesToProcess.length; i++) {
-      const studioFile = filesToProcess[i];
-      const category = inferUploadCategory(studioFile.fileName);
-      const title = studioFile.fileName.replace(/\.(jpg|jpeg|png)$/i, "");
-
-      let status: UploadProcessStatus = "analyzing";
-      let errorMessage: string | undefined;
-      let savedRecordId: string | undefined;
-
-      try {
-        const tempDocumentId = await uploadService.startSession();
-        await uploadService.uploadPage(tempDocumentId, studioFile.file, 1);
-        savedRecordId = await uploadService.createDocument({
-          inputMethod: "OCR",
-          categoryId: categoryToId(category),
-          title,
-        });
-      } catch {
-        status = "failed";
-        errorMessage = "서버 업로드에 실패했어요.";
-      }
-
-      newItems.push({
-        ...uploadLocalService.buildProcessDocument({
-          fileName: studioFile.fileName,
-          sizeMb: studioFile.sizeMb,
-          fileSizeBytes: studioFile.fileSizeBytes,
-          category,
-          extractedFields: makeExtractedFields(category, studioFile.fileName, i),
-          status,
-        }),
-        savedRecordId,
-        errorMessage,
-      });
-    }
-
-    const currentItems = uploadLocalService.readProcessItems();
-    uploadLocalService.writeProcessItems([...newItems, ...currentItems]);
-
-    setIsUploading(false);
-    setToastMessage("AI 분석을 시작했어요. 상단바 처리 센터에서 상태를 확인할 수 있어요.");
-    window.setTimeout(() => setToastMessage(""), 2400);
   };
 
   return (
@@ -219,26 +172,26 @@ export function UploadPage() {
         <div className="upload-studio-card__title">
           <div>
             <p className="upload-page__kicker">1. 업로드 스튜디오 · 시작</p>
-            <h1>{view === "uploaded" ? "업로드한 문서를 확인하세요" : "문서 이미지를 업로드하세요"}</h1>
-            <p>문서 이미지를 업로드하거나 직접 등록하여 AI 분석을 시작하세요.</p>
+            <h1>
+              {view === "uploaded"
+                ? "업로드한 문서를 확인하세요"
+                : "문서 이미지를 업로드하세요"}
+            </h1>
+            <p>
+              문서 이미지를 업로드하거나 직접 등록하여 AI 분석을 시작하세요.
+            </p>
           </div>
-
-          {view === "uploaded" && (
-            <button
-              type="button"
-              className="upload-page__text-button"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              파일 더 추가
-            </button>
-          )}
         </div>
 
         <div className="upload-studio-card__grid">
           <section className="upload-studio-card__main">
             {view === "studio" && (
               <div
-                className={dragActive ? "upload-dropzone upload-dropzone--active" : "upload-dropzone"}
+                className={
+                  dragActive
+                    ? "upload-dropzone upload-dropzone--active"
+                    : "upload-dropzone"
+                }
                 role="button"
                 tabIndex={0}
                 onDragEnter={(event) => {
@@ -273,9 +226,12 @@ export function UploadPage() {
                   <span>✓</span>
                   <div>
                     <strong>업로드가 완료되었습니다.</strong>
-                    <p>파일 순서를 확인한 뒤 AI 분석을 시작해 주세요.</p>
+                    <p>업로드된 파일을 확인한 뒤 AI 분석을 시작해 주세요.</p>
                   </div>
-                  <button type="button" onClick={() => fileInputRef.current?.click()}>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
                     파일 추가
                   </button>
                   <input
@@ -308,21 +264,8 @@ export function UploadPage() {
                       <div className="upload-file-row__actions">
                         <button
                           type="button"
-                          onClick={() => moveFile(file.id, "up")}
-                          disabled={index === 0}
-                          aria-label="위로 이동"
+                          onClick={() => removeFile(file.id)}
                         >
-                          ↑
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => moveFile(file.id, "down")}
-                          disabled={index === studioFiles.length - 1}
-                          aria-label="아래로 이동"
-                        >
-                          ↓
-                        </button>
-                        <button type="button" onClick={() => removeFile(file.id)}>
                           삭제
                         </button>
                       </div>
@@ -332,15 +275,20 @@ export function UploadPage() {
 
                 <div className="upload-ready-panel__actions">
                   <div>
-                    <strong>{studioFiles.length}개 파일이 분석 대기 중입니다.</strong>
-                    <span>파일 순서를 확인한 뒤 AI 분석을 시작해 주세요.</span>
+                    <strong>
+                      {studioFiles.length}개 파일이 분석 대기 중입니다.
+                    </strong>
+                    <span>
+                      업로드된 파일을 확인한 뒤 AI 분석을 시작해 주세요.
+                    </span>
                   </div>
                   <div className="upload-ready-panel__action-buttons">
-                    <button type="button" className="upload-ready-panel__clear" onClick={clearFiles}>
+                    <button
+                      type="button"
+                      className="upload-ready-panel__clear"
+                      onClick={clearFiles}
+                    >
                       전체 삭제
-                    </button>
-                    <button type="button" className="upload-ready-panel__start" onClick={openAnalysisModal}>
-                      AI 분석하기
                     </button>
                   </div>
                 </div>
@@ -374,7 +322,9 @@ export function UploadPage() {
                   <span key={guide.category}>{guide.category}</span>
                 ))}
               </div>
-              <p className="upload-side-card__note">다양한 문서를 업로드하면 더 정확한 분석이 가능합니다.</p>
+              <p className="upload-side-card__note">
+                다양한 문서를 업로드하면 더 정확한 분석이 가능합니다.
+              </p>
             </section>
 
             {studioFiles.length > 0 && (
@@ -402,18 +352,6 @@ export function UploadPage() {
                     AI 분석하기
                   </button>
                 </section>
-
-                <section className="upload-side-card upload-next-card">
-                  <div className="upload-side-card__title">
-                    <span>→</span>
-                    <h2>다음 단계</h2>
-                  </div>
-                  <ol>
-                    <li>AI가 문서 유형과 주요 정보를 분석합니다.</li>
-                    <li>결과는 상단바의 처리 센터에서 확인합니다.</li>
-                    <li>저장 대기 문서는 확인 후 저장할 수 있습니다.</li>
-                  </ol>
-                </section>
               </>
             )}
           </aside>
@@ -421,19 +359,29 @@ export function UploadPage() {
 
         {view === "studio" && (
           <>
-            <div className="upload-divider"><span>또는</span></div>
+            <div className="upload-divider">
+              <span>또는</span>
+            </div>
             <section className="upload-manual-cta">
               <div className="upload-manual-cta__icon">✎</div>
               <div>
-                <strong>빠른 수기 등록</strong>
-                <p>문서를 직접 입력하여 등록할 수 있습니다. AI 분석 없이 바로 저장됩니다.</p>
+                <strong>수기 등록</strong>
+                <p>
+                  문서를 직접 입력하여 등록할 수 있습니다. AI 분석 없이 바로
+                  저장됩니다.
+                </p>
               </div>
-              <button type="button" onClick={() => navigate("/upload/manual")}>수기로 등록하기</button>
+              <button type="button" onClick={() => navigate("/upload/manual")}>
+                수기로 등록하기
+              </button>
             </section>
           </>
         )}
 
-        <p className="upload-page__security">♡ 업로드한 파일은 안전하게 보호되며, 분석 목적 외에는 사용되지 않습니다.</p>
+        <p className="upload-page__security">
+          ♡ 업로드한 파일은 안전하게 보호되며, 분석 목적 외에는 사용되지
+          않습니다.
+        </p>
       </main>
 
       {showAnalysisModal && (
@@ -441,6 +389,14 @@ export function UploadPage() {
           fileCount={studioFiles.length}
           onCancel={() => setShowAnalysisModal(false)}
           onConfirm={startAnalysis}
+        />
+      )}
+
+      {showStartedModal && (
+        <AnalysisStartedModal
+          fileCount={startedFileCount}
+          onStay={() => setShowStartedModal(false)}
+          onMoveCenter={() => navigate("/processing-center")}
         />
       )}
     </section>

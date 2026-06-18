@@ -1,26 +1,43 @@
 .main-layout {
   display: flex;
   min-height: 100vh;
-  background: var(--color-bg);
+  background-color: var(--color-bg);
 }
 
 .main-layout__content {
-  flex: 1;
   display: flex;
+  flex: 1;
   flex-direction: column;
   min-width: 0;
 }
 
 .main-layout__main {
   flex: 1;
-  padding: var(--content-padding-y) var(--content-padding-x);
-  background:
-    radial-gradient(circle at 90% 0%, rgba(21, 144, 131, 0.04), transparent 28%),
-    var(--color-bg);
+  min-width: 0;
+  padding: 28px 32px 48px;
+  background: var(--color-bg);
 }
 
-@media (max-width: 960px) {
+@media (max-width: 900px) {
   .main-layout__main {
-    padding: 20px 18px 40px;
+    padding: 20px 16px 40px;
   }
+}
+/* =========================================
+   Global page width reset
+   디지털 캐비닛처럼 메인 페이지들이 화면 폭을 꽉 쓰도록 통일
+========================================= */
+
+.main-layout__main {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* main 안에 들어오는 각 페이지 루트의 max-width/margin-auto를 한 번에 해제 */
+.main-layout__main > * {
+  width: 100% !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box;
 }

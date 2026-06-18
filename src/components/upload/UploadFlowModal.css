@@ -193,3 +193,68 @@
     width: 100%;
   }
 }
+
+/* =========================================
+   AI analysis started modal
+========================================= */
+
+.upload-flow-modal__icon--started {
+  background: var(--color-primary-light, #edf7f6);
+  color: var(--color-primary-dark, #3e7773);
+  font-size: 24px;
+}
+
+.upload-flow-modal__notice {
+  display: grid;
+  gap: 7px;
+  margin: 18px 0 0;
+  padding: 15px 16px;
+  border: 1px solid var(--color-primary-border, #b7d2cf);
+  border-radius: 15px;
+  background: var(--color-chip-bg, #f2fbf9);
+  color: var(--color-text-sub, #3d4b63);
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.upload-flow-modal__notice strong {
+  color: var(--color-primary-dark, #3e7773);
+  font-weight: 950;
+}
+
+.upload-flow-modal__notice span {
+  color: var(--color-muted, #657084);
+  font-weight: 650;
+}
+
+/* AI 분석 시작 완료 모달 */
+.upload-flow-modal__icon--started {
+  background: var(--color-primary-light, #edf7f6);
+  color: var(--color-primary-dark, #3e7773);
+  font-size: 24px;
+}
+
+.upload-flow-modal__notice {
+  display: grid;
+  gap: 7px;
+  margin: 18px 0 0;
+  padding: 15px 16px;
+  border: 1px solid var(--color-primary-border, #b7d2cf);
+  border-radius: 15px;
+  background: var(--color-chip-bg, #f2fbf9);
+  color: var(--color-text-sub, #3d4b63);
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.upload-flow-modal__notice strong {
+  color: var(--color-primary-dark, #3e7773);
+  font-weight: 950;
+}
+
+.upload-flow-modal__notice span {
+  color: var(--color-muted, #657084);
+  font-weight: 650;
+}

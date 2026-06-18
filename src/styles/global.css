@@ -1,42 +1,11 @@
 @import './reset.css';
 @import './variables.css';
 
-html {
-  background: var(--color-bg);
-}
-
 body {
-  min-width: 320px;
   font-family: var(--font-base);
   font-size: var(--font-size-base);
   color: var(--color-text);
-  background:
-    radial-gradient(circle at 92% 8%, rgba(21, 144, 131, 0.055), transparent 30%),
-    var(--color-bg);
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-
-button,
-a,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
-button {
-  border: 0;
-  background: transparent;
-}
-
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-  outline: 3px solid rgba(21, 144, 131, 0.18);
-  outline-offset: 2px;
+  background-color: var(--color-bg);
 }
 
 #root {
@@ -45,27 +14,23 @@ textarea:focus-visible {
   flex-direction: column;
 }
 
-::selection {
-  background: rgba(21, 144, 131, 0.16);
-}
-
-/* Scrollbar */
+/* 스크롤바 */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd8de;
+  background: var(--color-border);
   border-radius: var(--radius-full);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #a9b8c1;
+  background: var(--color-muted);
 }
 
-/* Utilities */
+/* 유틸리티 */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -83,6 +48,7 @@ textarea:focus-visible {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 
 /* Landing page */
 .landing-page {
