@@ -24,15 +24,26 @@ const MyPageWithdraw: React.FC = () => {
 
   return (
     <div className="mypage-section">
-      <h2 className="mypage-section__title" style={{ color: "var(--color-danger)" }}>회원탈퇴</h2>
+      <h2
+        className="mypage-section__title"
+        style={{ color: "var(--color-danger)" }}
+      >
+        회원탈퇴
+      </h2>
 
       <div className="mypage-withdraw__warning">
-        <p className="mypage-withdraw__warning-title">⚠️ 탈퇴 전 확인해주세요</p>
+        <p className="mypage-withdraw__warning-title">
+          ⚠️ 탈퇴 전 확인해주세요
+        </p>
         <ul className="mypage-withdraw__warning-list">
           <li>모든 문서와 영수증 데이터가 영구 삭제됩니다</li>
           <li>PRO 구독 중인 경우 즉시 해지됩니다</li>
           <li>삭제된 데이터는 복구할 수 없습니다</li>
         </ul>
+        <p className="mypage-withdraw__demo-note">
+          현재 회원탈퇴는 시연용 UI만 구현되어 있으며, 실제 데이터 삭제 요청은
+          서버 연동 후 처리됩니다.
+        </p>
       </div>
 
       <div className="mypage-withdraw__form">
@@ -48,14 +59,26 @@ const MyPageWithdraw: React.FC = () => {
           placeholder={`"${user.nickname}" 입력 시 활성화`}
           value={confirmText}
           onChange={(e) => setConfirmText(e.target.value)}
-          error={confirmText && confirmText !== user.nickname ? "닉네임이 일치하지 않습니다." : undefined}
+          error={
+            confirmText && confirmText !== user.nickname
+              ? "닉네임이 일치하지 않습니다."
+              : undefined
+          }
         />
-        <Button variant="danger" fullWidth disabled={!isValid} onClick={() => setModalOpen(true)}>
+        <Button
+          variant="danger"
+          fullWidth
+          disabled={!isValid}
+          onClick={() => setModalOpen(true)}
+        >
           탈퇴하기
         </Button>
       </div>
 
-      <WithdrawConfirmModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+      <WithdrawConfirmModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+      />
     </div>
   );
 };

@@ -63,3 +63,30 @@
   background-color: var(--color-primary-dark);
   transform: scale(1.08);
 }
+
+.header__breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.header__breadcrumb button {
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.header__breadcrumb button:hover {
+  color: #159083;
+}
+
+.header__breadcrumb b {
+  color: var(--color-text);
+  font-weight: 800;
+}

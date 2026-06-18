@@ -9,12 +9,13 @@ import {
 } from "recharts";
 
 export const CATEGORY_COLOR_MAP: Record<string, string> = {
-  식비: "#5b9d99",
-  카페: "#7c3aed",
-  교통: "#0891b2",
-  쇼핑: "#d97706",
-  의료: "#16a34a",
-  기타: "#6b7280",
+  식비: "#6DB6B1",
+  카페: "#F8B84E",
+  쇼핑: "#9B6BEE",
+  교통: "#4A90F2",
+  생활: "#4FD08B",
+  의료: "#FF6B6B",
+  기타: "#94A3B8",
 };
 
 export const getCategoryColor = (categoryName: string) => {

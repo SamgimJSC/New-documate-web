@@ -1,271 +1,413 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { createMockAnalysisResults, createMockUploadFiles, uploadCategoryGuide } from '../../data/uploadCategories';
-import type { UploadAnalysisResult, UploadDocumentCategory } from '../../types/upload';
-import './UploadPage.css';
+import { useMemo, useRef, useState } from "react";
+import type { ChangeEvent, DragEvent } from "react";
+import { useNavigate } from "react-router-dom";
+import { uploadCategoryGuide } from "../../data/uploadCategories";
+import { AnalysisStartModal } from "../../components/upload/AnalysisStartModal";
+import { uploadLocalService } from "../../services/uploadLocalService";
+import {
+  ACCEPTED_UPLOAD_TYPES,
+  fileSizeMb,
+  formatUploadedAt,
+  inferUploadCategory,
+  makeExtractedFields,
+  MAX_UPLOAD_FILE_COUNT,
+  MAX_UPLOAD_FILE_SIZE_MB,
+  nowText,
+} from "../../utils/uploadWorkflow";
+import "./UploadPage.css";
 
-const initialFileNames = [
-  '영수증_스타벅스.jpg',
-  '임대차계약서.png',
-  '보증서_노트북.jpg',
-];
+type StudioView = "studio" | "uploaded";
 
-const statusLabel = {
-  대기: '분석 대기 중',
-  분석중: 'AI 분석 중',
-  완료: '분류 완료',
-  오류: '오류',
+type StudioFile = {
+  id: string;
+  fileName: string;
+  sizeMb: number;
+  fileSizeBytes: number;
+  uploadedAt: string;
 };
+
+const makeId = () => `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
 
 export function UploadPage() {
   const navigate = useNavigate();
-  const [step, setStep] = useState<1 | 2>(1);
-  const [selectedResultId, setSelectedResultId] = useState(1);
-  const [results, setResults] = useState<UploadAnalysisResult[]>(() =>
-    createMockAnalysisResults(createMockUploadFiles(initialFileNames)),
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [view, setView] = useState<StudioView>("studio");
+  const [studioFiles, setStudioFiles] = useState<StudioFile[]>([]);
+  const [dragActive, setDragActive] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+
+  const totalSizeMb = useMemo(
+    () => studioFiles.reduce((sum, file) => sum + file.sizeMb, 0),
+    [studioFiles],
   );
 
-  const uploadFiles = useMemo(() => createMockUploadFiles(initialFileNames), []);
-  const selectedResult = results.find((result) => result.id === selectedResultId) ?? results[0];
+  const addFiles = (fileList: FileList | File[]) => {
+    const errors: string[] = [];
 
-  const handleCategoryChange = (category: UploadDocumentCategory) => {
-    const confirmed = window.confirm(
-      '카테고리를 바꾸면 추출 항목이 달라져 기존 입력값이 초기화됩니다. 변경할까요?',
-    );
+    const validFiles = Array.from(fileList).reduce<StudioFile[]>((acc, file) => {
+      const mb = fileSizeMb(file);
 
-    if (!confirmed) {
+      if (!ACCEPTED_UPLOAD_TYPES.includes(file.type)) {
+        errors.push(`${file.name}은 JPG/PNG 파일이 아니에요.`);
+        return acc;
+      }
+
+      if (mb > MAX_UPLOAD_FILE_SIZE_MB) {
+        errors.push(`${file.name}은 10MB를 초과했어요.`);
+        return acc;
+      }
+
+      acc.push({
+        id: makeId(),
+        fileName: file.name,
+        sizeMb: mb,
+        fileSizeBytes: file.size,
+        uploadedAt: nowText(),
+      });
+
+      return acc;
+    }, []);
+
+    setStudioFiles((current) => {
+      const availableSlots = MAX_UPLOAD_FILE_COUNT - current.length;
+
+      if (availableSlots <= 0) {
+        errors.push("한 번에 최대 10장까지만 업로드할 수 있어요.");
+        return current;
+      }
+
+      const nextFiles = [...current, ...validFiles.slice(0, availableSlots)];
+
+      if (validFiles.length > availableSlots) {
+        errors.push("최대 10장까지만 추가되었어요.");
+      }
+
+      if (nextFiles.length > 0) {
+        setView("uploaded");
+      }
+
+      return nextFiles;
+    });
+
+    setUploadError(errors[0] ?? "");
+  };
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      addFiles(event.target.files);
+    }
+
+    event.target.value = "";
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setDragActive(false);
+    addFiles(event.dataTransfer.files);
+  };
+
+  const moveFile = (fileId: string, direction: "up" | "down") => {
+    setStudioFiles((current) => {
+      const index = current.findIndex((file) => file.id === fileId);
+      const target = direction === "up" ? index - 1 : index + 1;
+
+      if (index < 0 || target < 0 || target >= current.length) {
+        return current;
+      }
+
+      const next = [...current];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  };
+
+  const removeFile = (fileId: string) => {
+    setStudioFiles((current) => {
+      const next = current.filter((file) => file.id !== fileId);
+      if (next.length === 0) setView("studio");
+      return next;
+    });
+  };
+
+  const clearFiles = () => {
+    setStudioFiles([]);
+    setUploadError("");
+    setView("studio");
+  };
+
+  const openAnalysisModal = () => {
+    if (studioFiles.length === 0) {
+      setUploadError("분석할 파일을 먼저 업로드해 주세요.");
       return;
     }
 
-    const guide = uploadCategoryGuide.find((item) => item.category === category);
-
-    setResults((prevResults) =>
-      prevResults.map((result) =>
-        result.id === selectedResult.id
-          ? {
-              ...result,
-              category,
-              isReceipt: category === '영수증',
-              fields:
-                guide?.extractedData
-                  .split(', ')
-                  .map((label) => ({ label, value: '' })) ?? [],
-            }
-          : result,
-      ),
-    );
+    setShowAnalysisModal(true);
   };
 
-  const handleSave = () => {
-    if (selectedResult.isReceipt) {
-      alert('영수증으로 분류된 문서가 있습니다. 영수증 관리 페이지에서 별도로 확인해주세요.');
-      navigate('/receipts');
-      return;
-    }
+  const startAnalysis = () => {
+    const nextItems = studioFiles.map((file, index) => {
+      const category = inferUploadCategory(file.fileName);
 
-    alert('디지털 캐비닛에 저장되었습니다.');
-    navigate('/documents');
-  };
+      return {
+        ...uploadLocalService.buildProcessDocument({
+          fileName: file.fileName,
+          sizeMb: file.sizeMb,
+          fileSizeBytes: file.fileSizeBytes,
+          category,
+          extractedFields: makeExtractedFields(category, file.fileName, index),
+          status: "analyzing",
+        }),
+        progress: 20 + index * 8,
+        confidence: 0,
+      };
+    });
 
-  const movePrev = () => {
-    setSelectedResultId((current) => Math.max(1, current - 1));
-  };
+    const currentItems = uploadLocalService.readProcessItems();
+    uploadLocalService.writeProcessItems([...nextItems, ...currentItems]);
 
-  const moveNext = () => {
-    setSelectedResultId((current) => Math.min(results.length, current + 1));
+    setStudioFiles([]);
+    setUploadError("");
+    setShowAnalysisModal(false);
+    setView("studio");
+    setToastMessage("AI 분석을 시작했어요. 상단바 처리 센터에서 상태를 확인할 수 있어요.");
+
+    window.setTimeout(() => setToastMessage(""), 2400);
   };
 
   return (
-    <section className="documate-upload-page">
-      <header className="upload-page-header">
-        <button type="button" className="upload-back-button" onClick={() => navigate('/documents')}>
-          ‹ 디지털 캐비닛
-        </button>
-        <div>
-          <p className="eyebrow">DocuMate · 업로드</p>
-          <h1>문서 업로드</h1>
-          <p>JPG / PNG 이미지를 업로드하면 AI가 문서 종류를 분석하고 저장 위치를 자동으로 분기합니다.</p>
+    <section className="upload-page">
+      {toastMessage && <div className="upload-page__toast">{toastMessage}</div>}
+
+      <main className={`upload-studio-card upload-studio-card--${view}`}>
+        <div className="upload-studio-card__title">
+          <div>
+            <p className="upload-page__kicker">1. 업로드 스튜디오 · 시작</p>
+            <h1>{view === "uploaded" ? "업로드한 문서를 확인하세요" : "문서 이미지를 업로드하세요"}</h1>
+            <p>문서 이미지를 업로드하거나 직접 등록하여 AI 분석을 시작하세요.</p>
+          </div>
+
+          {view === "uploaded" && (
+            <button
+              type="button"
+              className="upload-page__text-button"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              파일 더 추가
+            </button>
+          )}
         </div>
-      </header>
 
-      <div className="upload-step-card">
-        <button
-          type="button"
-          className={step === 1 ? 'step-pill active' : 'step-pill'}
-          onClick={() => setStep(1)}
-        >
-          <span>01</span>
-          새 문서 업로드
-        </button>
-        <div className="step-line" />
-        <button
-          type="button"
-          className={step === 2 ? 'step-pill active' : 'step-pill'}
-          onClick={() => setStep(2)}
-        >
-          <span>02</span>
-          추출 정보 확인·등록
-        </button>
-      </div>
-
-      {step === 1 ? (
-        <div className="upload-workspace">
-          <main className="upload-card primary">
-            <div className="upload-card-title">
-              <div>
-                <span className="section-number">①</span>
-                <h2>새 문서 업로드</h2>
-                <p>파일을 올리면 자동 분석이 시작됩니다. 분석이 끝나면 정보 확인 단계로 이동합니다.</p>
+        <div className="upload-studio-card__grid">
+          <section className="upload-studio-card__main">
+            {view === "studio" && (
+              <div
+                className={dragActive ? "upload-dropzone upload-dropzone--active" : "upload-dropzone"}
+                role="button"
+                tabIndex={0}
+                onDragEnter={(event) => {
+                  event.preventDefault();
+                  setDragActive(true);
+                }}
+                onDragOver={(event) => event.preventDefault()}
+                onDragLeave={() => setDragActive(false)}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") fileInputRef.current?.click();
+                }}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  multiple
+                  onChange={handleFileChange}
+                />
+                <div className="upload-dropzone__icon">☁</div>
+                <strong>문서 이미지를 업로드하세요</strong>
+                <span>JPG / PNG · 최대 10MB · 최대 10장</span>
+                <button type="button">파일 선택</button>
               </div>
-              <button type="button" onClick={() => setStep(2)}>분석 결과 확인</button>
-            </div>
+            )}
 
-            <label className="figma-upload-zone">
-              <input type="file" accept="image/png,image/jpeg" multiple />
-              <div className="upload-arrow">↑</div>
-              <strong>파일을 여기에 드래그하세요</strong>
-              <small>또는 클릭해서 파일 선택</small>
-            </label>
-
-            <div className="upload-file-list">
-              <div className="list-heading">
-                <strong>업로드 ({uploadFiles.length})</strong>
-                <span>JPG · PNG / 10MB / 최대 10장</span>
-              </div>
-
-              {uploadFiles.map((file) => (
-                <article key={file.id} className="figma-file-row">
-                  <div className="file-icon">IMG</div>
-                  <div className="file-meta">
-                    <strong>{file.fileName}</strong>
-                    <span>{file.sizeMb} MB · {statusLabel[file.status]}</span>
-                    <div className="progress-track">
-                      <i style={{ width: `${file.progress}%` }} />
-                    </div>
+            {view === "uploaded" && (
+              <div className="upload-ready-panel">
+                <div className="upload-ready-panel__notice">
+                  <span>✓</span>
+                  <div>
+                    <strong>업로드가 완료되었습니다.</strong>
+                    <p>파일 순서를 확인한 뒤 AI 분석을 시작해 주세요.</p>
                   </div>
-                  <span className={file.status === '완료' ? 'status complete' : 'status loading'}>
-                    {file.status === '완료' ? '완료' : '분석중'}
-                  </span>
-                </article>
-              ))}
-            </div>
-          </main>
+                  <button type="button" onClick={() => fileInputRef.current?.click()}>
+                    파일 추가
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg"
+                    multiple
+                    onChange={handleFileChange}
+                  />
+                </div>
 
-          <aside className="upload-info-stack">
-            <section className="upload-card compact">
-              <h3>업로드 안내</h3>
+                <div className="upload-file-list" aria-label="업로드 파일 목록">
+                  <div className="upload-file-list__head">
+                    <span>파일명</span>
+                    <span>크기</span>
+                    <span>업로드 시간</span>
+                    <span>상태</span>
+                    <span>관리</span>
+                  </div>
+
+                  {studioFiles.map((file, index) => (
+                    <article key={file.id} className="upload-file-row">
+                      <div className="upload-file-row__name">
+                        <b>{file.fileName}</b>
+                        <small>#{index + 1}</small>
+                      </div>
+                      <span>{file.sizeMb} MB</span>
+                      <span>{formatUploadedAt(file.uploadedAt)}</span>
+                      <em>업로드 완료</em>
+                      <div className="upload-file-row__actions">
+                        <button
+                          type="button"
+                          onClick={() => moveFile(file.id, "up")}
+                          disabled={index === 0}
+                          aria-label="위로 이동"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveFile(file.id, "down")}
+                          disabled={index === studioFiles.length - 1}
+                          aria-label="아래로 이동"
+                        >
+                          ↓
+                        </button>
+                        <button type="button" onClick={() => removeFile(file.id)}>
+                          삭제
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+
+                <div className="upload-ready-panel__actions">
+                  <div>
+                    <strong>{studioFiles.length}개 파일이 분석 대기 중입니다.</strong>
+                    <span>파일 순서를 확인한 뒤 AI 분석을 시작해 주세요.</span>
+                  </div>
+                  <div className="upload-ready-panel__action-buttons">
+                    <button type="button" className="upload-ready-panel__clear" onClick={clearFiles}>
+                      전체 삭제
+                    </button>
+                    <button type="button" className="upload-ready-panel__start" onClick={openAnalysisModal}>
+                      AI 분석하기
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {uploadError && <p className="upload-page__error">{uploadError}</p>}
+          </section>
+
+          <aside className="upload-studio-side">
+            <section className="upload-side-card">
+              <div className="upload-side-card__title">
+                <span>▣</span>
+                <h2>업로드 가이드</h2>
+              </div>
               <ul>
                 <li>지원 형식: JPG, PNG</li>
-                <li>PDF 업로드 제외</li>
-                <li>장당 최대 10MB</li>
-                <li>한 번에 최대 10장</li>
-                <li>업로드 즉시 AI 분석 시작</li>
+                <li>최대 크기: 10MB</li>
+                <li>권장 해상도: 300dpi 이상</li>
+                <li>선명한 문서 이미지를 업로드해 주세요.</li>
               </ul>
             </section>
 
-            <section className="upload-card compact">
-              <h3>분류 카테고리</h3>
-              <p>AI가 문서 종류를 자동 분류합니다.</p>
-              <div className="upload-category-grid">
+            <section className="upload-side-card">
+              <div className="upload-side-card__title">
+                <span>▣</span>
+                <h2>분석 가능한 문서 예시</h2>
+              </div>
+              <div className="upload-category-pills">
                 {uploadCategoryGuide.map((guide) => (
                   <span key={guide.category}>{guide.category}</span>
                 ))}
               </div>
+              <p className="upload-side-card__note">다양한 문서를 업로드하면 더 정확한 분석이 가능합니다.</p>
             </section>
 
-            <section className="upload-card compact dark">
-              <h3>저장 분기</h3>
-              <p>계약서·보증서·처방전 등은 디지털 캐비닛으로, 영수증은 영수증 관리로 이동합니다.</p>
+            {studioFiles.length > 0 && (
+              <>
+                <section className="upload-side-card upload-summary-card">
+                  <div className="upload-side-card__title">
+                    <span>▣</span>
+                    <h2>업로드 요약</h2>
+                  </div>
+                  <dl>
+                    <div>
+                      <dt>파일 수</dt>
+                      <dd>{studioFiles.length}개</dd>
+                    </div>
+                    <div>
+                      <dt>전체 크기</dt>
+                      <dd>{totalSizeMb.toFixed(1)} MB</dd>
+                    </div>
+                    <div>
+                      <dt>분석 가능</dt>
+                      <dd>가능</dd>
+                    </div>
+                  </dl>
+                  <button type="button" onClick={openAnalysisModal}>
+                    AI 분석하기
+                  </button>
+                </section>
+
+                <section className="upload-side-card upload-next-card">
+                  <div className="upload-side-card__title">
+                    <span>→</span>
+                    <h2>다음 단계</h2>
+                  </div>
+                  <ol>
+                    <li>AI가 문서 유형과 주요 정보를 분석합니다.</li>
+                    <li>결과는 상단바의 처리 센터에서 확인합니다.</li>
+                    <li>저장 대기 문서는 확인 후 저장할 수 있습니다.</li>
+                  </ol>
+                </section>
+              </>
+            )}
+          </aside>
+        </div>
+
+        {view === "studio" && (
+          <>
+            <div className="upload-divider"><span>또는</span></div>
+            <section className="upload-manual-cta">
+              <div className="upload-manual-cta__icon">✎</div>
+              <div>
+                <strong>빠른 수기 등록</strong>
+                <p>문서를 직접 입력하여 등록할 수 있습니다. AI 분석 없이 바로 저장됩니다.</p>
+              </div>
+              <button type="button" onClick={() => navigate("/upload/manual")}>수기로 등록하기</button>
             </section>
-          </aside>
-        </div>
-      ) : (
-        <div className="analysis-workspace">
-          <main className="upload-card preview">
-            <div className="upload-card-title">
-              <div>
-                <span className="section-number">②</span>
-                <h2>추출 정보 확인·등록</h2>
-                <p>AI가 채운 정보를 확인하고, 그대로 저장하거나 직접 수정하세요.</p>
-              </div>
-              <div className="document-counter">
-                <button type="button" onClick={movePrev}>‹</button>
-                <span>문서 {selectedResult.id} / {results.length}</span>
-                <button type="button" onClick={moveNext}>›</button>
-              </div>
-            </div>
+          </>
+        )}
 
-            <div className="figma-preview-box">
-              <div className="preview-mountain" />
-              <div>
-                <span>미리보기</span>
-                <strong>{selectedResult.fileName}</strong>
-              </div>
-            </div>
+        <p className="upload-page__security">♡ 업로드한 파일은 안전하게 보호되며, 분석 목적 외에는 사용되지 않습니다.</p>
+      </main>
 
-            <div className="preview-helper">
-              <span>미리보기에서 마스킹할 영역을 드래그로 지정할 수 있습니다.</span>
-            </div>
-          </main>
-
-          <aside className="upload-card analysis-form">
-            <label className="form-label">
-              AI 판단 카테고리
-              <select
-                value={selectedResult.category}
-                onChange={(event) => handleCategoryChange(event.target.value as UploadDocumentCategory)}
-              >
-                {uploadCategoryGuide.map((guide) => (
-                  <option key={guide.category} value={guide.category}>
-                    {guide.category}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <div className={selectedResult.isReceipt ? 'branch-box receipt' : 'branch-box document'}>
-              <strong>{selectedResult.isReceipt ? '영수증 관리로 저장됩니다.' : '디지털 캐비닛에 저장됩니다.'}</strong>
-              <p>
-                {selectedResult.isReceipt
-                  ? '영수증은 소비 분석을 위해 영수증 관리 페이지에서 별도로 관리합니다.'
-                  : '일반 문서는 검색과 알림 관리를 위해 디지털 캐비닛에 보관합니다.'}
-              </p>
-            </div>
-
-            <div className="extracted-fields">
-              <h3>추출 정보</h3>
-              {selectedResult.fields.map((field) => (
-                <label key={field.label} className="form-label">
-                  {field.label}
-                  <input defaultValue={field.value} placeholder={`${field.label} 입력`} />
-                </label>
-              ))}
-            </div>
-
-            <div className="masking-panel">
-              <div className="masking-head">
-                <strong>민감정보 마스킹</strong>
-                <span>Pro</span>
-              </div>
-              <p>저장 전 가릴 항목을 선택하세요.</p>
-              <div className="masking-grid">
-                <label><input type="checkbox" /> 주민등록번호</label>
-                <label><input type="checkbox" /> 서명</label>
-                <label><input type="checkbox" /> 계좌번호</label>
-                <label><input type="checkbox" /> 전화번호</label>
-              </div>
-            </div>
-
-            <div className="form-actions">
-              <button type="button" className="secondary" onClick={() => setStep(1)}>
-                업로드로 돌아가기
-              </button>
-              <button type="button" onClick={handleSave}>
-                {selectedResult.isReceipt ? '영수증으로 등록' : '저장하고 등록'}
-              </button>
-            </div>
-          </aside>
-        </div>
+      {showAnalysisModal && (
+        <AnalysisStartModal
+          fileCount={studioFiles.length}
+          onCancel={() => setShowAnalysisModal(false)}
+          onConfirm={startAnalysis}
+        />
       )}
     </section>
   );
