@@ -45,7 +45,7 @@ const ReceiptDetail: React.FC = () => {
       <div className="receipt-detail__layout">
         <div className="receipt-detail__image">
           {receipt.file_url ? (
-            <img src={receipt.file_url} alt="영수증" style={{ width: "100%", borderRadius: 8 }} />
+            <img className="receipt-detail__image-file" src={receipt.file_url} alt="영수증" />
           ) : (
             <div className="receipt-detail__no-image">
               <span className="receipt-detail__no-image-icon">🧾</span>
