@@ -73,4 +73,22 @@ export const documentService = {
     const res = await api.get<ApiResponse<DocumentApiItem>>(`/documents/${id}`);
     return mapDocument(res.data.data);
   },
+
+  async updateDocument(
+    id: string,
+    body: {
+      title?: string;
+      categoryId?: number;
+      issueDate?: string;
+      expiryDate?: string;
+      renewalDate?: string;
+      extractedData?: Record<string, string>;
+    },
+  ): Promise<Document> {
+    const res = await api.patch<ApiResponse<DocumentApiItem>>(
+      `/documents/${id}`,
+      body,
+    );
+    return mapDocument(res.data.data);
+  },
 };
