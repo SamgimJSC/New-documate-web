@@ -7,8 +7,9 @@ import Badge from "../../components/common/Badge";
 import EmptyState from "../../components/common/EmptyState";
 import { documentService } from "../../services/documentService";
 import {
-  mockDocuments,
   mockDocumentCategories,
+  // mockDocumentTags,
+  // mockTags,
 } from "../../data/mockDocuments";
 import { filterDocuments } from "../../utils/filterUtils";
 import { formatDate, getDday } from "../../utils/formatDate";
