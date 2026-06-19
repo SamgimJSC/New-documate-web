@@ -118,18 +118,21 @@ export function ProcessingCenterPage() {
     if (analyzingItems.length === 0) return;
 
     const timer = window.setInterval(() => {
-      analyzingItems.forEach((item) => {
-        uploadService
-          .getAiStatus(item.savedRecordId!)
-          .then((aiStatus) => {
-            if (aiStatus === "DONE") {
+      uploadService
+        .getTempList()
+        .then((list) => {
+          analyzingItems.forEach((item) => {
+            const found = list.find((d) => d.tempDocumentId === item.savedRecordId);
+            if (!found) return;
+
+            if (found.aiStatus === "DONE") {
               updateItem(item.id, {
                 status: "waitingSave",
                 progress: 100,
                 confidence: 0.88,
                 memo: "AI 분석이 완료되었습니다. 저장 전 내용을 확인해 주세요.",
               });
-            } else if (aiStatus === "FAILED") {
+            } else if (found.aiStatus === "FAILED") {
               updateItem(item.id, {
                 status: "failed",
                 progress: 0,
@@ -137,10 +140,10 @@ export function ProcessingCenterPage() {
                 errorMessage: "AI 분석에 실패했어요.",
               });
             }
-          })
-          .catch(() => {/* 네트워크 오류는 다음 폴링에서 재시도 */});
-      });
-    }, 3000);
+          });
+        })
+        .catch(() => {/* 네트워크 오류는 다음 폴링에서 재시도 */});
+    }, 5000);
 
     return () => window.clearInterval(timer);
   }, [processItems]);

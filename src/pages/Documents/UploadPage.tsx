@@ -5,11 +5,9 @@ import { uploadCategoryGuide } from "../../data/uploadCategories";
 import { AnalysisStartModal } from "../../components/upload/AnalysisStartModal";
 import {
   uploadLocalService,
-  type UploadProcessStatus,
 } from "../../services/uploadLocalService";
 import { uploadService } from "../../services/uploadService";
 import { AnalysisStartedModal } from "../../components/upload/AnalysisStartedModal";
-import { uploadLocalService } from "../../services/uploadLocalService";
 import {
   ACCEPTED_UPLOAD_TYPES,
   categoryToId,
@@ -151,13 +149,41 @@ export function UploadPage() {
     setShowAnalysisModal(false);
     setIsUploading(true);
 
-    setStartedFileCount(studioFiles.length);
-    setStudioFiles([]);
-    setUploadError("");
-    setToastMessage("");
-    setShowAnalysisModal(false);
-    setShowStartedModal(true);
-    setView("studio");
+    try {
+      const tempDocumentId = await uploadService.startSession();
+
+      let uploadedFiles: Array<{ id: string; pageNo: number }> = [];
+      for (let i = 0; i < studioFiles.length; i++) {
+        const res = await uploadService.uploadPage(tempDocumentId, studioFiles[i].file, i + 1);
+        uploadedFiles = res.files.map((f) => ({ id: f.id, pageNo: f.pageNo }));
+      }
+
+      const { tempDocumentId: confirmedId } = await uploadService.requestAi(tempDocumentId, uploadedFiles);
+
+      uploadLocalService.writeProcessItems([
+        ...uploadLocalService.readProcessItems(),
+        ...studioFiles.map((f) =>
+          uploadLocalService.buildProcessDocument({
+            fileName: f.fileName,
+            sizeMb: f.sizeMb,
+            fileSizeBytes: f.fileSizeBytes,
+            status: "analyzing",
+            savedRecordId: confirmedId,
+          }),
+        ),
+      ]);
+
+      setStartedFileCount(studioFiles.length);
+      setStudioFiles([]);
+      setUploadError("");
+      setToastMessage("");
+      setShowStartedModal(true);
+      setView("studio");
+    } catch {
+      setUploadError("업로드 중 오류가 발생했습니다. 다시 시도해 주세요.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
