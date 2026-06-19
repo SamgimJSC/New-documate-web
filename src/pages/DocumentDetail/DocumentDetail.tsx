@@ -276,9 +276,23 @@ const DocumentDetail: React.FC = () => {
     setIsEditing(false);
   };
 
-  const handleEditSave = () => {
-    setIsEditing(false);
-    showToast("문서 정보가 수정되었습니다.", "success");
+  const handleEditSave = async () => {
+    if (!document_id) return;
+    try {
+      const updated = await documentService.updateDocument(document_id, {
+        title: form.title,
+        categoryId: form.categoryId,
+        issueDate: form.issueDate || undefined,
+        expiryDate: form.expiryDate || undefined,
+        renewalDate: form.renewalDate || undefined,
+        extractedData: form.extractedData,
+      });
+      setDoc(updated);
+      setIsEditing(false);
+      showToast("문서 정보가 수정되었습니다.", "success");
+    } catch {
+      showToast("수정에 실패했습니다.", "error");
+    }
   };
 
   const handleCategoryChange = (categoryId: number) => {

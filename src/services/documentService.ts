@@ -74,6 +74,19 @@ export const documentService = {
     return mapDocument(res.data.data);
   },
 
+  async updateCategory(
+    categoryId: number,
+    body: {
+      name?: string;
+      defaultNotifyOffsetDays?: number;
+      isSecured?: boolean;
+      description?: string;
+    },
+  ) {
+    const res = await api.patch(`/documents/categories/${categoryId}`, body);
+    return res.data.data;
+  },
+
   async updateDocument(
     id: string,
     body: {
