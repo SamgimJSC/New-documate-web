@@ -34,7 +34,9 @@ export const uploadService = {
     const form = new FormData();
     form.append("file", file);
     form.append("pageNo", String(pageNo));
-    const res = await api.post<ApiResponse<UploadPageData>>(`/upload/${tempDocumentId}`, form);
+    const res = await api.post<ApiResponse<UploadPageData>>(`/upload/${tempDocumentId}`, form, {
+      headers: { "Content-Type": undefined },
+    });
     return res.data.data;
   },
 
