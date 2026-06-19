@@ -2,15 +2,14 @@ import { useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { RegistrationSuccessModal } from "../../components/upload/RegistrationSuccessModal";
-import {
-  uploadLocalService,
-  type ManualRegistrationInput,
-} from "../../services/uploadLocalService";
+import type { ManualRegistrationInput } from "../../services/uploadLocalService";
 import type { UploadDocumentCategory } from "../../types/upload";
 import {
+  categoryToId,
   MANUAL_UPLOAD_DRAFT_KEY,
   getSaveLocationLabel,
 } from "../../utils/uploadWorkflow";
+import { uploadService } from "../../services/uploadService";
 import "./ManualRegisterPage.css";
 
 type ManualExtraKey =
@@ -64,7 +63,11 @@ const CATEGORY_CONFIGS: CategoryConfig[] = [
         placeholder: "예: 김민준 / ○○부동산",
         required: true,
       },
-      { key: "issuer", label: "거래처 / 발행처", placeholder: "예: ○○부동산" },
+      {
+        key: "issuer",
+        label: "거래처 / 발행처",
+        placeholder: "예: ○○부동산",
+      },
       {
         key: "contractDate",
         label: "계약일",
@@ -126,7 +129,11 @@ const CATEGORY_CONFIGS: CategoryConfig[] = [
         required: true,
         type: "amount",
       },
-      { key: "items", label: "품목", placeholder: "예: 아메리카노, 샌드위치" },
+      {
+        key: "items",
+        label: "품목",
+        placeholder: "예: 아메리카노, 샌드위치",
+      },
     ],
   },
   {
@@ -227,7 +234,11 @@ const CATEGORY_CONFIGS: CategoryConfig[] = [
         placeholder: "예: 학교 안내문",
         required: true,
       },
-      { key: "issuer", label: "발행처", placeholder: "예: 관리사무소" },
+      {
+        key: "issuer",
+        label: "발행처",
+        placeholder: "예: 관리사무소",
+      },
       {
         key: "documentDate",
         label: "업로드일",
@@ -299,6 +310,7 @@ export function ManualRegisterPage() {
   );
   const [manualErrors, setManualErrors] = useState<string[]>([]);
   const [toastMessage, setToastMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [successCategory, setSuccessCategory] =
     useState<UploadDocumentCategory | null>(null);
 
@@ -318,6 +330,8 @@ export function ManualRegisterPage() {
   };
 
   const changeCategory = (category: UploadDocumentCategory) => {
+    if (isSubmitting) return;
+
     setManualForm((current) => ({
       ...emptyManualForm,
       category,
@@ -334,6 +348,8 @@ export function ManualRegisterPage() {
   };
 
   const saveManualDraft = () => {
+    if (isSubmitting) return;
+
     window.localStorage.setItem(
       MANUAL_UPLOAD_DRAFT_KEY,
       JSON.stringify(manualForm),
@@ -342,12 +358,16 @@ export function ManualRegisterPage() {
   };
 
   const resetManualForm = () => {
+    if (isSubmitting) return;
+
     setManualForm({ ...emptyManualForm, category: manualForm.category });
     setManualErrors([]);
     window.localStorage.removeItem(MANUAL_UPLOAD_DRAFT_KEY);
   };
 
-  const saveManualDocument = () => {
+  const saveManualDocument = async () => {
+    if (isSubmitting) return;
+
     const errors = selectedConfig.fields
       .filter((field) => field.required)
       .filter((field) => !String(manualForm[field.key] ?? "").trim())
@@ -356,41 +376,58 @@ export function ManualRegisterPage() {
     setManualErrors(errors);
     if (errors.length > 0) return;
 
-    const normalizedDate =
-      manualForm.documentDate ||
-      manualForm.contractDate ||
-      manualForm.expiryDate ||
-      manualForm.repairDate ||
-      "";
+    setIsSubmitting(true);
 
-    const normalizedIssuer =
-      manualForm.issuer ||
-      manualForm.contractor ||
-      manualForm.productName ||
-      "";
+    try {
+      const normalizedDate =
+        manualForm.documentDate ||
+        manualForm.contractDate ||
+        manualForm.expiryDate ||
+        manualForm.repairDate ||
+        "";
 
-    const persistableForm: ManualRegistrationInput = {
-      category: manualForm.category,
-      title: manualForm.title,
-      issuer: normalizedIssuer,
-      documentDate: normalizedDate,
-      amount: manualForm.amount,
-      memo: formatExtraMemo(manualForm, selectedConfig),
-      attachmentName: manualForm.attachmentName,
-    };
+      const normalizedIssuer =
+        manualForm.issuer ||
+        manualForm.contractor ||
+        manualForm.productName ||
+        "";
 
-    if (manualForm.category === "영수증") {
-      uploadLocalService.saveReceipt(
-        uploadLocalService.manualToReceipt(persistableForm),
-      );
-    } else {
-      uploadLocalService.saveDocument(
-        uploadLocalService.manualToDocument(persistableForm),
-      );
+      const memoForSave = formatExtraMemo(manualForm, selectedConfig);
+
+      const extractedData: Record<string, string> = {};
+
+      if (normalizedIssuer) extractedData["발행처"] = normalizedIssuer;
+      if (manualForm.amount) extractedData["금액"] = manualForm.amount;
+      if (manualForm.contractor)
+        extractedData["계약자"] = manualForm.contractor;
+      if (manualForm.items) extractedData["품목"] = manualForm.items;
+      if (manualForm.medicineName) {
+        extractedData["약품명 / 진료 내용"] = manualForm.medicineName;
+      }
+      if (manualForm.productName)
+        extractedData["제품명"] = manualForm.productName;
+      if (manualForm.warrantyPeriod) {
+        extractedData["보증기간"] = manualForm.warrantyPeriod;
+      }
+      if (manualForm.repairDate)
+        extractedData["수리일"] = manualForm.repairDate;
+      if (memoForSave) extractedData["메모"] = memoForSave;
+
+      await uploadService.createDocument({
+        inputMethod: "MANUAL",
+        categoryId: categoryToId(manualForm.category),
+        title: manualForm.title.trim(),
+        issueDate: normalizedDate || undefined,
+        extractedData,
+      });
+
+      window.localStorage.removeItem(MANUAL_UPLOAD_DRAFT_KEY);
+      setSuccessCategory(manualForm.category);
+    } catch {
+      setManualErrors(["서버 저장에 실패했어요. 잠시 후 다시 시도해 주세요."]);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    window.localStorage.removeItem(MANUAL_UPLOAD_DRAFT_KEY);
-    setSuccessCategory(manualForm.category);
   };
 
   const handleAttachment = (event: ChangeEvent<HTMLInputElement>) => {
@@ -410,6 +447,7 @@ export function ManualRegisterPage() {
             <input
               value={value}
               inputMode="numeric"
+              disabled={isSubmitting}
               onChange={(event) => updateManual(field.key, event.target.value)}
               placeholder={field.placeholder}
             />
@@ -425,6 +463,7 @@ export function ManualRegisterPage() {
         <input
           type={field.type === "date" ? "date" : "text"}
           value={value}
+          disabled={isSubmitting}
           onChange={(event) => updateManual(field.key, event.target.value)}
           placeholder={field.placeholder}
         />
@@ -462,6 +501,7 @@ export function ManualRegisterPage() {
                 <button
                   key={config.category}
                   type="button"
+                  disabled={isSubmitting}
                   className={
                     manualForm.category === config.category ? "is-selected" : ""
                   }
@@ -496,6 +536,7 @@ export function ManualRegisterPage() {
               메모
               <textarea
                 value={manualForm.memo}
+                disabled={isSubmitting}
                 onChange={(event) => updateManual("memo", event.target.value)}
                 maxLength={500}
                 placeholder="문서와 관련된 내용을 입력해 주세요."
@@ -508,12 +549,14 @@ export function ManualRegisterPage() {
                 ref={fileInputRef}
                 type="file"
                 accept="image/png,image/jpeg"
+                disabled={isSubmitting}
                 onChange={handleAttachment}
               />
               <span>{manualForm.attachmentName || "첨부 이미지 선택"}</span>
               <i>선택 사항 · JPG/PNG 최대 10MB</i>
               <button
                 type="button"
+                disabled={isSubmitting}
                 onClick={() => fileInputRef.current?.click()}
               >
                 이미지 첨부
@@ -533,18 +576,26 @@ export function ManualRegisterPage() {
                 type="button"
                 className="manual-form-actions__ghost"
                 onClick={resetManualForm}
+                disabled={isSubmitting}
               >
                 초기화
               </button>
+
               <button
                 type="button"
                 className="manual-form-actions__ghost"
                 onClick={saveManualDraft}
+                disabled={isSubmitting}
               >
                 임시 저장
               </button>
-              <button type="submit" className="manual-form-actions__primary">
-                저장하고 완료하기
+
+              <button
+                type="submit"
+                className="manual-form-actions__primary"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "저장 중..." : "저장하고 완료하기"}
               </button>
             </div>
           </form>
@@ -593,7 +644,11 @@ export function ManualRegisterPage() {
               파일이 있다면 업로드 후 AI 분석을 이용하면 더 빠르고 정확하게
               등록할 수 있어요.
             </p>
-            <button type="button" onClick={() => navigate("/upload")}>
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={() => navigate("/upload")}
+            >
               업로드 페이지로 이동
             </button>
           </div>

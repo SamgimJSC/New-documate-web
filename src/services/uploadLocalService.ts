@@ -216,9 +216,10 @@ export const uploadLocalService = {
     fileName: string;
     sizeMb: number;
     fileSizeBytes: number;
-    category: UploadDocumentCategory;
-    extractedFields: UploadExtractedField[];
+    category?: UploadDocumentCategory;
+    extractedFields?: UploadExtractedField[];
     status?: UploadProcessStatus;
+    savedRecordId?: string;
   }): UploadProcessItem {
     const fileType = normalizeFileType(input.fileName);
 
@@ -231,10 +232,11 @@ export const uploadLocalService = {
       sizeMb: input.sizeMb,
       uploadedAt: now(),
       status: input.status ?? "waitingSave",
-      category: input.category,
-      extractedFields: input.extractedFields,
+      category: input.category ?? "기타",
+      extractedFields: input.extractedFields ?? [],
       confidence: input.status === "failed" ? 0 : 0.88,
       progress: input.status === "failed" ? 0 : 100,
+      savedRecordId: input.savedRecordId,
       errorMessage:
         input.status === "failed"
           ? "이미지가 흐리거나 필수 정보를 읽지 못했어요."

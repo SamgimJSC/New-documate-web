@@ -13,25 +13,27 @@ import {
 import Badge from "../../components/common/Badge";
 import Button from "../../components/common/Button";
 import {
-  mockCurrentUser,
   mockUserConsents,
   mockUserSettings,
 } from "../../data/mockUsers";
+import { useUserStore } from "../../store/userStore";
 import { mockSubscription } from "../../data/mockPayments";
 import { formatDate } from "../../utils/formatDate";
 import "./MyPage.css";
 
 const MyPageHome: React.FC = () => {
   const navigate = useNavigate();
-  const user = mockCurrentUser;
+  const user = useUserStore((s) => s.user);
+  if (!user) return null;
 
-  const storagePercent = Math.min(
-    100,
-    Math.round((user.storage_used_bytes / user.storage_quota_bytes) * 100),
-  );
+  const storagePercent = user.storage_quota_bytes > 0
+    ? Math.min(100, Math.round((user.storage_used_bytes / user.storage_quota_bytes) * 100))
+    : 0;
 
   const usedGB = (user.storage_used_bytes / 1024 / 1024 / 1024).toFixed(1);
-  const quotaGB = (user.storage_quota_bytes / 1024 / 1024 / 1024).toFixed(0);
+  const quotaGB = user.storage_quota_bytes > 0
+    ? (user.storage_quota_bytes / 1024 / 1024 / 1024).toFixed(0)
+    : "-";
 
   const marketingConsent = mockUserConsents.find(
     (consent) => consent.consent_type === "MARKETING",

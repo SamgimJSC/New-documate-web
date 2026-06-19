@@ -1,6 +1,7 @@
 import React from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { CreditCard, Home, LogOut, Settings, User, UserX } from "lucide-react";
+import { authService } from "../../services/authService";
 import "./MyPageLayout.css";
 
 const myPageNav = [
@@ -19,11 +20,12 @@ const myPageNav = [
 const MyPageLayout: React.FC = () => {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem("documate_access_token");
-    localStorage.removeItem("documate_refresh_token");
-    sessionStorage.clear();
-    navigate("/login", { replace: true });
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } finally {
+      navigate("/login", { replace: true });
+    }
   };
 
   return (

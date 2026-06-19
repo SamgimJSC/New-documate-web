@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FileText, Clock, HardDrive, Lock } from "lucide-react";
 import Card from "../../components/common/Card";
 import Badge from "../../components/common/Badge";
-import { mockCurrentUser } from "../../data/mockUsers";
-import { mockDocuments } from "../../data/mockDocuments";
+import { useUserStore } from "../../store/userStore";
+import { documentService } from "../../services/documentService";
 import { mockReceipts } from "../../data/mockReceipts";
 import { mockMonthlyReports } from "../../data/mockReports";
+import type { Document } from "../../types/document";
 import { formatDate, getDday } from "../../utils/formatDate";
 import { formatKRW } from "../../utils/formatCurrency";
 import "./Dashboard.css";
@@ -14,9 +15,19 @@ import "./Dashboard.css";
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<"recent" | "favorite">("recent");
+  const [documents, setDocuments] = useState<Document[]>([]);
 
-  const user = mockCurrentUser;
-  const docs = mockDocuments.filter((d) => d.is_deleted === "N");
+  const user = useUserStore((s) => s.user);
+
+  useEffect(() => {
+    documentService.getDocuments()
+      .then((list) => setDocuments(list.filter((d) => d.is_deleted === "N")))
+      .catch(() => setDocuments([]));
+  }, []);
+
+  if (!user) return null;
+
+  const docs = documents;
   const expiringDocs = docs.filter((d) => {
     if (!d.expiry_date) return false;
     const today = new Date();
@@ -31,9 +42,13 @@ const Dashboard: React.FC = () => {
   });
   const thisMonthSpend = thisMonthReceipts.reduce((s, r) => s + r.total_amount, 0);
   const latestReport = mockMonthlyReports[mockMonthlyReports.length - 1];
-  const storagePercent = Math.round((user.storage_used_bytes / user.storage_quota_bytes) * 100);
+  const storagePercent = user.storage_quota_bytes > 0
+    ? Math.round((user.storage_used_bytes / user.storage_quota_bytes) * 100)
+    : 0;
   const usedMB = (user.storage_used_bytes / 1024 / 1024).toFixed(0);
-  const quotaGB = (user.storage_quota_bytes / 1024 / 1024 / 1024).toFixed(0);
+  const quotaGB = user.storage_quota_bytes > 0
+    ? (user.storage_quota_bytes / 1024 / 1024 / 1024).toFixed(0)
+    : "-";
   const isPro = user.plan === "PRO";
 
   const displayDocs = tab === "recent"
@@ -79,7 +94,7 @@ const Dashboard: React.FC = () => {
           <div className="dashboard__summary-icon dashboard__summary-icon--green"><HardDrive size={20} /></div>
           <div className="dashboard__summary-content">
             <p className="dashboard__summary-value">{usedMB}MB</p>
-            <p className="dashboard__summary-label">/{quotaGB}GB 사용</p>
+            <p className="dashboard__summary-label">{quotaGB}GB 중 {storagePercent}% 사용</p>
             <div className="dashboard__storage-bar" aria-label="저장 공간 사용량">
               <div className="dashboard__storage-fill" style={{ width: `${storagePercent}%` }} />
             </div>

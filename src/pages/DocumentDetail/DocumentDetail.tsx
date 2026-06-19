@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -17,8 +17,8 @@ import {
 import Badge from "../../components/common/Badge";
 import Button from "../../components/common/Button";
 import AlertSettingModal from "../../components/modal/AlertSettingModal";
+import { documentService } from "../../services/documentService";
 import {
-  mockDocuments,
   mockDocumentCategories,
   mockDocumentTags,
   mockTags,
@@ -26,6 +26,7 @@ import {
 } from "../../data/mockDocuments";
 import { formatDate } from "../../utils/formatDate";
 import { useToast } from "../../components/common/Toast";
+import type { Document } from "../../types/document";
 import type { AiStatus } from "../../types/common";
 import "./DocumentDetail.css";
 
@@ -49,6 +50,16 @@ type EditableDocumentState = {
   tagsText: string;
 };
 
+const EMPTY_FORM: EditableDocumentState = {
+  title: "",
+  categoryId: 1,
+  issueDate: "",
+  expiryDate: "",
+  renewalDate: "",
+  extractedData: {},
+  tagsText: "",
+};
+
 const formatFileSize = (bytes: number) => {
   if (bytes >= 1024 * 1024) {
     return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
@@ -65,7 +76,9 @@ const getPreviewTitle = (categoryName?: string) => {
   return "문서 미리보기";
 };
 
-const getEmptyExtractedData = (categoryName?: string): Record<string, string> => {
+const getEmptyExtractedData = (
+  categoryName?: string,
+): Record<string, string> => {
   switch (categoryName) {
     case "계약서":
       return {
@@ -108,38 +121,68 @@ const DocumentDetail: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
 
-  const doc = mockDocuments.find((d) => d.document_id === document_id);
-
-  const initialCategory = doc
-    ? mockDocumentCategories.find((c) => c.category_id === doc.category_id)
-    : undefined;
-
-  const docTagIds = doc
-    ? mockDocumentTags
-        .filter((dt) => dt.document_id === doc.document_id)
-        .map((dt) => dt.tag_id)
-    : [];
-  const docTags = mockTags.filter((t) => docTagIds.includes(t.tag_id));
-  const alerts = doc
-    ? mockDocumentAlerts.filter((a) => a.document_id === doc.document_id)
-    : [];
-
+  const [doc, setDoc] = useState<Document | null>(null);
+  const [loading, setLoading] = useState(true);
   const [alertOpen, setAlertOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(doc?.is_favorite ?? false);
+  const [isFavorite, setIsFavorite] = useState(false);
   const [zoom, setZoom] = useState(100);
+  const [form, setForm] = useState<EditableDocumentState>(EMPTY_FORM);
+
+  useEffect(() => {
+    if (!document_id) {
+      setDoc(null);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
+    documentService
+      .getDocument(document_id)
+      .then((d) => {
+        setDoc(d);
+        setIsFavorite(d.is_favorite);
+      })
+      .catch(() => {
+        setDoc(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [document_id]);
+
+  const initialCategory = useMemo(() => {
+    if (!doc) return undefined;
+
+    return mockDocumentCategories.find(
+      (category) => category.category_id === doc.category_id,
+    );
+  }, [doc]);
+
+  const docTagIds = useMemo(() => {
+    if (!doc) return [];
+
+    return mockDocumentTags
+      .filter((documentTag) => documentTag.document_id === doc.document_id)
+      .map((documentTag) => documentTag.tag_id);
+  }, [doc]);
+
+  const docTags = useMemo(() => {
+    return mockTags.filter((tag) => docTagIds.includes(tag.tag_id));
+  }, [docTagIds]);
+
+  const alerts = useMemo(() => {
+    if (!doc) return [];
+
+    return mockDocumentAlerts.filter(
+      (alert) => alert.document_id === doc.document_id,
+    );
+  }, [doc]);
 
   const initialForm = useMemo<EditableDocumentState>(() => {
     if (!doc) {
-      return {
-        title: "",
-        categoryId: 1,
-        issueDate: "",
-        expiryDate: "",
-        renewalDate: "",
-        extractedData: {},
-        tagsText: "",
-      };
+      return EMPTY_FORM;
     }
 
     const extracted = doc.extracted_data
@@ -162,10 +205,23 @@ const DocumentDetail: React.FC = () => {
     };
   }, [doc, docTags, initialCategory?.name]);
 
-  const [form, setForm] = useState<EditableDocumentState>(initialForm);
-  const activeCategory =
-    mockDocumentCategories.find((c) => c.category_id === form.categoryId) ??
-    initialCategory;
+  useEffect(() => {
+    setForm(initialForm);
+  }, [initialForm]);
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          padding: 48,
+          textAlign: "center",
+          color: "var(--color-muted)",
+        }}
+      >
+        문서를 불러오는 중...
+      </div>
+    );
+  }
 
   if (!doc) {
     return (
@@ -181,6 +237,11 @@ const DocumentDetail: React.FC = () => {
       </div>
     );
   }
+
+  const activeCategory =
+    mockDocumentCategories.find(
+      (category) => category.category_id === form.categoryId,
+    ) ?? initialCategory;
 
   const handleFavorite = () => {
     setIsFavorite((prev) => {
@@ -250,13 +311,17 @@ const DocumentDetail: React.FC = () => {
     typeof doc.ai_confidence === "number"
       ? `신뢰도 ${Math.round(doc.ai_confidence * 100)}%`
       : "신뢰도 확인 중";
+
   const tagNames = form.tagsText
     .split(",")
     .map((tag) => tag.trim())
     .filter(Boolean);
+
   const previewUrl = (doc.file_url ?? "").trim();
   const hasPreviewFile = previewUrl.length > 0;
-  const previewPageCount = hasPreviewFile ? Math.max(1, doc.page_count ?? 1) : 0;
+  const previewPageCount = hasPreviewFile
+    ? Math.max(1, doc.page_count ?? 1)
+    : 0;
 
   return (
     <section className="doc-detail">
@@ -277,7 +342,6 @@ const DocumentDetail: React.FC = () => {
               업로드일 {formatDate(doc.created_at)} · AI 상태 {doc.ai_status}
             </p>
           </div>
-
         </div>
       </div>
 
@@ -292,7 +356,10 @@ const DocumentDetail: React.FC = () => {
             </div>
 
             {hasPreviewFile && (
-              <div className="doc-detail__viewer-tools" aria-label="문서 미리보기 도구">
+              <div
+                className="doc-detail__viewer-tools"
+                aria-label="문서 미리보기 도구"
+              >
                 <button
                   type="button"
                   onClick={() => setZoom((prev) => Math.max(prev - 10, 70))}
@@ -372,6 +439,7 @@ const DocumentDetail: React.FC = () => {
               <h2>문서 정보</h2>
               <p>분류 기준과 AI 추출 내용을 한 번에 확인합니다.</p>
             </div>
+
             <div className="doc-detail__mini-actions">
               <button
                 type="button"
@@ -381,6 +449,7 @@ const DocumentDetail: React.FC = () => {
               >
                 <Star size={16} fill={isFavorite ? "currentColor" : "none"} />
               </button>
+
               <button type="button" onClick={handleShare} title="공유">
                 <Share2 size={16} />
               </button>
@@ -440,6 +509,7 @@ const DocumentDetail: React.FC = () => {
                 <b>{activeCategory?.name ?? "-"}</b>
               )}
             </label>
+
             <p className="doc-detail__helper-text">
               카테고리를 바꾸면 추출 항목의 맥락이 달라질 수 있습니다.
             </p>
@@ -447,6 +517,7 @@ const DocumentDetail: React.FC = () => {
 
           <section className="doc-detail__form-section">
             <div className="doc-detail__section-title">기본 정보</div>
+
             <div className="doc-detail__field-grid doc-detail__field-grid--basic">
               <label className="doc-detail__field doc-detail__field--wide">
                 <span>문서명</span>
@@ -572,6 +643,7 @@ const DocumentDetail: React.FC = () => {
                 <div className="doc-detail__section-title">관리</div>
                 <p>알림과 태그를 간단히 확인합니다.</p>
               </div>
+
               <button
                 type="button"
                 className="doc-detail__text-button"
@@ -581,55 +653,59 @@ const DocumentDetail: React.FC = () => {
               </button>
             </div>
 
-            <div className="doc-detail__manage-grid">
-              <div className="doc-detail__manage-box">
-                <span>알림 설정</span>
-                {alerts.length === 0 ? (
-                  <p>설정된 알림이 없습니다.</p>
-                ) : (
-                  <div className="doc-detail__alert-list">
-                    {alerts.map((alert) => (
-                      <div key={alert.alert_id} className="doc-detail__alert-item">
-                        <Calendar size={14} />
-                        <div>
-                          <b>{alert.notify_date}</b>
-                          <small>{alert.reason}</small>
-                        </div>
-                        <Badge variant={alert.is_sent ? "success" : "default"}>
-                          {alert.is_sent ? "발송됨" : "대기"}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+            <div className="doc-detail__manage-block">
+              <div className="doc-detail__manage-label">알림 설정</div>
 
-              <div className="doc-detail__manage-box">
-                <span>태그</span>
-                {isEditing ? (
-                  <input
-                    className="doc-detail__tag-input"
-                    value={form.tagsText}
-                    placeholder="예: 계약서, 중요, 병원/약국"
-                    onChange={(event) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        tagsText: event.target.value,
-                      }))
-                    }
-                  />
-                ) : tagNames.length > 0 ? (
-                  <div className="doc-detail__tag-list">
-                    {tagNames.map((tag) => (
-                      <span key={tag} className="doc-detail__tag">
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <p>등록된 태그가 없습니다.</p>
-                )}
-              </div>
+              {alerts.length === 0 ? (
+                <p className="doc-detail__empty-text">
+                  설정된 알림이 없습니다.
+                </p>
+              ) : (
+                <div className="doc-detail__alert-list">
+                  {alerts.map((alert) => (
+                    <div
+                      key={alert.alert_id}
+                      className="doc-detail__alert-item"
+                    >
+                      <Calendar size={15} />
+                      <div>
+                        <b>{alert.notify_date}</b>
+                        <span>{alert.reason}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="doc-detail__manage-block">
+              <div className="doc-detail__manage-label">태그</div>
+
+              {isEditing ? (
+                <input
+                  className="doc-detail__tag-input"
+                  value={form.tagsText}
+                  placeholder="예: 계약서, 중요, 병원/약국"
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      tagsText: event.target.value,
+                    }))
+                  }
+                />
+              ) : tagNames.length > 0 ? (
+                <div className="doc-detail__tag-list">
+                  {tagNames.map((tag) => (
+                    <span key={tag} className="doc-detail__tag">
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="doc-detail__empty-text">
+                  등록된 태그가 없습니다.
+                </p>
+              )}
             </div>
           </section>
 

@@ -1,16 +1,19 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Star, Grid, List } from "lucide-react";
 import FilterChip from "../../components/common/FilterChip";
 import Select from "../../components/common/Select";
 import Badge from "../../components/common/Badge";
 import EmptyState from "../../components/common/EmptyState";
+import { documentService } from "../../services/documentService";
 import {
-  mockDocuments,
   mockDocumentCategories,
+  // mockDocumentTags,
+  // mockTags,
 } from "../../data/mockDocuments";
 import { filterDocuments } from "../../utils/filterUtils";
 import { formatDate, getDday } from "../../utils/formatDate";
+import type { Document } from "../../types/document";
 import type { AiStatus } from "../../types/common";
 import "./Documents.css";
 
@@ -37,13 +40,38 @@ const Documents: React.FC = () => {
   const [categoryId, setCategoryId] = useState<number | undefined>();
   const [sort, setSort] = useState("latest");
   const [viewMode, setViewMode] = useState<"card" | "list">("card");
+  const [allDocs, setAllDocs] = useState<Document[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const docs = filterDocuments(mockDocuments, query, categoryId);
+  useEffect(() => {
+    documentService
+      .getDocuments()
+      .then(setAllDocs)
+      .catch(() => setAllDocs([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const docs = filterDocuments(allDocs, query, categoryId);
 
   const sorted = [...docs].sort((a, b) => {
     if (sort === "latest") return b.created_at.localeCompare(a.created_at);
     return a.title.localeCompare(b.title, "ko");
   });
+
+  if (loading) {
+    return (
+      <div
+        className="documents"
+        style={{
+          padding: 48,
+          textAlign: "center",
+          color: "var(--color-muted)",
+        }}
+      >
+        문서를 불러오는 중...
+      </div>
+    );
+  }
 
   return (
     <div className="documents">
@@ -65,7 +93,8 @@ const Documents: React.FC = () => {
       </div>
 
       <p className="documents__policy-note">
-        계약서, 영수증, 병원/약국, 보증서/A·S, 기타 문서를 한 곳에서 확인할 수 있습니다.
+        계약서, 영수증, 병원/약국, 보증서/A·S, 기타 문서를 한 곳에서 확인할 수
+        있습니다.
       </p>
 
       <div className="documents__filters">

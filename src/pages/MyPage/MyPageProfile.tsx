@@ -5,7 +5,7 @@ import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
 import ProfilePhotoModal from "../../components/modal/ProfilePhotoModal";
 import PaymentMethodModal from "../../components/modal/PaymentMethodModal";
-import { mockCurrentUser } from "../../data/mockUsers";
+import { useUserStore } from "../../store/userStore";
 import { mockSubscription } from "../../data/mockPayments";
 import { formatDate } from "../../utils/formatDate";
 import { useToast } from "../../components/common/Toast";
@@ -14,19 +14,21 @@ import "./MyPage.css";
 type ReauthMethod = "password" | "pin";
 
 const MyPageProfile: React.FC = () => {
-  const user = mockCurrentUser;
+  const user = useUserStore((s) => s.user);
   const { showToast } = useToast();
   const [isReauthed, setIsReauthed] = useState(false);
   const [reauthMethod, setReauthMethod] = useState<ReauthMethod>("password");
   const [reauthValue, setReauthValue] = useState("");
   const [editNickname, setEditNickname] = useState(false);
-  const [nickname, setNickname] = useState(user.nickname);
+  const [nickname, setNickname] = useState(user?.nickname ?? "");
+
+  if (!user) return null;
   const [photoOpen, setPhotoOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
 
-  const storagePercent = Math.round(
-    (user.storage_used_bytes / user.storage_quota_bytes) * 100,
-  );
+  const storagePercent = user.storage_quota_bytes > 0
+    ? Math.round((user.storage_used_bytes / user.storage_quota_bytes) * 100)
+    : 0;
   const usedMB = (user.storage_used_bytes / 1024 / 1024).toFixed(0);
   const quotaGB = (user.storage_quota_bytes / 1024 / 1024 / 1024).toFixed(0);
   const isReauthValid =

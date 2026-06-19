@@ -9,6 +9,7 @@ import {
   getPasswordRuleState,
   PASSWORD_RULE_MESSAGE,
 } from "../../utils/authValidation";
+import { authService } from "../../services/authService";
 import "./Signup.css";
 
 type PinStep = "input" | "confirm" | "done";
@@ -20,6 +21,7 @@ const Signup: React.FC = () => {
   const [verCode, setVerCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
+  const [emailVerificationId, setEmailVerificationId] = useState("");
   const [seconds, setSeconds] = useState(0);
   const [password, setPassword] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
@@ -46,18 +48,29 @@ const Signup: React.FC = () => {
     return () => window.clearInterval(timerId);
   }, [codeSent, emailVerified, seconds]);
 
-  const handleSendCode = () => {
-    setCodeSent(true);
-    setEmailVerified(false);
-    setSeconds(180);
-    setVerCode("");
-    showToast("인증번호가 전송되었습니다.", "success");
+  const handleSendCode = async () => {
+    try {
+      const res = await authService.sendEmailVerification(email, "SIGNUP");
+      setEmailVerificationId(res.data.emailVerificationId);
+      setCodeSent(true);
+      setEmailVerified(false);
+      setSeconds(180);
+      setVerCode("");
+      showToast("인증번호가 전송되었습니다.", "success");
+    } catch {
+      showToast("인증번호 전송에 실패했습니다.", "error");
+    }
   };
 
-  const handleVerifyCode = () => {
+  const handleVerifyCode = async () => {
     if (verCode.length !== 6 || seconds <= 0) return;
-    setEmailVerified(true);
-    showToast("이메일 인증이 완료되었습니다.", "success");
+    try {
+      await authService.verifyEmail(emailVerificationId, verCode);
+      setEmailVerified(true);
+      showToast("이메일 인증이 완료되었습니다.", "success");
+    } catch {
+      showToast("인증번호가 올바르지 않습니다.", "error");
+    }
   };
 
   const handlePinInput = (value: string) => {
@@ -91,10 +104,21 @@ const Signup: React.FC = () => {
     termsAgreed &&
     privacyAgreed;
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     if (!isValid) return;
-    showToast("회원가입이 완료되었습니다.", "success");
-    navigate("/login");
+    try {
+      await authService.signup({
+        email,
+        password,
+        nickname,
+        pinNumber: pin,
+        emailVerificationId,
+      });
+      showToast("회원가입이 완료되었습니다.", "success");
+      navigate("/login");
+    } catch {
+      showToast("회원가입에 실패했습니다.", "error");
+    }
   };
 
   return (
