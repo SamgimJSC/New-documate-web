@@ -30,7 +30,6 @@ const AppRouter: React.FC = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-
       <Route element={<MainLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/upload" element={<UploadPage />} />
@@ -44,14 +43,14 @@ const AppRouter: React.FC = () => {
         <Route path="/finance" element={<Finance />} />
         <Route path="/finance/report" element={<FinanceReport />} />
         <Route path="/subscription" element={<MyPagePlan />} />
-      </Route>
 
-      <Route element={<MyPageLayout />}>
-        <Route path="/mypage" element={<MyPageHome />} />
-        <Route path="/mypage/profile" element={<MyPageProfile />} />
-        <Route path="/mypage/settings" element={<MyPageSettings />} />
-        <Route path="/mypage/plan" element={<MyPagePlan />} />
-        <Route path="/mypage/withdraw" element={<MyPageWithdraw />} />
+        <Route element={<MyPageLayout />}>
+          <Route path="/mypage" element={<MyPageHome />} />
+          <Route path="/mypage/profile" element={<MyPageProfile />} />
+          <Route path="/mypage/settings" element={<MyPageSettings />} />
+          <Route path="/mypage/plan" element={<MyPagePlan />} />
+          <Route path="/mypage/withdraw" element={<MyPageWithdraw />} />
+        </Route>
       </Route>
     </Routes>
   );

@@ -831,7 +831,6 @@
   }
 }
 
-
 /* =========================================
    MyPage design-system final tuning
    메인 앱 카드 톤과 맞춤: 약한 그림자, 낮은 카드, 민트/네이비 통일
@@ -1058,5 +1057,88 @@
 @media (max-width: 1100px) {
   .mypage-section.mypage-home {
     max-width: 100%;
+  }
+}
+/* =========================================
+   MyPage Home layout retuning
+   - 중앙 몰림 개선
+   - 대시보드처럼 왼쪽 기준 정렬
+   - 카드 높이/간격 살짝 정돈
+========================================= */
+
+.mypage-section.mypage-home {
+  width: min(100%, 1120px);
+  max-width: 1120px;
+  margin: 0;
+  gap: 18px;
+}
+
+.mypage-home__header {
+  margin-bottom: 2px;
+}
+
+.mypage-home__hero {
+  min-height: 112px;
+  padding: 20px 24px;
+  border-radius: 20px;
+}
+
+.mypage-home__avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+}
+
+.mypage-home__name-row h3 {
+  font-size: 20px;
+}
+
+.mypage-home__desc {
+  font-size: 13px;
+}
+
+.mypage-home__section-heading {
+  margin-bottom: 8px;
+}
+
+.mypage-home__status-grid {
+  gap: 12px;
+}
+
+.mypage-home__status-card {
+  min-height: 116px;
+  padding: 16px;
+  border-radius: 18px;
+}
+
+.mypage-home__status-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+}
+
+.mypage-home__status-content strong {
+  font-size: 19px;
+}
+
+.mypage-home__menu-grid {
+  gap: 12px;
+}
+
+.mypage-home__menu-card {
+  min-height: 72px;
+  padding: 15px 16px;
+  border-radius: 17px;
+}
+
+.mypage-home__security-note {
+  padding: 14px 16px;
+  border-radius: 16px;
+}
+
+/* 화면이 너무 넓을 때도 오른쪽으로 과하게 늘어나지 않게 */
+@media (min-width: 1440px) {
+  .mypage-section.mypage-home {
+    max-width: 1060px;
   }
 }
