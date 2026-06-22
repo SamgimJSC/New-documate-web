@@ -1,11 +1,25 @@
 import { useMemo, useRef, useState } from "react";
 import type { ChangeEvent, DragEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import type { DragEndEvent } from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { GripVertical } from "lucide-react";
 import { uploadCategoryGuide } from "../../data/uploadCategories";
 import { AnalysisStartModal } from "../../components/upload/AnalysisStartModal";
-import {
-  uploadLocalService,
-} from "../../services/uploadLocalService";
+import { uploadLocalService } from "../../services/uploadLocalService";
 import { uploadService } from "../../services/uploadService";
 import { AnalysisStartedModal } from "../../components/upload/AnalysisStartedModal";
 import {
@@ -35,6 +49,58 @@ type StudioFile = {
 
 const makeId = () => `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
 
+type SortableFileRowProps = {
+  file: StudioFile;
+  index: number;
+  onRemove: (id: string) => void;
+};
+
+function SortableFileRow({ file, index, onRemove }: SortableFileRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: file.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 1 : undefined,
+    position: isDragging ? ("relative" as const) : undefined,
+  };
+
+  return (
+    <article ref={setNodeRef} style={style} className="upload-file-row">
+      <div
+        className="upload-file-row__drag-handle"
+        {...attributes}
+        {...listeners}
+        aria-label="드래그하여 순서 변경"
+      >
+        <GripVertical size={16} />
+      </div>
+      <div className="upload-file-row__name">
+        <b>{file.fileName}</b>
+        <small>#{index + 1}</small>
+      </div>
+      <span>{file.sizeMb} MB</span>
+      <span>{formatUploadedAt(file.uploadedAt)}</span>
+      {file.uploadStatus === "uploading" && <em>업로드 중...</em>}
+      {file.uploadStatus === "uploaded" && <em>업로드 완료</em>}
+      {file.uploadStatus === "failed" && <em>업로드 실패</em>}
+      <div className="upload-file-row__actions">
+        <button type="button" onClick={() => onRemove(file.id)}>
+          삭제
+        </button>
+      </div>
+    </article>
+  );
+}
+
 export function UploadPage() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -50,6 +116,10 @@ export function UploadPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [tempDocumentId, setTempDocumentId] = useState<string | null>(null);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+  );
+
   const allUploaded =
     studioFiles.length > 0 &&
     studioFiles.every((f) => f.uploadStatus === "uploaded");
@@ -58,6 +128,17 @@ export function UploadPage() {
     () => studioFiles.reduce((sum, file) => sum + file.sizeMb, 0),
     [studioFiles],
   );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setStudioFiles((current) => {
+        const oldIndex = current.findIndex((f) => f.id === active.id);
+        const newIndex = current.findIndex((f) => f.id === over.id);
+        return arrayMove(current, oldIndex, newIndex);
+      });
+    }
+  };
 
   const addFiles = async (fileList: FileList | File[]) => {
     const errors: string[] = [];
@@ -314,6 +395,7 @@ export function UploadPage() {
 
                 <div className="upload-file-list" aria-label="업로드 파일 목록">
                   <div className="upload-file-list__head">
+                    <span className="upload-file-list__head-handle" />
                     <span>파일명</span>
                     <span>크기</span>
                     <span>업로드 시간</span>
@@ -321,27 +403,25 @@ export function UploadPage() {
                     <span>관리</span>
                   </div>
 
-                  {studioFiles.map((file, index) => (
-                    <article key={file.id} className="upload-file-row">
-                      <div className="upload-file-row__name">
-                        <b>{file.fileName}</b>
-                        <small>#{index + 1}</small>
-                      </div>
-                      <span>{file.sizeMb} MB</span>
-                      <span>{formatUploadedAt(file.uploadedAt)}</span>
-                      {file.uploadStatus === "uploading" && <em>업로드 중...</em>}
-                      {file.uploadStatus === "uploaded" && <em>업로드 완료</em>}
-                      {file.uploadStatus === "failed" && <em>업로드 실패</em>}
-                      <div className="upload-file-row__actions">
-                        <button
-                          type="button"
-                          onClick={() => removeFile(file.id)}
-                        >
-                          삭제
-                        </button>
-                      </div>
-                    </article>
-                  ))}
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={studioFiles.map((f) => f.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {studioFiles.map((file, index) => (
+                        <SortableFileRow
+                          key={file.id}
+                          file={file}
+                          index={index}
+                          onRemove={removeFile}
+                        />
+                      ))}
+                    </SortableContext>
+                  </DndContext>
                 </div>
 
                 <div className="upload-ready-panel__actions">

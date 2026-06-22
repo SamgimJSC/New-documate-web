@@ -73,4 +73,35 @@ export const documentService = {
     const res = await api.get<ApiResponse<DocumentApiItem>>(`/documents/${id}`);
     return mapDocument(res.data.data);
   },
+
+  async updateCategory(
+    categoryId: number,
+    body: {
+      name?: string;
+      defaultNotifyOffsetDays?: number;
+      isSecured?: boolean;
+      description?: string;
+    },
+  ) {
+    const res = await api.patch(`/documents/categories/${categoryId}`, body);
+    return res.data.data;
+  },
+
+  async updateDocument(
+    id: string,
+    body: {
+      title?: string;
+      categoryId?: number;
+      issueDate?: string;
+      expiryDate?: string;
+      renewalDate?: string;
+      extractedData?: Record<string, string>;
+    },
+  ): Promise<Document> {
+    const res = await api.patch<ApiResponse<DocumentApiItem>>(
+      `/documents/${id}`,
+      body,
+    );
+    return mapDocument(res.data.data);
+  },
 };
