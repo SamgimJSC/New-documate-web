@@ -3,7 +3,6 @@ import type { ChangeEvent, DragEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { uploadCategoryGuide } from "../../data/uploadCategories";
 import { AnalysisStartModal } from "../../components/upload/AnalysisStartModal";
-import { AnalysisStartedModal } from "../../components/upload/AnalysisStartedModal";
 import { uploadLocalService } from "../../services/uploadLocalService";
 import {
   ACCEPTED_UPLOAD_TYPES,
@@ -38,8 +37,6 @@ export function UploadPage() {
   const [dragActive, setDragActive] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
-  const [showStartedModal, setShowStartedModal] = useState(false);
-  const [startedFileCount, setStartedFileCount] = useState(0);
   const [toastMessage, setToastMessage] = useState("");
 
   const totalSizeMb = useMemo(
@@ -115,6 +112,20 @@ export function UploadPage() {
     addFiles(event.dataTransfer.files);
   };
 
+  const moveFile = (fileId: string, direction: "up" | "down") => {
+    setStudioFiles((current) => {
+      const index = current.findIndex((file) => file.id === fileId);
+      const target = direction === "up" ? index - 1 : index + 1;
+
+      if (index < 0 || target < 0 || target >= current.length) {
+        return current;
+      }
+
+      const next = [...current];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  };
 
   const removeFile = (fileId: string) => {
     setStudioFiles((current) => {
@@ -160,13 +171,15 @@ export function UploadPage() {
     const currentItems = uploadLocalService.readProcessItems();
     uploadLocalService.writeProcessItems([...nextItems, ...currentItems]);
 
-    setStartedFileCount(studioFiles.length);
     setStudioFiles([]);
     setUploadError("");
-    setToastMessage("");
     setShowAnalysisModal(false);
-    setShowStartedModal(true);
     setView("studio");
+    setToastMessage(
+      "AI 분석을 시작했어요. 상단바 처리 센터에서 상태를 확인할 수 있어요.",
+    );
+
+    window.setTimeout(() => setToastMessage(""), 2400);
   };
 
   return (
@@ -225,78 +238,89 @@ export function UploadPage() {
               </div>
             )}
 
-            {view === "uploaded" && (
-              <div className="upload-ready-panel">
-                <div className="upload-ready-panel__notice">
-                  <span>✓</span>
-                  <div>
-                    <strong>업로드가 완료되었습니다.</strong>
-                    <p>업로드된 파일을 확인한 뒤 AI 분석을 시작해 주세요.</p>
-                  </div>
+            <div className="upload-ready-panel">
+              <div className="upload-ready-panel__notice">
+                <span>✓</span>
+                <div>
+                  <strong>업로드가 완료되었습니다.</strong>
+                  <p>파일 순서를 확인한 뒤 AI 분석을 시작해 주세요.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  파일 추가
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  multiple
+                  onChange={handleFileChange}
+                />
+              </div>
+
+              <div className="upload-file-list" aria-label="업로드 파일 목록">
+                <div className="upload-file-list__head">
+                  <span>파일명</span>
+                  <span>크기</span>
+                  <span>업로드 시간</span>
+                  <span>상태</span>
+                  <span>관리</span>
+                </div>
+
+                {studioFiles.map((file, index) => (
+                  <article key={file.id} className="upload-file-row">
+                    <div className="upload-file-row__name">
+                      <b>{file.fileName}</b>
+                      <small>#{index + 1}</small>
+                    </div>
+                    <span>{file.sizeMb} MB</span>
+                    <span>{formatUploadedAt(file.uploadedAt)}</span>
+                    <em>업로드 완료</em>
+                    <div className="upload-file-row__actions">
+                      <button
+                        type="button"
+                        onClick={() => moveFile(file.id, "up")}
+                        disabled={index === 0}
+                        aria-label="위로 이동"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveFile(file.id, "down")}
+                        disabled={index === studioFiles.length - 1}
+                        aria-label="아래로 이동"
+                      >
+                        ↓
+                      </button>
+                      <button type="button" onClick={() => removeFile(file.id)}>
+                        삭제
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              <div className="upload-ready-panel__actions">
+                <div>
+                  <strong>
+                    {studioFiles.length}개 파일이 분석 대기 중입니다.
+                  </strong>
+                  <span>파일 순서를 확인한 뒤 AI 분석을 시작해 주세요.</span>
+                </div>
+                <div className="upload-ready-panel__action-buttons">
                   <button
                     type="button"
-                    onClick={() => fileInputRef.current?.click()}
+                    className="upload-ready-panel__clear"
+                    onClick={clearFiles}
                   >
-                    파일 추가
+                    전체 삭제
                   </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/png,image/jpeg"
-                    multiple
-                    onChange={handleFileChange}
-                  />
-                </div>
-
-                <div className="upload-file-list" aria-label="업로드 파일 목록">
-                  <div className="upload-file-list__head">
-                    <span>파일명</span>
-                    <span>크기</span>
-                    <span>업로드 시간</span>
-                    <span>상태</span>
-                    <span>관리</span>
-                  </div>
-
-                  {studioFiles.map((file, index) => (
-                    <article key={file.id} className="upload-file-row">
-                      <div className="upload-file-row__name">
-                        <b>{file.fileName}</b>
-                        <small>#{index + 1}</small>
-                      </div>
-                      <span>{file.sizeMb} MB</span>
-                      <span>{formatUploadedAt(file.uploadedAt)}</span>
-                      <em>업로드 완료</em>
-                      <div className="upload-file-row__actions">
-                        <button
-                          type="button"
-                          onClick={() => removeFile(file.id)}
-                        >
-                          삭제
-                        </button>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-
-                <div className="upload-ready-panel__actions">
-                  <div>
-                    <strong>
-                      {studioFiles.length}개 파일이 분석 대기 중입니다.
-                    </strong>
-                    <span>업로드된 파일을 확인한 뒤 AI 분석을 시작해 주세요.</span>
-                  </div>
-                  <div className="upload-ready-panel__action-buttons">
-                    <button
-                      type="button"
-                      className="upload-ready-panel__clear"
-                      onClick={clearFiles}
-                    >
-                      전체 삭제
-                    </button>
-                  </div>
                 </div>
               </div>
-            )}
+            </div>
 
             {uploadError && <p className="upload-page__error">{uploadError}</p>}
           </section>
@@ -392,14 +416,6 @@ export function UploadPage() {
           fileCount={studioFiles.length}
           onCancel={() => setShowAnalysisModal(false)}
           onConfirm={startAnalysis}
-        />
-      )}
-
-      {showStartedModal && (
-        <AnalysisStartedModal
-          fileCount={startedFileCount}
-          onStay={() => setShowStartedModal(false)}
-          onMoveCenter={() => navigate("/processing-center")}
         />
       )}
     </section>

@@ -1,23 +1,33 @@
 import React from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { CreditCard, Home, LogOut, Settings, User, UserX } from "lucide-react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Bell, ChevronLeft, LogOut, UserCircle } from "lucide-react";
 import "./MyPageLayout.css";
 
-const myPageNav = [
-  { to: "/mypage", icon: <Home size={16} />, label: "프로필 메인", end: true },
-  { to: "/mypage/profile", icon: <User size={16} />, label: "회원정보 변경" },
-  { to: "/mypage/settings", icon: <Settings size={16} />, label: "설정" },
-  { to: "/mypage/plan", icon: <CreditCard size={16} />, label: "요금제 관리" },
-  {
-    to: "/mypage/withdraw",
-    icon: <UserX size={16} />,
-    label: "회원탈퇴",
-    danger: true,
-  },
-];
+const PAGE_TITLES: Record<string, string> = {
+  "/mypage": "마이페이지",
+  "/mypage/profile": "회원정보 변경",
+  "/mypage/settings": "설정",
+  "/mypage/plan": "요금제 관리",
+  "/mypage/withdraw": "회원탈퇴",
+};
+
+const PAGE_SUBTITLES: Record<string, string> = {
+  "/mypage": "계정 상태와 주요 설정을 간단하게 확인해보세요.",
+  "/mypage/profile": "닉네임, 프로필 사진, 계정 정보를 수정할 수 있어요.",
+  "/mypage/settings": "알림, 보안, 동의사항을 관리할 수 있어요.",
+  "/mypage/plan": "현재 요금제와 결제 정보를 확인할 수 있어요.",
+  "/mypage/withdraw": "회원탈퇴 전 안내사항을 확인해주세요.",
+};
 
 const MyPageLayout: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isHome = location.pathname === "/mypage";
+  const pageTitle = PAGE_TITLES[location.pathname] ?? "마이페이지";
+  const pageSubtitle =
+    PAGE_SUBTITLES[location.pathname] ??
+    "계정 정보를 확인하고 설정을 관리할 수 있어요.";
 
   const handleLogout = () => {
     localStorage.removeItem("documate_access_token");
@@ -28,48 +38,73 @@ const MyPageLayout: React.FC = () => {
 
   return (
     <div className="mypage-layout">
-      <aside className="mypage-sidebar">
-        <div className="mypage-sidebar__brand">
-          <span>D</span>
-          <div>
-            <strong>DocuMate</strong>
-            <p>마이페이지</p>
-          </div>
-        </div>
+      <header className="mypage-topbar">
+        <button
+          type="button"
+          className="mypage-topbar__brand"
+          onClick={() => navigate("/dashboard")}
+          aria-label="대시보드로 이동"
+        >
+          <span className="mypage-topbar__logo">D</span>
+          <span className="mypage-topbar__brand-text">DocuMate</span>
+        </button>
 
-        <nav className="mypage-sidebar__nav" aria-label="마이페이지 메뉴">
-          {myPageNav.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) =>
-                `mypage-sidebar__item${isActive ? " mypage-sidebar__item--active" : ""}${
-                  item.danger ? " mypage-sidebar__item--danger" : ""
-                }`
-              }
-            >
-              <span className="mypage-sidebar__icon">{item.icon}</span>
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="mypage-sidebar__footer">
+        <div className="mypage-topbar__actions">
           <button
             type="button"
-            className="mypage-sidebar__logout"
-            onClick={handleLogout}
+            className="mypage-topbar__icon-btn"
+            aria-label="알림"
           >
-            <LogOut size={16} />
-            로그아웃
+            <Bell size={20} />
           </button>
-          <p>로그아웃 클릭 시 바로 로그인 화면으로 이동합니다.</p>
-        </div>
-      </aside>
 
-      <main className="mypage-content">
-        <Outlet />
+          <button
+            type="button"
+            className="mypage-topbar__profile-btn"
+            onClick={() => navigate("/mypage")}
+          >
+            <UserCircle size={22} />
+            <span>내 계정</span>
+          </button>
+        </div>
+      </header>
+
+      <main className="mypage-shell">
+        <div className="mypage-shell__inner">
+          <section className="mypage-page-head">
+            <div className="mypage-page-head__left">
+              {!isHome && (
+                <button
+                  type="button"
+                  className="mypage-back-btn"
+                  onClick={() => navigate("/mypage")}
+                >
+                  <ChevronLeft size={18} />
+                  마이페이지
+                </button>
+              )}
+
+              <div>
+                <p className="mypage-page-head__eyebrow">My Page</p>
+                <h1 className="mypage-page-head__title">{pageTitle}</h1>
+                <p className="mypage-page-head__desc">{pageSubtitle}</p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="mypage-logout-btn"
+              onClick={handleLogout}
+            >
+              <LogOut size={16} />
+              로그아웃
+            </button>
+          </section>
+
+          <div className="mypage-content">
+            <Outlet />
+          </div>
+        </div>
       </main>
     </div>
   );
