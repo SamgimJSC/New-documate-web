@@ -783,7 +783,7 @@ body:has(.upload-page) button[class*="fab"] {
 ========================================= */
 
 .upload-file-list {
-  --upload-file-table-columns: minmax(0, 1fr) 96px 152px 118px 64px;
+  --upload-file-table-columns: 28px minmax(0, 1fr) 96px 152px 118px 64px;
   gap: 10px;
 }
 
@@ -803,14 +803,38 @@ body:has(.upload-page) button[class*="fab"] {
   padding: 13px 14px !important;
 }
 
+/* 드래그 핸들 */
+.upload-file-row__drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  cursor: grab;
+  touch-action: none;
+  border-radius: 4px;
+}
+
+.upload-file-row__drag-handle:active {
+  cursor: grabbing;
+}
+
+.upload-file-row__drag-handle:hover {
+  color: #475569;
+}
+
+/* 헤더 드래그 핸들 자리 (빈 컬럼) */
+.upload-file-list__head-handle {
+  display: block;
+}
+
 /* 파일명만 왼쪽, 나머지는 각 컬럼 중앙 기준 */
-.upload-file-list__head span:first-child,
+.upload-file-list__head span:nth-child(2),
 .upload-file-row__name {
   justify-self: stretch;
   text-align: left;
 }
 
-.upload-file-list__head span:nth-child(n + 2),
+.upload-file-list__head span:nth-child(n + 3),
 .upload-file-row > span,
 .upload-file-row em,
 .upload-file-row__actions {
@@ -853,6 +877,10 @@ body:has(.upload-page) button[class*="fab"] {
 @media (max-width: 760px) {
   .upload-file-list {
     --upload-file-table-columns: 1fr;
+  }
+
+  .upload-file-row__drag-handle {
+    display: none;
   }
 
   .upload-file-row__actions {
