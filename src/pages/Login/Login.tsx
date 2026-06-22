@@ -3,6 +3,9 @@ import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import Input from "../../components/common/Input";
 import Button from "../../components/common/Button";
+import { authService } from "../../services/authService";
+import { userService } from "../../services/userService";
+import { useUserStore } from "../../store/userStore";
 import "./Login.css";
 
 const Login: React.FC = () => {
@@ -13,15 +16,19 @@ const Login: React.FC = () => {
   const [error, setError] = useState("");
   const [remember] = useState(true);
 
-  const handleLogin = () => {
+  const setUser = useUserStore((s) => s.setUser);
+
+  const handleLogin = async () => {
     if (!email || !password) return;
     setError("");
-    localStorage.setItem(
-      "documate_access_token",
-      "demo-jwt-token-without-expiry",
-    );
-    localStorage.setItem("documate_login_device", window.navigator.userAgent);
-    navigate("/dashboard");
+    try {
+      await authService.login(email, password);
+      const user = await userService.getMe();
+      setUser(user);
+      navigate("/dashboard");
+    } catch {
+      setError("이메일 또는 비밀번호가 올바르지 않습니다.");
+    }
   };
 
   return (

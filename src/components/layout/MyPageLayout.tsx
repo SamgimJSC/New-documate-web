@@ -1,6 +1,5 @@
 import React from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Bell, ChevronLeft, LogOut, UserCircle } from "lucide-react";
 import "./MyPageLayout.css";
 
 const PAGE_TITLES: Record<string, string> = {
@@ -43,7 +42,6 @@ const MyPageLayout: React.FC = () => {
           type="button"
           className="mypage-topbar__brand"
           onClick={() => navigate("/dashboard")}
-          aria-label="대시보드로 이동"
         >
           <span className="mypage-topbar__logo">D</span>
           <span className="mypage-topbar__brand-text">DocuMate</span>
@@ -55,7 +53,7 @@ const MyPageLayout: React.FC = () => {
             className="mypage-topbar__icon-btn"
             aria-label="알림"
           >
-            <Bell size={20} />
+            🔔
           </button>
 
           <button
@@ -63,7 +61,7 @@ const MyPageLayout: React.FC = () => {
             className="mypage-topbar__profile-btn"
             onClick={() => navigate("/mypage")}
           >
-            <UserCircle size={22} />
+            <span>👤</span>
             <span>내 계정</span>
           </button>
         </div>
@@ -79,8 +77,7 @@ const MyPageLayout: React.FC = () => {
                   className="mypage-back-btn"
                   onClick={() => navigate("/mypage")}
                 >
-                  <ChevronLeft size={18} />
-                  마이페이지
+                  ← 마이페이지
                 </button>
               )}
 
@@ -96,7 +93,6 @@ const MyPageLayout: React.FC = () => {
               className="mypage-logout-btn"
               onClick={handleLogout}
             >
-              <LogOut size={16} />
               로그아웃
             </button>
           </section>
