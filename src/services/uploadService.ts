@@ -40,6 +40,13 @@ export const uploadService = {
     return res.data.data;
   },
 
+  async reorder(
+    tempDocumentId: string,
+    files: Array<{ id: string; pageNo: number }>,
+  ): Promise<void> {
+    await api.patch(`/upload/${tempDocumentId}/reorder`, { files });
+  },
+
   async requestAi(
     tempDocumentId: string,
     files: Array<{ id: string; pageNo: number }>,

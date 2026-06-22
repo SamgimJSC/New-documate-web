@@ -1,5 +1,5 @@
 import { api } from "./api";
-import type { Document } from "../types/document";
+import type { Document, DocumentCategory, DocumentTagItem } from "../types/document";
 
 interface ApiResponse<T> {
   data: T;
@@ -28,6 +28,7 @@ interface DocumentApiItem {
   createdAt: string;
   updatedAt: string;
   isDeleted: boolean;
+  documentTags?: Array<{ tag: { tagId: string; name: string } }>;
 }
 
 interface DocumentListData {
@@ -61,9 +62,31 @@ const mapDocument = (raw: DocumentApiItem): Document => ({
   created_at: raw.createdAt,
   updated_at: raw.updatedAt,
   is_deleted: raw.isDeleted ? "Y" : "N",
+  tags: (raw.documentTags ?? []).map(
+    (t): DocumentTagItem => ({ tag_id: t.tag.tagId, name: t.tag.name }),
+  ),
 });
 
 export const documentService = {
+  async getCategories(): Promise<DocumentCategory[]> {
+    const res = await api.get<ApiResponse<Array<{
+      categoryId: number;
+      code: string;
+      name: string;
+      defaultNotifyOffsetDays: number;
+      isSecured: boolean;
+      description?: string;
+    }>>>("/documents/categories");
+    return res.data.data.map((c) => ({
+      category_id: c.categoryId,
+      code: c.code,
+      name: c.name,
+      default_notify_offset_days: c.defaultNotifyOffsetDays,
+      is_secured: c.isSecured,
+      description: c.description,
+    }));
+  },
+
   async getDocuments(): Promise<Document[]> {
     const res = await api.get<ApiResponse<DocumentListData>>("/documents");
     return res.data.data.items.map(mapDocument);
@@ -103,5 +126,25 @@ export const documentService = {
       body,
     );
     return mapDocument(res.data.data);
+  },
+
+  async toggleFavorite(id: string, isFavorite: boolean): Promise<void> {
+    await api.patch(`/documents/${id}/favorite`, { isFavorite });
+  },
+
+  async addTag(id: string, name: string): Promise<DocumentTagItem> {
+    const res = await api.post<ApiResponse<{ documentId: string; tagId: string }>>(
+      `/documents/${id}/tags`,
+      { name },
+    );
+    return { tag_id: res.data.data.tagId, name };
+  },
+
+  async removeTag(id: string, tagId: string): Promise<void> {
+    await api.delete(`/documents/${id}/tags/${tagId}`);
+  },
+
+  async deleteDocument(id: string): Promise<void> {
+    await api.delete(`/documents/${id}`);
   },
 };

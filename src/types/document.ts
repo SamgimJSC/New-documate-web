@@ -14,6 +14,11 @@ export interface DocumentCategory {
   description?: string;
 }
 
+export interface DocumentTagItem {
+  tag_id: string;
+  name: string;
+}
+
 export interface Document {
   document_id: string;
   user_id: string;
@@ -37,6 +42,7 @@ export interface Document {
   created_at: string;
   updated_at: string;
   is_deleted: YnFlag;
+  tags: DocumentTagItem[];
 }
 
 export interface Tag {

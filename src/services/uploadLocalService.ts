@@ -22,6 +22,7 @@ export type UploadProcessItem = {
   fileType: DocumentFileType;
   fileSizeBytes: number;
   sizeMb: number;
+  pageCount: number;
   uploadedAt: string;
   status: UploadProcessStatus;
   category: UploadDocumentCategory;
@@ -216,6 +217,7 @@ export const uploadLocalService = {
     fileName: string;
     sizeMb: number;
     fileSizeBytes: number;
+    pageCount?: number;
     category?: UploadDocumentCategory;
     extractedFields?: UploadExtractedField[];
     status?: UploadProcessStatus;
@@ -230,6 +232,7 @@ export const uploadLocalService = {
       fileType,
       fileSizeBytes: input.fileSizeBytes,
       sizeMb: input.sizeMb,
+      pageCount: input.pageCount ?? 1,
       uploadedAt: now(),
       status: input.status ?? "waitingSave",
       category: input.category ?? "기타",

@@ -6,11 +6,7 @@ import Select from "../../components/common/Select";
 import Badge from "../../components/common/Badge";
 import EmptyState from "../../components/common/EmptyState";
 import { documentService } from "../../services/documentService";
-import {
-  mockDocumentCategories,
-  // mockDocumentTags,
-  // mockTags,
-} from "../../data/mockDocuments";
+import { useCategories } from "../../hooks/useCategories";
 import { filterDocuments } from "../../utils/filterUtils";
 import { formatDate, getDday } from "../../utils/formatDate";
 import type { Document } from "../../types/document";
@@ -36,6 +32,7 @@ const AI_STATUS_VARIANT: Record<
 
 const Documents: React.FC = () => {
   const navigate = useNavigate();
+  const categories = useCategories();
   const [query, setQuery] = useState("");
   const [categoryId, setCategoryId] = useState<number | undefined>();
   const [sort, setSort] = useState("latest");
@@ -103,7 +100,7 @@ const Documents: React.FC = () => {
           selected={!categoryId}
           onClick={() => setCategoryId(undefined)}
         />
-        {mockDocumentCategories.map((c) => (
+        {categories.map((c) => (
           <FilterChip
             key={c.category_id}
             label={c.name}
@@ -151,7 +148,7 @@ const Documents: React.FC = () => {
       ) : viewMode === "card" ? (
         <div className="documents__card-grid">
           {sorted.map((doc) => {
-            const category = mockDocumentCategories.find(
+            const category = categories.find(
               (c) => c.category_id === doc.category_id,
             );
             return (
@@ -207,7 +204,7 @@ const Documents: React.FC = () => {
             <span>업로드일</span>
           </div>
           {sorted.map((doc) => {
-            const category = mockDocumentCategories.find(
+            const category = categories.find(
               (c) => c.category_id === doc.category_id,
             );
             return (
