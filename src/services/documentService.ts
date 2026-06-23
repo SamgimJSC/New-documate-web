@@ -1,5 +1,9 @@
 import { api } from "./api";
-import type { Document, DocumentCategory, DocumentTagItem } from "../types/document";
+import type {
+  Document,
+  DocumentCategory,
+  DocumentTagItem,
+} from "../types/document";
 
 interface ApiResponse<T> {
   data: T;
@@ -69,14 +73,18 @@ const mapDocument = (raw: DocumentApiItem): Document => ({
 
 export const documentService = {
   async getCategories(): Promise<DocumentCategory[]> {
-    const res = await api.get<ApiResponse<Array<{
-      categoryId: number;
-      code: string;
-      name: string;
-      defaultNotifyOffsetDays: number;
-      isSecured: boolean;
-      description?: string;
-    }>>>("/documents/categories");
+    const res = await api.get<
+      ApiResponse<
+        Array<{
+          categoryId: number;
+          code: string;
+          name: string;
+          defaultNotifyOffsetDays: number;
+          isSecured: boolean;
+          description?: string;
+        }>
+      >
+    >("/documents/categories");
     return res.data.data.map((c) => ({
       category_id: c.categoryId,
       code: c.code,
@@ -133,10 +141,9 @@ export const documentService = {
   },
 
   async addTag(id: string, name: string): Promise<DocumentTagItem> {
-    const res = await api.post<ApiResponse<{ documentId: string; tagId: string }>>(
-      `/documents/${id}/tags`,
-      { name },
-    );
+    const res = await api.post<
+      ApiResponse<{ documentId: string; tagId: string }>
+    >(`/documents/${id}/tags`, { name });
     return { tag_id: res.data.data.tagId, name };
   },
 

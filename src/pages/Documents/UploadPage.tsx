@@ -293,6 +293,7 @@ export function UploadPage() {
           pageCount: studioFiles.length,
           status: "analyzing",
           savedRecordId: confirmedId,
+          uploadedFileIds: uploadedFiles,
         }),
       ]);
 

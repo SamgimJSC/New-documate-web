@@ -6,6 +6,9 @@ import {
   type UploadProcessStatus,
 } from "../../services/uploadLocalService";
 import { uploadService } from "../../services/uploadService";
+import { documentService } from "../../services/documentService";
+import { useCategories } from "../../hooks/useCategories";
+import type { UploadDocumentCategory } from "../../types/upload";
 import {
   formatUploadedAt,
   getMoveButtonLabel,
@@ -58,6 +61,7 @@ const getStatusCardClass = (tab: ProcessTab, activeTab: ProcessTab) => {
 
 export function ProcessingCenterPage() {
   const navigate = useNavigate();
+  const categories = useCategories();
 
   const [processItems, setProcessItems] = useState<UploadProcessItem[]>(() =>
     uploadLocalService.readProcessItems(),
@@ -104,12 +108,39 @@ export function ProcessingCenterPage() {
             if (!found) return;
 
             if (found.aiStatus === "DONE") {
-              updateItem(item.id, {
-                status: "completed",
-                progress: 100,
-                savedTarget: "documents",
-                memo: "AI 분석이 완료되어 디지털 캐비닛에 저장되었습니다.",
-              });
+              documentService
+                .getDocuments()
+                .then((docs) => {
+                  const sorted = [...docs].sort((a, b) =>
+                    b.created_at.localeCompare(a.created_at),
+                  );
+                  const matched =
+                    sorted.find((d) => d.file_name === item.fileName) ?? sorted[0];
+
+                  let category: UploadDocumentCategory = "기타";
+                  if (matched) {
+                    const cat = categories.find(
+                      (c) => c.category_id === matched.category_id,
+                    );
+                    if (cat) category = cat.name as UploadDocumentCategory;
+                  }
+
+                  updateItem(item.id, {
+                    status: "completed",
+                    progress: 100,
+                    savedTarget: "documents",
+                    category,
+                    memo: "AI 분석이 완료되어 디지털 캐비닛에 저장되었습니다.",
+                  });
+                })
+                .catch(() => {
+                  updateItem(item.id, {
+                    status: "completed",
+                    progress: 100,
+                    savedTarget: "documents",
+                    memo: "AI 분석이 완료되어 디지털 캐비닛에 저장되었습니다.",
+                  });
+                });
             } else if (found.aiStatus === "FAILED") {
               updateItem(item.id, {
                 status: "failed",
@@ -124,7 +155,7 @@ export function ProcessingCenterPage() {
     }, 5000);
 
     return () => window.clearInterval(timer);
-  }, [processItems]);
+  }, [processItems, categories]);
 
   const stats = useMemo(
     () => ({
@@ -139,16 +170,18 @@ export function ProcessingCenterPage() {
   const filteredItems = useMemo(() => {
     const query = processQuery.trim().toLowerCase();
 
-    return processItems.filter((item) => {
-      const matchesTab = activeTab === "all" || item.status === activeTab;
-      const matchesQuery =
-        !query ||
-        item.displayName.toLowerCase().includes(query) ||
-        item.fileName.toLowerCase().includes(query) ||
-        item.category.toLowerCase().includes(query);
+    return processItems
+      .filter((item) => {
+        const matchesTab = activeTab === "all" || item.status === activeTab;
+        const matchesQuery =
+          !query ||
+          item.displayName.toLowerCase().includes(query) ||
+          item.fileName.toLowerCase().includes(query) ||
+          item.category.toLowerCase().includes(query);
 
-      return matchesTab && matchesQuery;
-    });
+        return matchesTab && matchesQuery;
+      })
+      .sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt));
   }, [activeTab, processItems, processQuery]);
 
   const updateItem = (itemId: string, patch: Partial<UploadProcessItem>) => {
@@ -160,6 +193,15 @@ export function ProcessingCenterPage() {
   };
 
   const retryAnalysis = (itemId: string) => {
+    const item = processItems.find((i) => i.id === itemId);
+    if (!item?.savedRecordId || !item.uploadedFileIds?.length) {
+      updateItem(itemId, {
+        status: "failed",
+        errorMessage: "재분석에 필요한 파일 정보가 없습니다. 다시 업로드해 주세요.",
+      });
+      return;
+    }
+
     updateItem(itemId, {
       status: "analyzing",
       progress: 25,
@@ -167,6 +209,16 @@ export function ProcessingCenterPage() {
       errorMessage: undefined,
       memo: "재분석을 시작했어요.",
     });
+
+    uploadService
+      .requestAi(item.savedRecordId, item.uploadedFileIds)
+      .catch(() => {
+        updateItem(itemId, {
+          status: "failed",
+          progress: 0,
+          errorMessage: "재분석 요청에 실패했어요. 다시 시도해 주세요.",
+        });
+      });
   };
 
   const deleteProcessItem = (itemId: string) => {

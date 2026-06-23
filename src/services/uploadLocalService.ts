@@ -33,6 +33,7 @@ export type UploadProcessItem = {
   errorMessage?: string;
   savedTarget?: UploadSaveTarget;
   savedRecordId?: string;
+  uploadedFileIds?: Array<{ id: string; pageNo: number }>;
 };
 
 export type ManualRegistrationInput = {
@@ -222,6 +223,7 @@ export const uploadLocalService = {
     extractedFields?: UploadExtractedField[];
     status?: UploadProcessStatus;
     savedRecordId?: string;
+    uploadedFileIds?: Array<{ id: string; pageNo: number }>;
   }): UploadProcessItem {
     const fileType = normalizeFileType(input.fileName);
 
@@ -240,6 +242,7 @@ export const uploadLocalService = {
       confidence: input.status === "failed" ? 0 : 0.88,
       progress: input.status === "failed" ? 0 : 100,
       savedRecordId: input.savedRecordId,
+      uploadedFileIds: input.uploadedFileIds,
       errorMessage:
         input.status === "failed"
           ? "이미지가 흐리거나 필수 정보를 읽지 못했어요."
