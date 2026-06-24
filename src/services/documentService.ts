@@ -173,4 +173,19 @@ export const documentService = {
   async deleteDocument(id: string): Promise<void> {
     await api.delete(`/documents/${id}`);
   },
+
+  async downloadAsPdf(id: string, title: string): Promise<void> {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
+    const res = await fetch(`${baseUrl}/documents/${id}/download`, {
+      credentials: "include",
+    });
+    if (!res.ok) throw new Error("PDF 다운로드 실패");
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${title || id}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
 };

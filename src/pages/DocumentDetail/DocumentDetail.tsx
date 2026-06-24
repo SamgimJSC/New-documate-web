@@ -267,17 +267,12 @@ const DocumentDetail: React.FC = () => {
     }
   };
 
-  const handleDownload = () => {
-    if (!previewUrl) {
-      showToast("다운로드할 파일이 없습니다.", "info");
-      return;
+  const handleDownload = async () => {
+    try {
+      await documentService.downloadAsPdf(doc.document_id, doc.title);
+    } catch {
+      showToast("PDF 다운로드에 실패했습니다.", "error");
     }
-    const a = document.createElement("a");
-    a.href = previewUrl;
-    a.download = doc.file_name || doc.title;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
   };
 
   const handleEditStart = () => {
