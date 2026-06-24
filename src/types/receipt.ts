@@ -1,30 +1,76 @@
-import type { AiStatus, YnFlag } from "./common";
+import type { AiStatus } from "./common";
 
 export type ReceiptInputMethod = "OCR" | "MANUAL";
 
 export interface SpendCategory {
-  spend_category_id: number;
+  spendCategoryId: number;
   name: string;
   icon?: string;
 }
 
 export interface Receipt {
-  receipt_id: string;
-  user_id: string;
-  spend_category_id: number;
-  input_method: ReceiptInputMethod;
-  file_url?: string;
-  store_name: string;
-  store_address?: string;
-  total_amount: number;
-  purchase_date: string;
-  payment_item?: string;
+  receiptId: string;
+  userId: string;
+  inputMethod: ReceiptInputMethod;
+  storeName: string;
+  totalAmount: number;
+  purchaseDate: string;
+  spendCategoryId: number | null;
+  categoryName?: string;
+  icon?: string;
+  fileUrl?: string | null;
+  storeAddress?: string | null;
+  paymentItem?: string | null;
+  memo?: string | null;
+  ocrText?: string;
+  extractedData?: Record<string, unknown>;
+  aiStatus: AiStatus;
+  isConfirmed: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReceiptListResponse {
+  page: number;
+  size: number;
+  totalCount: number;
+  totalPages: number;
+  receipts: Receipt[];
+}
+
+export interface CreateReceiptBody {
+  inputMethod: ReceiptInputMethod;
+  storeName: string;
+  totalAmount: number;
+  purchaseDate: string;
+  spendCategoryId?: number | null;
+  fileUrl?: string;
+  storeAddress?: string;
+  paymentItem?: string;
   memo?: string;
-  ocr_text?: string;
-  extracted_data?: Record<string, unknown>;
-  ai_status: AiStatus;
-  is_confirmed: boolean;
-  created_at: string;
-  updated_at: string;
-  is_deleted: YnFlag;
+  isConfirmed?: boolean;
+}
+
+export interface UpdateReceiptBody {
+  storeName?: string;
+  totalAmount?: number;
+  purchaseDate?: string;
+  spendCategoryId?: number | null;
+  storeAddress?: string;
+  paymentItem?: string;
+  memo?: string;
+  isConfirmed?: boolean;
+}
+
+export interface ReceiptListParams {
+  year?: number;
+  month?: number;
+  date?: string;
+  fromDate?: string;
+  toDate?: string;
+  categoryId?: number;
+  keyword?: string;
+  sort?: "latest" | "purchaseDate" | "amountDesc" | "amountAsc";
+  page?: number;
+  size?: number;
 }

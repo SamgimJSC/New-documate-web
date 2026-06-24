@@ -22,6 +22,7 @@ export type UploadProcessItem = {
   fileType: DocumentFileType;
   fileSizeBytes: number;
   sizeMb: number;
+  pageCount: number;
   uploadedAt: string;
   status: UploadProcessStatus;
   category: UploadDocumentCategory;
@@ -32,6 +33,7 @@ export type UploadProcessItem = {
   errorMessage?: string;
   savedTarget?: UploadSaveTarget;
   savedRecordId?: string;
+  uploadedFileIds?: Array<{ id: string; pageNo: number }>;
 };
 
 export type ManualRegistrationInput = {
@@ -216,10 +218,12 @@ export const uploadLocalService = {
     fileName: string;
     sizeMb: number;
     fileSizeBytes: number;
+    pageCount?: number;
     category?: UploadDocumentCategory;
     extractedFields?: UploadExtractedField[];
     status?: UploadProcessStatus;
     savedRecordId?: string;
+    uploadedFileIds?: Array<{ id: string; pageNo: number }>;
   }): UploadProcessItem {
     const fileType = normalizeFileType(input.fileName);
 
@@ -230,6 +234,7 @@ export const uploadLocalService = {
       fileType,
       fileSizeBytes: input.fileSizeBytes,
       sizeMb: input.sizeMb,
+      pageCount: input.pageCount ?? 1,
       uploadedAt: now(),
       status: input.status ?? "waitingSave",
       category: input.category ?? "기타",
@@ -237,6 +242,7 @@ export const uploadLocalService = {
       confidence: input.status === "failed" ? 0 : 0.88,
       progress: input.status === "failed" ? 0 : 100,
       savedRecordId: input.savedRecordId,
+      uploadedFileIds: input.uploadedFileIds,
       errorMessage:
         input.status === "failed"
           ? "이미지가 흐리거나 필수 정보를 읽지 못했어요."

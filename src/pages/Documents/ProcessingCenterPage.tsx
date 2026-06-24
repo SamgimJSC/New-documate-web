@@ -1,19 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { SaveFileNameModal } from "../../components/upload/SaveFileNameModal";
-import { RegistrationSuccessModal } from "../../components/upload/RegistrationSuccessModal";
 import {
   uploadLocalService,
   type UploadProcessItem,
   type UploadProcessStatus,
 } from "../../services/uploadLocalService";
 import { uploadService } from "../../services/uploadService";
+import { documentService } from "../../services/documentService";
+import { useCategories } from "../../hooks/useCategories";
 import type { UploadDocumentCategory } from "../../types/upload";
 import {
   formatUploadedAt,
   getMoveButtonLabel,
-  getSaveLocationLabel,
-  makeExtractedFields,
   PROCESS_STATUS_HELPER,
   PROCESS_STATUS_LABEL,
 } from "../../utils/uploadWorkflow";
@@ -21,19 +19,9 @@ import "./ProcessingCenterPage.css";
 
 type ProcessTab = "all" | UploadProcessStatus;
 
-type SaveModalState = {
-  item: UploadProcessItem;
-};
-
-type SuccessState = {
-  category: UploadDocumentCategory;
-  title: string;
-};
-
 const statusTabs: ProcessTab[] = [
   "all",
   "analyzing",
-  "waitingSave",
   "failed",
   "completed",
 ];
@@ -41,12 +29,7 @@ const statusTabs: ProcessTab[] = [
 const getTabLabel = (tab: ProcessTab) =>
   tab === "all" ? "전체" : PROCESS_STATUS_LABEL[tab];
 
-const getPageCount = (item: UploadProcessItem) => {
-  if (item.category === "계약서") return 5;
-  if (item.category === "병원/약국") return 2;
-  if (item.category === "영수증") return 1;
-  return Math.max(1, Math.min(4, item.extractedFields.length || 1));
-};
+const getPageCount = (item: UploadProcessItem) => item.pageCount ?? 1;
 
 const getSummaryFields = (item: UploadProcessItem) => {
   const fields = item.extractedFields.filter(
@@ -78,6 +61,7 @@ const getStatusCardClass = (tab: ProcessTab, activeTab: ProcessTab) => {
 
 export function ProcessingCenterPage() {
   const navigate = useNavigate();
+  const categories = useCategories();
 
   const [processItems, setProcessItems] = useState<UploadProcessItem[]>(() =>
     uploadLocalService.readProcessItems(),
@@ -87,8 +71,6 @@ export function ProcessingCenterPage() {
   );
   const [activeTab, setActiveTab] = useState<ProcessTab>("all");
   const [processQuery, setProcessQuery] = useState("");
-  const [saveModal, setSaveModal] = useState<SaveModalState | null>(null);
-  const [successState, setSuccessState] = useState<SuccessState | null>(null);
 
   const selectedItem =
     processItems.find((item) => item.id === selectedItemId) ??
@@ -126,12 +108,39 @@ export function ProcessingCenterPage() {
             if (!found) return;
 
             if (found.aiStatus === "DONE") {
-              updateItem(item.id, {
-                status: "waitingSave",
-                progress: 100,
-                confidence: 0.88,
-                memo: "AI 분석이 완료되었습니다. 저장 전 내용을 확인해 주세요.",
-              });
+              documentService
+                .getDocuments()
+                .then((docs) => {
+                  const sorted = [...docs].sort((a, b) =>
+                    b.created_at.localeCompare(a.created_at),
+                  );
+                  const matched =
+                    sorted.find((d) => d.file_name === item.fileName) ?? sorted[0];
+
+                  let category: UploadDocumentCategory = "기타";
+                  if (matched) {
+                    const cat = categories.find(
+                      (c) => c.category_id === matched.category_id,
+                    );
+                    if (cat) category = cat.name as UploadDocumentCategory;
+                  }
+
+                  updateItem(item.id, {
+                    status: "completed",
+                    progress: 100,
+                    savedTarget: "documents",
+                    category,
+                    memo: "AI 분석이 완료되어 디지털 캐비닛에 저장되었습니다.",
+                  });
+                })
+                .catch(() => {
+                  updateItem(item.id, {
+                    status: "completed",
+                    progress: 100,
+                    savedTarget: "documents",
+                    memo: "AI 분석이 완료되어 디지털 캐비닛에 저장되었습니다.",
+                  });
+                });
             } else if (found.aiStatus === "FAILED") {
               updateItem(item.id, {
                 status: "failed",
@@ -146,18 +155,14 @@ export function ProcessingCenterPage() {
     }, 5000);
 
     return () => window.clearInterval(timer);
-  }, [processItems]);
+  }, [processItems, categories]);
 
   const stats = useMemo(
     () => ({
       total: processItems.length,
-      analyzing: processItems.filter((item) => item.status === "analyzing")
-        .length,
+      analyzing: processItems.filter((item) => item.status === "analyzing").length,
       failed: processItems.filter((item) => item.status === "failed").length,
-      waitingSave: processItems.filter((item) => item.status === "waitingSave")
-        .length,
-      completed: processItems.filter((item) => item.status === "completed")
-        .length,
+      completed: processItems.filter((item) => item.status === "completed").length,
     }),
     [processItems],
   );
@@ -165,16 +170,18 @@ export function ProcessingCenterPage() {
   const filteredItems = useMemo(() => {
     const query = processQuery.trim().toLowerCase();
 
-    return processItems.filter((item) => {
-      const matchesTab = activeTab === "all" || item.status === activeTab;
-      const matchesQuery =
-        !query ||
-        item.displayName.toLowerCase().includes(query) ||
-        item.fileName.toLowerCase().includes(query) ||
-        item.category.toLowerCase().includes(query);
+    return processItems
+      .filter((item) => {
+        const matchesTab = activeTab === "all" || item.status === activeTab;
+        const matchesQuery =
+          !query ||
+          item.displayName.toLowerCase().includes(query) ||
+          item.fileName.toLowerCase().includes(query) ||
+          item.category.toLowerCase().includes(query);
 
-      return matchesTab && matchesQuery;
-    });
+        return matchesTab && matchesQuery;
+      })
+      .sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt));
   }, [activeTab, processItems, processQuery]);
 
   const updateItem = (itemId: string, patch: Partial<UploadProcessItem>) => {
@@ -186,6 +193,15 @@ export function ProcessingCenterPage() {
   };
 
   const retryAnalysis = (itemId: string) => {
+    const item = processItems.find((i) => i.id === itemId);
+    if (!item?.savedRecordId || !item.uploadedFileIds?.length) {
+      updateItem(itemId, {
+        status: "failed",
+        errorMessage: "재분석에 필요한 파일 정보가 없습니다. 다시 업로드해 주세요.",
+      });
+      return;
+    }
+
     updateItem(itemId, {
       status: "analyzing",
       progress: 25,
@@ -193,71 +209,22 @@ export function ProcessingCenterPage() {
       errorMessage: undefined,
       memo: "재분석을 시작했어요.",
     });
+
+    uploadService
+      .requestAi(item.savedRecordId, item.uploadedFileIds)
+      .catch(() => {
+        updateItem(itemId, {
+          status: "failed",
+          progress: 0,
+          errorMessage: "재분석 요청에 실패했어요. 다시 시도해 주세요.",
+        });
+      });
   };
 
   const deleteProcessItem = (itemId: string) => {
     setProcessItems((current) => current.filter((item) => item.id !== itemId));
   };
 
-  const completeSave = (payload: {
-    fileName: string;
-    category: UploadDocumentCategory;
-  }) => {
-    if (!saveModal) return;
-
-    const currentItem =
-      processItems.find((item) => item.id === saveModal.item.id) ??
-      saveModal.item;
-
-    const itemToSave: UploadProcessItem = {
-      ...currentItem,
-      displayName: payload.fileName,
-      category: payload.category,
-      extractedFields:
-        currentItem.category === payload.category
-          ? currentItem.extractedFields
-          : makeExtractedFields(payload.category, currentItem.fileName),
-    };
-
-    if (payload.category === "영수증") {
-      const receipt = uploadLocalService.saveReceipt(
-        uploadLocalService.toReceipt(itemToSave, {
-          title: itemToSave.displayName,
-        }),
-      );
-
-      updateItem(itemToSave.id, {
-        ...itemToSave,
-        status: "completed",
-        progress: 100,
-        savedTarget: "receipts",
-        savedRecordId: receipt.receipt_id,
-        memo: `${getSaveLocationLabel(payload.category)}에 저장되었습니다.`,
-      });
-    } else {
-      const document = uploadLocalService.saveDocument(
-        uploadLocalService.toDocument(itemToSave, {
-          title: itemToSave.displayName,
-          category: payload.category,
-        }),
-      );
-
-      updateItem(itemToSave.id, {
-        ...itemToSave,
-        status: "completed",
-        progress: 100,
-        savedTarget: "documents",
-        savedRecordId: document.document_id,
-        memo: `${getSaveLocationLabel(payload.category)}에 저장되었습니다.`,
-      });
-    }
-
-    setSaveModal(null);
-    setSuccessState({
-      category: payload.category,
-      title: itemToSave.displayName,
-    });
-  };
 
   const renderDetailPanel = () => {
     if (!selectedItem) {
@@ -381,16 +348,6 @@ export function ProcessingCenterPage() {
                 문서 상세 보기
               </button>
 
-              {selectedItem.status === "waitingSave" && (
-                <button
-                  type="button"
-                  className="process-primary-button"
-                  onClick={() => setSaveModal({ item: selectedItem })}
-                >
-                  저장하기
-                </button>
-              )}
-
               {selectedItem.status === "completed" && (
                 <button
                   type="button"
@@ -429,7 +386,7 @@ export function ProcessingCenterPage() {
             문서 관리 · AI 분석 현황
           </p>
           <h1>업로드 현황</h1>
-          <p>분석 상태를 확인하고 저장 대기 문서를 검토해 저장하세요.</p>
+          <p>분석 상태를 확인하고 완료된 문서를 디지털 캐비닛에서 확인하세요.</p>
         </div>
       </div>
 
@@ -460,15 +417,6 @@ export function ProcessingCenterPage() {
           <span>분석 실패</span>
           <b>{stats.failed}</b>
           <small>재시도 필요</small>
-        </button>
-        <button
-          type="button"
-          className={getStatusCardClass("waitingSave", activeTab)}
-          onClick={() => setActiveTab("waitingSave")}
-        >
-          <span>저장 대기</span>
-          <b>{stats.waitingSave}</b>
-          <small>저장 또는 분류 대기</small>
         </button>
         <button
           type="button"
@@ -560,14 +508,6 @@ export function ProcessingCenterPage() {
                       className="process-row-actions"
                       onClick={(event) => event.stopPropagation()}
                     >
-                      {item.status === "waitingSave" && (
-                        <button
-                          type="button"
-                          onClick={() => setSaveModal({ item })}
-                        >
-                          저장하기
-                        </button>
-                      )}
                       {item.status === "failed" && (
                         <button
                           type="button"
@@ -608,25 +548,6 @@ export function ProcessingCenterPage() {
 
           {renderDetailPanel()}
         </div>
-      )}
-
-      {saveModal && (
-        <SaveFileNameModal
-          initialName={saveModal.item.displayName}
-          initialCategory={saveModal.item.category}
-          onClose={() => setSaveModal(null)}
-          onSave={completeSave}
-        />
-      )}
-
-      {successState && (
-        <RegistrationSuccessModal
-          category={successState.category}
-          onClose={() => setSuccessState(null)}
-          onMove={(path) => navigate(path)}
-          title="문서가 저장되었습니다!"
-          description={`${successState.title} 문서 저장이 완료되었습니다.`}
-        />
       )}
     </section>
   );

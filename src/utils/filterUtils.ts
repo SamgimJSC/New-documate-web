@@ -25,22 +25,21 @@ export const filterReceipts = (
   to?: string
 ): Receipt[] => {
   return receipts.filter((r) => {
-    if (r.is_deleted === "Y") return false;
     const matchQuery = query
-      ? r.store_name.toLowerCase().includes(query.toLowerCase()) ||
+      ? r.storeName.toLowerCase().includes(query.toLowerCase()) ||
         (r.memo?.toLowerCase().includes(query.toLowerCase()) ?? false) ||
-        (r.payment_item?.toLowerCase().includes(query.toLowerCase()) ?? false)
+        (r.paymentItem?.toLowerCase().includes(query.toLowerCase()) ?? false)
       : true;
-    const matchCategory = categoryId ? r.spend_category_id === categoryId : true;
-    const matchFrom = from ? r.purchase_date >= from : true;
-    const matchTo = to ? r.purchase_date <= to : true;
+    const matchCategory = categoryId ? r.spendCategoryId === categoryId : true;
+    const matchFrom = from ? r.purchaseDate >= from : true;
+    const matchTo = to ? r.purchaseDate <= to : true;
     return matchQuery && matchCategory && matchFrom && matchTo;
   });
 };
 
 export const groupReceiptsByMonth = (receipts: Receipt[]): Record<string, Receipt[]> => {
   return receipts.reduce<Record<string, Receipt[]>>((acc, r) => {
-    const key = r.purchase_date.substring(0, 7);
+    const key = r.purchaseDate.substring(0, 7);
     if (!acc[key]) acc[key] = [];
     acc[key].push(r);
     return acc;
@@ -53,9 +52,11 @@ export const sumByCategory = (
 ): { name: string; value: number }[] => {
   const totals: Record<number, number> = {};
   receipts.forEach((r) => {
-    totals[r.spend_category_id] = (totals[r.spend_category_id] || 0) + r.total_amount;
+    if (r.spendCategoryId) {
+      totals[r.spendCategoryId] = (totals[r.spendCategoryId] || 0) + r.totalAmount;
+    }
   });
   return categories
-    .map((c) => ({ name: c.name, value: totals[c.spend_category_id] || 0 }))
+    .map((c) => ({ name: c.name, value: totals[c.spendCategoryId] || 0 }))
     .filter((item) => item.value > 0);
 };

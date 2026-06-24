@@ -5,40 +5,25 @@ import {
   Calendar,
   Download,
   Edit3,
+  Maximize2,
   Plus,
   Save,
-  Share2,
   Star,
   Trash2,
   X,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import Badge from "../../components/common/Badge";
 import Button from "../../components/common/Button";
 import AlertSettingModal from "../../components/modal/AlertSettingModal";
 import { documentService } from "../../services/documentService";
-import {
-  mockDocumentCategories,
-  mockDocumentTags,
-  mockTags,
-  mockDocumentAlerts,
-} from "../../data/mockDocuments";
+import { mockDocumentAlerts } from "../../data/mockDocuments";
+import { useCategories } from "../../hooks/useCategories";
+import type { DocumentTagItem } from "../../types/document";
 import { formatDate } from "../../utils/formatDate";
 import { useToast } from "../../components/common/Toast";
 import type { Document } from "../../types/document";
-import type { AiStatus } from "../../types/common";
 import "./DocumentDetail.css";
-
-const AI_STATUS_VARIANT: Record<
-  AiStatus,
-  "default" | "warning" | "success" | "danger"
-> = {
-  PENDING: "default",
-  PROCESSING: "warning",
-  DONE: "success",
-  FAILED: "danger",
-};
 
 type EditableDocumentState = {
   title: string;
@@ -47,7 +32,6 @@ type EditableDocumentState = {
   expiryDate: string;
   renewalDate: string;
   extractedData: Record<string, string>;
-  tagsText: string;
 };
 
 const EMPTY_FORM: EditableDocumentState = {
@@ -57,7 +41,6 @@ const EMPTY_FORM: EditableDocumentState = {
   expiryDate: "",
   renewalDate: "",
   extractedData: {},
-  tagsText: "",
 };
 
 const formatFileSize = (bytes: number) => {
@@ -121,12 +104,16 @@ const DocumentDetail: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
 
+  const categories = useCategories();
   const [doc, setDoc] = useState<Document | null>(null);
   const [loading, setLoading] = useState(true);
   const [alertOpen, setAlertOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [tags, setTags] = useState<DocumentTagItem[]>([]);
+  const [tagInput, setTagInput] = useState("");
   const [zoom, setZoom] = useState(100);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [form, setForm] = useState<EditableDocumentState>(EMPTY_FORM);
 
   useEffect(() => {
@@ -143,6 +130,7 @@ const DocumentDetail: React.FC = () => {
       .then((d) => {
         setDoc(d);
         setIsFavorite(d.is_favorite);
+        setTags(d.tags);
       })
       .catch(() => {
         setDoc(null);
@@ -155,22 +143,10 @@ const DocumentDetail: React.FC = () => {
   const initialCategory = useMemo(() => {
     if (!doc) return undefined;
 
-    return mockDocumentCategories.find(
+    return categories.find(
       (category) => category.category_id === doc.category_id,
     );
   }, [doc]);
-
-  const docTagIds = useMemo(() => {
-    if (!doc) return [];
-
-    return mockDocumentTags
-      .filter((documentTag) => documentTag.document_id === doc.document_id)
-      .map((documentTag) => documentTag.tag_id);
-  }, [doc]);
-
-  const docTags = useMemo(() => {
-    return mockTags.filter((tag) => docTagIds.includes(tag.tag_id));
-  }, [docTagIds]);
 
   const alerts = useMemo(() => {
     if (!doc) return [];
@@ -201,9 +177,8 @@ const DocumentDetail: React.FC = () => {
       expiryDate: doc.expiry_date ?? "",
       renewalDate: doc.renewal_date ?? "",
       extractedData: extracted,
-      tagsText: docTags.map((tag) => tag.name).join(", "),
     };
-  }, [doc, docTags, initialCategory?.name]);
+  }, [doc, initialCategory?.name]);
 
   useEffect(() => {
     setForm(initialForm);
@@ -239,31 +214,69 @@ const DocumentDetail: React.FC = () => {
   }
 
   const activeCategory =
-    mockDocumentCategories.find(
+    categories.find(
       (category) => category.category_id === form.categoryId,
     ) ?? initialCategory;
 
-  const handleFavorite = () => {
-    setIsFavorite((prev) => {
-      showToast(
-        prev ? "즐겨찾기가 해제되었습니다." : "즐겨찾기에 추가되었습니다.",
-        "success",
-      );
-      return !prev;
-    });
+  const handleFavorite = async () => {
+    if (!document_id) return;
+    const next = !isFavorite;
+    setIsFavorite(next);
+    try {
+      await documentService.toggleFavorite(document_id, next);
+      showToast(next ? "즐겨찾기에 추가되었습니다." : "즐겨찾기가 해제되었습니다.", "success");
+    } catch {
+      setIsFavorite(!next);
+      showToast("즐겨찾기 변경에 실패했습니다.", "error");
+    }
   };
 
-  const handleDelete = () => {
-    showToast("문서가 삭제되었습니다.", "info");
-    navigate("/documents");
+  const handleAddTag = async () => {
+    if (!document_id) return;
+    const name = tagInput.trim();
+    if (!name) return;
+    try {
+      const newTag = await documentService.addTag(document_id, name);
+      setTags((prev) => [...prev, newTag]);
+      setTagInput("");
+    } catch {
+      showToast("태그 추가에 실패했습니다.", "error");
+    }
   };
 
-  const handleShare = () => {
-    showToast("공유 기능은 준비 중입니다.", "info");
+  const handleRemoveTag = async (tagId: string) => {
+    if (!document_id) return;
+    setTags((prev) => prev.filter((t) => t.tag_id !== tagId));
+    try {
+      await documentService.removeTag(document_id, tagId);
+    } catch {
+      showToast("태그 삭제에 실패했습니다.", "error");
+      documentService.getDocument(document_id).then((d) => setTags(d.tags)).catch(() => {});
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!document_id) return;
+    try {
+      await documentService.deleteDocument(document_id);
+      showToast("문서가 삭제되었습니다.", "info");
+      navigate("/documents");
+    } catch {
+      showToast("문서 삭제에 실패했습니다.", "error");
+    }
   };
 
   const handleDownload = () => {
-    showToast("다운로드 기능은 준비 중입니다.", "info");
+    if (!previewUrl) {
+      showToast("다운로드할 파일이 없습니다.", "info");
+      return;
+    }
+    const a = document.createElement("a");
+    a.href = previewUrl;
+    a.download = doc.file_name || doc.title;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   const handleEditStart = () => {
@@ -295,21 +308,6 @@ const DocumentDetail: React.FC = () => {
     }
   };
 
-  const handleCategoryChange = (categoryId: number) => {
-    const nextCategory = mockDocumentCategories.find(
-      (category) => category.category_id === categoryId,
-    );
-
-    setForm((prev) => ({
-      ...prev,
-      categoryId,
-      extractedData:
-        Object.keys(prev.extractedData).length > 0
-          ? prev.extractedData
-          : getEmptyExtractedData(nextCategory?.name),
-    }));
-  };
-
   const handleExtractedChange = (key: string, value: string) => {
     setForm((prev) => ({
       ...prev,
@@ -321,15 +319,6 @@ const DocumentDetail: React.FC = () => {
   };
 
   const fileSizeText = formatFileSize(doc.file_size_bytes);
-  const statusConfidence =
-    typeof doc.ai_confidence === "number"
-      ? `신뢰도 ${Math.round(doc.ai_confidence * 100)}%`
-      : "신뢰도 확인 중";
-
-  const tagNames = form.tagsText
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter(Boolean);
 
   const previewUrl = (doc.file_url ?? "").trim();
   const hasPreviewFile = previewUrl.length > 0;
@@ -356,6 +345,47 @@ const DocumentDetail: React.FC = () => {
               업로드일 {formatDate(doc.created_at)} · AI 상태 {doc.ai_status}
             </p>
           </div>
+
+          <div className="doc-detail__mini-actions">
+            <button
+              type="button"
+              className={isFavorite ? "is-active" : ""}
+              onClick={handleFavorite}
+              title="즐겨찾기"
+            >
+              <Star size={16} fill={isFavorite ? "currentColor" : "none"} />
+            </button>
+
+            {!isEditing ? (
+              <button
+                type="button"
+                className="doc-detail__mini-edit"
+                onClick={handleEditStart}
+                title="수정"
+              >
+                <Edit3 size={16} />
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="doc-detail__mini-cancel"
+                  onClick={handleEditCancel}
+                  title="취소"
+                >
+                  <X size={16} />
+                </button>
+                <button
+                  type="button"
+                  className="doc-detail__mini-save"
+                  onClick={handleEditSave}
+                  title="저장"
+                >
+                  <Save size={16} />
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -369,35 +399,46 @@ const DocumentDetail: React.FC = () => {
               </p>
             </div>
 
-            {hasPreviewFile && (
-              <div
-                className="doc-detail__viewer-tools"
-                aria-label="문서 미리보기 도구"
+            <div
+              className="doc-detail__viewer-tools"
+              aria-label="문서 미리보기 도구"
+            >
+              <button
+                type="button"
+                onClick={() => setZoom((prev) => Math.max(prev - 10, 70))}
+                aria-label="축소"
+                disabled={!hasPreviewFile}
               >
-                <button
-                  type="button"
-                  onClick={() => setZoom((prev) => Math.max(prev - 10, 70))}
-                  aria-label="축소"
-                >
-                  <ZoomOut size={15} />
-                </button>
-                <span>{zoom}%</span>
-                <button
-                  type="button"
-                  onClick={() => setZoom((prev) => Math.min(prev + 10, 150))}
-                  aria-label="확대"
-                >
-                  <ZoomIn size={15} />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDownload}
-                  aria-label="다운로드"
-                >
-                  <Download size={15} />
-                </button>
-              </div>
-            )}
+                <ZoomOut size={15} />
+              </button>
+              <span>{zoom}%</span>
+              <button
+                type="button"
+                onClick={() => setZoom((prev) => Math.min(prev + 10, 150))}
+                aria-label="확대"
+                disabled={!hasPreviewFile}
+              >
+                <ZoomIn size={15} />
+              </button>
+              <div className="doc-detail__viewer-tools-divider" />
+              <button
+                type="button"
+                className="doc-detail__viewer-download-btn"
+                onClick={handleDownload}
+                disabled={!hasPreviewFile}
+                aria-label="다운로드"
+              >
+                <Download size={14} /> 다운로드
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsFullscreen(true)}
+                disabled={!hasPreviewFile}
+                aria-label="전체화면"
+              >
+                <Maximize2 size={15} />
+              </button>
+            </div>
           </header>
 
           <div
@@ -449,85 +490,8 @@ const DocumentDetail: React.FC = () => {
 
         <aside className="doc-detail__editor-panel">
           <header className="doc-detail__panel-header">
-            <div>
-              <h2>문서 정보</h2>
-              <p>분류 기준과 AI 추출 내용을 한 번에 확인합니다.</p>
-            </div>
-
-            <div className="doc-detail__mini-actions">
-              <button
-                type="button"
-                className={isFavorite ? "is-active" : ""}
-                onClick={handleFavorite}
-                title="즐겨찾기"
-              >
-                <Star size={16} fill={isFavorite ? "currentColor" : "none"} />
-              </button>
-
-              <button type="button" onClick={handleShare} title="공유">
-                <Share2 size={16} />
-              </button>
-
-              {!isEditing ? (
-                <button
-                  type="button"
-                  className="doc-detail__mini-edit"
-                  onClick={handleEditStart}
-                  title="수정"
-                >
-                  <Edit3 size={16} />
-                </button>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    className="doc-detail__mini-cancel"
-                    onClick={handleEditCancel}
-                    title="취소"
-                  >
-                    <X size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    className="doc-detail__mini-save"
-                    onClick={handleEditSave}
-                    title="저장"
-                  >
-                    <Save size={16} />
-                  </button>
-                </>
-              )}
-            </div>
+            <h2>문서 정보</h2>
           </header>
-
-          <section className="doc-detail__form-section doc-detail__form-section--category">
-            <label className="doc-detail__field doc-detail__field--full">
-              <span>AI 판단 카테고리</span>
-              {isEditing ? (
-                <select
-                  value={form.categoryId}
-                  onChange={(event) =>
-                    handleCategoryChange(Number(event.target.value))
-                  }
-                >
-                  {mockDocumentCategories.map((category) => (
-                    <option
-                      key={category.category_id}
-                      value={category.category_id}
-                    >
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <b>{activeCategory?.name ?? "-"}</b>
-              )}
-            </label>
-
-            <p className="doc-detail__helper-text">
-              카테고리를 바꾸면 추출 항목의 맥락이 달라질 수 있습니다.
-            </p>
-          </section>
 
           <section className="doc-detail__form-section">
             <div className="doc-detail__section-title">기본 정보</div>
@@ -551,7 +515,7 @@ const DocumentDetail: React.FC = () => {
               </label>
 
               <label className="doc-detail__field">
-                <span>파일 정보</span>
+                <span>파일 형식</span>
                 <b>
                   {doc.file_type} · {fileSizeText}
                   {doc.page_count ? ` · ${doc.page_count}p` : ""}
@@ -612,28 +576,14 @@ const DocumentDetail: React.FC = () => {
                 )}
               </label>
 
-              <label className="doc-detail__field">
-                <span>AI 상태</span>
-                <b className="doc-detail__status-line">
-                  <Badge variant={AI_STATUS_VARIANT[doc.ai_status]}>
-                    {doc.ai_status}
-                  </Badge>
-                  <em>{statusConfidence}</em>
-                </b>
-              </label>
             </div>
           </section>
 
           <section className="doc-detail__form-section">
-            <div className="doc-detail__section-header-inline">
-              <div>
-                <div className="doc-detail__section-title">AI 추출 정보</div>
-                <p>실제 내용과 다르면 수정해 주세요.</p>
-              </div>
-            </div>
+            <div className="doc-detail__section-title">AI 추출 정보</div>
 
             <div className="doc-detail__field-grid">
-              {Object.entries(form.extractedData).map(([key, value]) => (
+              {Object.entries(form.extractedData).filter(([key]) => key !== "_meta").map(([key, value]) => (
                 <label key={key} className="doc-detail__field">
                   <span>{key}</span>
                   {isEditing ? (
@@ -652,23 +602,17 @@ const DocumentDetail: React.FC = () => {
           </section>
 
           <section className="doc-detail__form-section doc-detail__form-section--manage">
-            <div className="doc-detail__manage-row">
-              <div>
-                <div className="doc-detail__section-title">관리</div>
-                <p>알림과 태그를 간단히 확인합니다.</p>
-              </div>
-
-              <button
-                type="button"
-                className="doc-detail__text-button"
-                onClick={() => setAlertOpen(true)}
-              >
-                <Plus size={14} /> 알림 추가
-              </button>
-            </div>
-
             <div className="doc-detail__manage-block">
-              <div className="doc-detail__manage-label">알림 설정</div>
+              <div className="doc-detail__manage-block-header">
+                <span>알림 설정</span>
+                <button
+                  type="button"
+                  className="doc-detail__text-button"
+                  onClick={() => setAlertOpen(true)}
+                >
+                  <Plus size={12} /> 알림 추가
+                </button>
+              </div>
 
               {alerts.length === 0 ? (
                 <p className="doc-detail__empty-text">
@@ -693,32 +637,51 @@ const DocumentDetail: React.FC = () => {
             </div>
 
             <div className="doc-detail__manage-block">
-              <div className="doc-detail__manage-label">태그</div>
+              <div className="doc-detail__manage-block-header">
+                <span>태그</span>
+              </div>
 
-              {isEditing ? (
+              <div className="doc-detail__tag-input-row">
                 <input
                   className="doc-detail__tag-input"
-                  value={form.tagsText}
-                  placeholder="예: 계약서, 중요, 병원/약국"
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      tagsText: event.target.value,
-                    }))
-                  }
+                  value={tagInput}
+                  placeholder="태그 입력 후 Enter"
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
                 />
-              ) : tagNames.length > 0 ? (
+                <button
+                  type="button"
+                  className="doc-detail__tag-add-btn"
+                  onClick={handleAddTag}
+                  disabled={!tagInput.trim()}
+                >
+                  추가
+                </button>
+              </div>
+
+              {tags.length > 0 ? (
                 <div className="doc-detail__tag-list">
-                  {tagNames.map((tag) => (
-                    <span key={tag} className="doc-detail__tag">
-                      #{tag}
+                  {tags.map((tag) => (
+                    <span key={tag.tag_id} className="doc-detail__tag">
+                      #{tag.name}
+                      <button
+                        type="button"
+                        className="doc-detail__tag-remove"
+                        onClick={() => handleRemoveTag(tag.tag_id)}
+                        aria-label={`${tag.name} 태그 삭제`}
+                      >
+                        <X size={11} />
+                      </button>
                     </span>
                   ))}
                 </div>
               ) : (
-                <p className="doc-detail__empty-text">
-                  등록된 태그가 없습니다.
-                </p>
+                <p className="doc-detail__empty-text">등록된 태그가 없습니다.</p>
               )}
             </div>
           </section>
@@ -736,6 +699,28 @@ const DocumentDetail: React.FC = () => {
           )}
         </aside>
       </div>
+
+      {isFullscreen && (
+        <div
+          className="doc-detail__fullscreen-overlay"
+          onClick={() => setIsFullscreen(false)}
+        >
+          <button
+            type="button"
+            className="doc-detail__fullscreen-close"
+            onClick={() => setIsFullscreen(false)}
+            aria-label="닫기"
+          >
+            <X size={18} />
+          </button>
+          <img
+            src={previewUrl}
+            alt={form.title || doc.title}
+            className="doc-detail__fullscreen-image"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
 
       <AlertSettingModal
         isOpen={alertOpen}

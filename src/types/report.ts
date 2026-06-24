@@ -21,3 +21,46 @@ export interface CardRecommendation {
   match_score?: number;
   recommended_at: string;
 }
+
+export interface MonthSummary {
+  month: number;
+  totalSpend: number;
+  receiptCount: number;
+}
+
+export interface MonthlySpendResponse {
+  year: number;
+  totalSpend: number;
+  months: MonthSummary[];
+}
+
+export interface DaySummary {
+  date: string;
+  day: number;
+  totalSpend: number;
+  receiptCount: number;
+}
+
+export interface DailySpendResponse {
+  year: number;
+  month: number;
+  totalSpend: number;
+  days: DaySummary[];
+}
+
+export interface CategorySummaryItem {
+  spendCategoryId: number;
+  name: string;
+  icon: string;
+  totalSpend: number;
+  receiptCount: number;
+  percentage: number;
+}
+
+export interface CategorySummaryResponse {
+  year: number;
+  month: number;
+  date: string | null;
+  totalSpend: number;
+  categories: CategorySummaryItem[];
+}
