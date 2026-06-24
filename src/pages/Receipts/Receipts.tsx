@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, ShoppingCart, Calendar, TrendingDown } from "lucide-react";
+import { Search, ShoppingCart, Calendar, TrendingDown, AlertCircle } from "lucide-react";
 import Card from "../../components/common/Card";
 import FilterChip from "../../components/common/FilterChip";
 import Select from "../../components/common/Select";
@@ -15,6 +15,12 @@ import type { Receipt } from "../../types/receipt";
 import "./Receipts.css";
 
 const PAGE_SIZE = 10;
+
+const isNullVal = (v: string | null | undefined) =>
+  v == null || v === "" || v === "null" || v === "undefined";
+
+const hasMissingFields = (r: Receipt) =>
+  isNullVal(r.storeName) || r.totalAmount == null || isNullVal(r.purchaseDate) || isNullVal(r.categoryName);
 
 const Receipts: React.FC = () => {
   const navigate = useNavigate();
@@ -142,6 +148,19 @@ const Receipts: React.FC = () => {
         />
       </div>
 
+      {!loading && (() => {
+        const missingReceipts = receipts.filter(hasMissingFields);
+        return missingReceipts.length > 0 ? (
+          <div className="receipts__missing-banner">
+            <AlertCircle size={15} className="receipts__missing-banner-icon" />
+            <span>
+              <strong>{missingReceipts.length}개</strong> 영수증에 OCR 미인식 항목이 있어요.
+              아래 표시된 영수증을 클릭해서 직접 입력해주세요.
+            </span>
+          </div>
+        ) : null;
+      })()}
+
       {loading ? (
         <div style={{ textAlign: "center", padding: 40, color: "var(--color-muted)" }}>불러오는 중...</div>
       ) : receipts.length === 0 ? (
@@ -152,20 +171,34 @@ const Receipts: React.FC = () => {
         />
       ) : (
         <div className="receipts__list">
-          {receipts.map((r) => (
-            <div
-              key={r.receiptId}
-              className="receipt-card"
-              onClick={() => navigate(`/receipts/${r.receiptId}`)}
-            >
-              <div className="receipt-card__cat-badge">{r.categoryName?.slice(0, 2) ?? "기타"}</div>
-              <div className="receipt-card__info">
-                <p className="receipt-card__store">{r.storeName}</p>
-                <p className="receipt-card__meta">{r.categoryName} · {formatDate(r.purchaseDate)}</p>
+          {receipts.map((r) => {
+            const missing = hasMissingFields(r);
+            return (
+              <div
+                key={r.receiptId}
+                className={`receipt-card${missing ? " receipt-card--missing" : ""}`}
+                onClick={() => navigate(`/receipts/${r.receiptId}`)}
+              >
+                <div className="receipt-card__cat-badge">{r.categoryName?.slice(0, 2) ?? "기타"}</div>
+                <div className="receipt-card__info">
+                  <p className="receipt-card__store">
+                    {isNullVal(r.storeName)
+                      ? <span className="receipt-card__store-missing">가게명 미인식</span>
+                      : r.storeName}
+                  </p>
+                  <p className="receipt-card__meta">
+                    {isNullVal(r.categoryName) ? "카테고리 미인식" : r.categoryName}
+                    {" · "}
+                    {isNullVal(r.purchaseDate) ? "날짜 미인식" : formatDate(r.purchaseDate)}
+                  </p>
+                </div>
+                {missing && <span className="receipt-card__missing-badge">미인식</span>}
+                <p className="receipt-card__amount">
+                  {r.totalAmount != null ? formatKRW(r.totalAmount) : "-"}
+                </p>
               </div>
-              <p className="receipt-card__amount">{formatKRW(r.totalAmount)}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
