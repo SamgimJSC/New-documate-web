@@ -55,6 +55,27 @@ const ReceiptDetail: React.FC = () => {
     );
   }
 
+  const formattedPaymentItem = (() => {
+    const raw = receipt.paymentItem;
+    if (!raw) return null;
+    if (!/^\s*\[/.test(raw)) return raw;
+    try {
+      const json = raw
+        .replace(/'/g, '"')
+        .replace(/\bNone\b/g, "null")
+        .replace(/\bTrue\b/g, "true")
+        .replace(/\bFalse\b/g, "false");
+      const items = JSON.parse(json) as Array<{ name?: string; quantity?: number | null }>;
+      const text = items
+        .map((item) => (item.quantity ? `${item.name} ×${item.quantity}` : item.name))
+        .filter(Boolean)
+        .join(", ");
+      return text || null;
+    } catch {
+      return null;
+    }
+  })();
+
   return (
     <div className="receipt-detail">
       <button className="receipt-detail__back" onClick={() => navigate("/receipts")}>
@@ -76,7 +97,7 @@ const ReceiptDetail: React.FC = () => {
         <div className="receipt-detail__info">
           <div className="receipt-detail__info-header">
             <div>
-              <p className="receipt-detail__store">{receipt.storeName}</p>
+              <p className="receipt-detail__store">{receipt.storeName ?? "-"}</p>
               {receipt.storeAddress && (
                 <p className="receipt-detail__address">{receipt.storeAddress}</p>
               )}
@@ -106,10 +127,10 @@ const ReceiptDetail: React.FC = () => {
               <span className="receipt-detail__field-label">입력 방식</span>
               <span className="receipt-detail__field-value">{receipt.inputMethod === "OCR" ? "OCR 스캔" : "직접 입력"}</span>
             </div>
-            {receipt.paymentItem && (
+            {formattedPaymentItem && (
               <div className="receipt-detail__field">
                 <span className="receipt-detail__field-label">결제 항목</span>
-                <span className="receipt-detail__field-value">{receipt.paymentItem}</span>
+                <span className="receipt-detail__field-value">{formattedPaymentItem}</span>
               </div>
             )}
             {receipt.memo && (
