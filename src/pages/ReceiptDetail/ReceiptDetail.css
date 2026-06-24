@@ -6,99 +6,186 @@
 }
 
 .receipt-detail__back {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: var(--space-xs);
   font-size: var(--font-size-sm);
   font-weight: 500;
-  color: var(--color-primary);
+  color: var(--color-muted);
   background: none;
   border: none;
   cursor: pointer;
   width: fit-content;
+  padding: 4px 0;
+  transition: color 0.15s;
 }
 
-/* 영수증 사진 : 상세 설명 카드 = 5 : 5 */
+.receipt-detail__back:hover {
+  color: var(--color-primary);
+}
+
+/* 이미지(좌) : 정보(우) = 5:5 */
 .receipt-detail__layout {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: var(--space-lg);
-  align-items: stretch;
+  align-items: start;
 }
 
-.receipt-detail__image {
-  min-width: 0;
-  min-height: 370px;
-  background-color: var(--color-surface);
+/* ── 왼쪽: 이미지 미리보기 카드 ── */
+.receipt-detail__preview-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.receipt-detail__preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: 10px var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.receipt-detail__preview-header-left {
+  min-width: 0;
+}
+
+.receipt-detail__preview-title {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 1px;
+}
+
+.receipt-detail__preview-meta {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted);
+}
+
+/* 줌 툴바 */
+.receipt-detail__preview-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.receipt-detail__toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-xs);
+  border: none;
+  background: none;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  text-decoration: none;
+}
+
+.receipt-detail__toolbar-btn:hover:not(:disabled) {
+  background: var(--color-bg-soft);
+  color: var(--color-text);
+}
+
+.receipt-detail__toolbar-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.receipt-detail__toolbar-zoom {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-muted);
+  min-width: 36px;
+  text-align: center;
+}
+
+.receipt-detail__toolbar-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--color-border);
+  margin: 0 4px;
+}
+
+/* 줌 이미지 래퍼 */
+.receipt-detail__zoom-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow: hidden;
+}
+
+.receipt-detail__preview-body {
   padding: var(--space-md);
-  display: grid;
-  place-items: center;
+  min-height: 380px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: var(--color-bg);
   overflow: hidden;
 }
 
 .receipt-detail__image-file {
   display: block;
-  width: 100%;
   max-width: 100%;
-  max-height: 560px;
+  max-height: 540px;
   object-fit: contain;
-  border-radius: var(--radius-sm);
-  background-color: var(--color-bg);
+  border-radius: var(--radius-xs);
 }
 
 .receipt-detail__no-image {
   width: 100%;
   height: 100%;
-  min-height: 338px;
-  background-color: var(--color-bg);
-  border: 1.5px dashed var(--color-border);
-  border-radius: var(--radius-sm);
+  min-height: 340px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: var(--space-sm);
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
 }
 
 .receipt-detail__no-image-icon {
-  font-size: 40px;
+  font-size: 32px;
+  opacity: 0.35;
 }
 
 .receipt-detail__no-image p {
   font-size: var(--font-size-sm);
-  color: var(--color-muted);
+  color: var(--color-placeholder);
 }
 
-.receipt-detail__info {
-  min-width: 0;
-  min-height: 370px;
-  background-color: var(--color-surface);
+/* ── 오른쪽: 문서 정보 카드 ── */
+.receipt-detail__info-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
-  padding: var(--space-lg);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
 }
 
-.receipt-detail__info-header {
+.receipt-detail__info-card-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: var(--space-md);
+  padding: 14px var(--space-md);
+  border-bottom: 1px solid var(--color-border);
 }
 
-.receipt-detail__store {
-  font-size: var(--font-size-xl);
+.receipt-detail__info-card-title {
+  font-size: var(--font-size-base);
   font-weight: 700;
-}
-
-.receipt-detail__address {
-  font-size: var(--font-size-sm);
-  color: var(--color-muted);
-  margin-top: 4px;
+  color: var(--color-text);
 }
 
 .receipt-detail__actions {
@@ -107,79 +194,254 @@
 }
 
 .receipt-detail__icon-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm);
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-xs);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--color-muted);
-  border: 1.5px solid var(--color-border);
+  border: 1px solid var(--color-border);
   background: none;
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .receipt-detail__icon-btn:hover {
-  background-color: var(--color-bg);
+  background: var(--color-bg);
   color: var(--color-text);
 }
 
 .receipt-detail__icon-btn--danger:hover {
   color: var(--color-danger);
   border-color: var(--color-danger);
+  background: var(--color-danger-light);
 }
 
-.receipt-detail__amount {
-  font-size: 32px;
+/* OCR 미인식 배너 */
+.receipt-detail__ocr-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 10px var(--space-md);
+  background-color: var(--color-warning-light);
+  border-bottom: 1px solid #f0d9b8;
+  font-size: var(--font-size-sm);
+  color: var(--color-warning-dark);
+}
+
+.receipt-detail__ocr-banner-icon {
+  flex-shrink: 0;
+  color: var(--color-warning);
+}
+
+.receipt-detail__ocr-banner-btn {
+  margin-left: auto;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-warning-dark);
+  background: none;
+  border: 1px solid var(--color-warning-dark);
+  border-radius: var(--radius-xs);
+  padding: 3px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.receipt-detail__ocr-banner-btn:hover {
+  background-color: var(--color-warning-dark);
+  color: #fff;
+}
+
+/* 섹션 */
+.receipt-detail__section {
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.receipt-detail__section:last-child {
+  border-bottom: none;
+}
+
+.receipt-detail__section-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--space-sm);
+}
+
+/* 기본 정보 테이블 */
+.receipt-detail__table {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.receipt-detail__table-row {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.receipt-detail__table-row:last-child {
+  border-bottom: none;
+}
+
+.receipt-detail__table-label {
+  padding: 11px 14px;
+  font-size: var(--font-size-xs);
+  color: var(--color-muted);
+  background: var(--color-bg-cool);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  line-height: 1.4;
+}
+
+.receipt-detail__table-value {
+  padding: 11px 14px;
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.receipt-detail__table-value--amount {
+  font-size: var(--font-size-lg);
   font-weight: 800;
   color: var(--color-text);
+  letter-spacing: -0.02em;
 }
 
-.receipt-detail__fields {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
-.receipt-detail__field {
-  display: flex;
-  gap: var(--space-md);
-  align-items: flex-start;
-}
-
-.receipt-detail__field-label {
+/* 카테고리 배지 */
+.receipt-detail__category-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary-light);
+  color: var(--color-primary-dark);
   font-size: var(--font-size-sm);
-  color: var(--color-muted);
-  width: 90px;
-  flex-shrink: 0;
+  font-weight: 600;
 }
 
-.receipt-detail__field-value {
+/* 입력방식 배지 */
+.receipt-detail__method-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.receipt-detail__method-badge--ocr {
+  background-color: var(--color-info-light);
+  color: var(--color-info);
+}
+
+.receipt-detail__method-badge--manual {
+  background-color: var(--color-bg-soft);
+  color: var(--color-muted);
+}
+
+/* OCR 미인식 */
+.receipt-detail__ocr-missing {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-warning-light);
+  color: var(--color-warning-dark);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  border: 1px solid #f0d9b8;
+}
+
+/* 결제 항목 2열 그리드 */
+.receipt-detail__items-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--color-border);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.receipt-detail__item-cell {
+  background: var(--color-surface);
+  padding: 10px 14px;
+}
+
+.receipt-detail__item-cell-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted);
+  margin-bottom: 3px;
+}
+
+.receipt-detail__item-cell-value {
   font-size: var(--font-size-md);
+  font-weight: 600;
   color: var(--color-text);
 }
 
-.receipt-detail__new-actions {
+/* 메모 */
+.receipt-detail__memo-text {
+  font-size: var(--font-size-md);
+  color: var(--color-text-sub);
+  line-height: 1.7;
+  padding: 4px 0;
+}
+
+/* 전체화면 모달 */
+.receipt-detail__fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.92);
   display: flex;
-  justify-content: flex-end;
-  gap: var(--space-sm);
-  padding-top: var(--space-md);
-  border-top: 1px solid var(--color-border);
-  margin-top: auto;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+}
+
+.receipt-detail__fullscreen-img {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  cursor: default;
+}
+
+.receipt-detail__fullscreen-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.receipt-detail__fullscreen-close:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 @media (max-width: 900px) {
   .receipt-detail__layout {
     grid-template-columns: 1fr;
-  }
-
-  .receipt-detail__image,
-  .receipt-detail__info {
-    min-height: auto;
-  }
-
-  .receipt-detail__no-image {
-    min-height: 300px;
   }
 }

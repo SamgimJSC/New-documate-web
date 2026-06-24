@@ -123,7 +123,7 @@ const FinanceReport: React.FC = () => {
   const categoryData = useMemo(
     () =>
       (categorySummary?.categories ?? []).map((c) => ({
-        name: c.name,
+        name: (c as Record<string, unknown>).categoryName as string ?? c.name ?? "기타",
         value: c.totalSpend,
       })),
     [categorySummary],
