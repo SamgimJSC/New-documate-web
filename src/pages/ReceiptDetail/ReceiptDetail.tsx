@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Pencil, Trash2, AlertCircle, ZoomIn, ZoomOut, Maximize2, X, Download } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, AlertCircle, ZoomIn, ZoomOut, Maximize2, X } from "lucide-react";
 import Button from "../../components/common/Button";
 import ReceiptManualModal from "../../components/modal/ReceiptManualModal";
 import ReceiptDeleteConfirmModal from "../../components/modal/ReceiptDeleteConfirmModal";
@@ -138,14 +138,6 @@ const ReceiptDetail: React.FC = () => {
                   <ZoomIn size={13} />
                 </button>
                 <div className="receipt-detail__toolbar-divider" />
-                <a
-                  className="receipt-detail__toolbar-btn"
-                  href={receipt.fileUrl}
-                  download
-                  title="다운로드"
-                >
-                  <Download size={13} />
-                </a>
                 <button
                   className="receipt-detail__toolbar-btn"
                   onClick={() => setIsFullscreen(true)}
