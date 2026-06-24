@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Pencil, Trash2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, AlertCircle, ZoomIn, ZoomOut, Maximize2, X, Download } from "lucide-react";
 import Button from "../../components/common/Button";
 import ReceiptManualModal from "../../components/modal/ReceiptManualModal";
 import ReceiptDeleteConfirmModal from "../../components/modal/ReceiptDeleteConfirmModal";
@@ -23,6 +23,8 @@ const ReceiptDetail: React.FC = () => {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [loading, setLoading] = useState(true);
+  const [zoom, setZoom] = useState(100);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     if (!receipt_id || receipt_id === "confirm") {
@@ -34,6 +36,14 @@ const ReceiptDetail: React.FC = () => {
       .catch(() => setReceipt(null))
       .finally(() => setLoading(false));
   }, [receipt_id]);
+
+  // 전체화면에서 ESC 키로 닫기
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setIsFullscreen(false); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isFullscreen]);
 
   const handleDelete = async () => {
     if (!receipt) return;
@@ -103,12 +113,60 @@ const ReceiptDetail: React.FC = () => {
         {/* ── 왼쪽: 미리보기 ── */}
         <div className="receipt-detail__preview-card">
           <div className="receipt-detail__preview-header">
-            <p className="receipt-detail__preview-title">영수증 미리보기</p>
-            {fileExt && <p className="receipt-detail__preview-meta">{fileExt}</p>}
+            <div className="receipt-detail__preview-header-left">
+              <p className="receipt-detail__preview-title">영수증 미리보기</p>
+              {fileExt && <p className="receipt-detail__preview-meta">{fileExt}</p>}
+            </div>
+
+            {receipt.fileUrl && (
+              <div className="receipt-detail__preview-toolbar">
+                <button
+                  className="receipt-detail__toolbar-btn"
+                  onClick={() => setZoom(z => Math.max(z - 25, 50))}
+                  disabled={zoom <= 50}
+                  title="축소"
+                >
+                  <ZoomOut size={13} />
+                </button>
+                <span className="receipt-detail__toolbar-zoom">{zoom}%</span>
+                <button
+                  className="receipt-detail__toolbar-btn"
+                  onClick={() => setZoom(z => Math.min(z + 25, 300))}
+                  disabled={zoom >= 300}
+                  title="확대"
+                >
+                  <ZoomIn size={13} />
+                </button>
+                <div className="receipt-detail__toolbar-divider" />
+                <a
+                  className="receipt-detail__toolbar-btn"
+                  href={receipt.fileUrl}
+                  download
+                  title="다운로드"
+                >
+                  <Download size={13} />
+                </a>
+                <button
+                  className="receipt-detail__toolbar-btn"
+                  onClick={() => setIsFullscreen(true)}
+                  title="전체화면"
+                >
+                  <Maximize2 size={13} />
+                </button>
+              </div>
+            )}
           </div>
+
           <div className="receipt-detail__preview-body">
             {receipt.fileUrl ? (
-              <img className="receipt-detail__image-file" src={receipt.fileUrl} alt="영수증" />
+              <div className="receipt-detail__zoom-wrap">
+                <img
+                  className="receipt-detail__image-file"
+                  src={receipt.fileUrl}
+                  alt="영수증"
+                  style={{ transform: `scale(${zoom / 100})`, transformOrigin: "top center" }}
+                />
+              </div>
             ) : (
               <div className="receipt-detail__no-image">
                 <span className="receipt-detail__no-image-icon">🧾</span>
@@ -207,6 +265,21 @@ const ReceiptDetail: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* 전체화면 모달 */}
+      {isFullscreen && receipt.fileUrl && (
+        <div className="receipt-detail__fullscreen" onClick={() => setIsFullscreen(false)}>
+          <button className="receipt-detail__fullscreen-close" onClick={() => setIsFullscreen(false)}>
+            <X size={20} />
+          </button>
+          <img
+            src={receipt.fileUrl}
+            alt="영수증 전체화면"
+            className="receipt-detail__fullscreen-img"
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+      )}
 
       <ReceiptManualModal
         isOpen={editOpen}
