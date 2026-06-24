@@ -14,7 +14,7 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
-  const [remember] = useState(true);
+  const [remember, setRemember] = useState(false);
 
   const setUser = useUserStore((s) => s.setUser);
 
@@ -22,7 +22,7 @@ const Login: React.FC = () => {
     if (!email || !password) return;
     setError("");
     try {
-      await authService.login(email, password);
+      await authService.login(email, password, remember);
       const user = await userService.getMe();
       setUser(user);
       navigate("/dashboard");
@@ -65,14 +65,14 @@ const Login: React.FC = () => {
               </button>
             }
           />
-          <label className="login-remember login-remember--fixed">
-            <input type="checkbox" checked={remember} readOnly />
+          <label className="login-remember">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+            />
             로그인 상태 계속 유지
           </label>
-          <p className="login-helper">
-            JWT 토큰은 시연 정책상 컴퓨터 변경 전까지 유지됩니다. 웹/앱 로그인
-            정책은 동일하게 적용됩니다.
-          </p>
           {error && <p className="login-error">{error}</p>}
           <Button
             variant="primary"

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Modal from "../common/Modal";
 import Button from "../common/Button";
 import Select from "../common/Select";
-import { mockDocumentCategories } from "../../data/mockDocuments";
+import { useCategories } from "../../hooks/useCategories";
 import { useToast } from "../common/Toast";
 
 interface Props {
@@ -13,9 +13,10 @@ interface Props {
 
 const CategoryEditModal: React.FC<Props> = ({ isOpen, onClose, currentCategoryId }) => {
   const { showToast } = useToast();
+  const categories = useCategories();
   const [categoryId, setCategoryId] = useState(String(currentCategoryId || ""));
 
-  const options = mockDocumentCategories.map((c) => ({ value: String(c.category_id), label: c.name }));
+  const options = categories.map((c) => ({ value: String(c.category_id), label: c.name }));
 
   const handleSave = () => {
     showToast("카테고리가 변경되었습니다.", "success");

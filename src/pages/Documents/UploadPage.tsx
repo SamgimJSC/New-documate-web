@@ -53,9 +53,10 @@ type SortableFileRowProps = {
   file: StudioFile;
   index: number;
   onRemove: (id: string) => void;
+  disabled?: boolean;
 };
 
-function SortableFileRow({ file, index, onRemove }: SortableFileRowProps) {
+function SortableFileRow({ file, index, onRemove, disabled = false }: SortableFileRowProps) {
   const {
     attributes,
     listeners,
@@ -63,7 +64,7 @@ function SortableFileRow({ file, index, onRemove }: SortableFileRowProps) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: file.id });
+  } = useSortable({ id: file.id, disabled });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -76,10 +77,10 @@ function SortableFileRow({ file, index, onRemove }: SortableFileRowProps) {
   return (
     <article ref={setNodeRef} style={style} className="upload-file-row">
       <div
-        className="upload-file-row__drag-handle"
-        {...attributes}
-        {...listeners}
-        aria-label="드래그하여 순서 변경"
+        className={`upload-file-row__drag-handle${disabled ? " upload-file-row__drag-handle--disabled" : ""}`}
+        {...(!disabled ? attributes : {})}
+        {...(!disabled ? listeners : {})}
+        aria-label={disabled ? undefined : "드래그하여 순서 변경"}
       >
         <GripVertical size={16} />
       </div>
@@ -210,7 +211,7 @@ export function UploadPage() {
       const pageNo = currentCount + i + 1;
       try {
         const res = await uploadService.uploadPage(finalTempId, studioFile.file, pageNo);
-        const uploadedFileId = res.files[0]?.id;
+        const uploadedFileId = res.files.find((f) => f.pageNo === pageNo)?.id;
         setStudioFiles((current) =>
           current.map((f) =>
             f.id === studioFile.id ? { ...f, uploadStatus: "uploaded", uploadedFileId } : f,
@@ -285,15 +286,15 @@ export function UploadPage() {
 
       uploadLocalService.writeProcessItems([
         ...uploadLocalService.readProcessItems(),
-        ...studioFiles.map((f) =>
-          uploadLocalService.buildProcessDocument({
-            fileName: f.fileName,
-            sizeMb: f.sizeMb,
-            fileSizeBytes: f.fileSizeBytes,
-            status: "analyzing",
-            savedRecordId: confirmedId,
-          }),
-        ),
+        uploadLocalService.buildProcessDocument({
+          fileName: studioFiles[0].fileName,
+          sizeMb: studioFiles.reduce((sum, f) => sum + f.sizeMb, 0),
+          fileSizeBytes: studioFiles.reduce((sum, f) => sum + f.fileSizeBytes, 0),
+          pageCount: studioFiles.length,
+          status: "analyzing",
+          savedRecordId: confirmedId,
+          uploadedFileIds: uploadedFiles,
+        }),
       ]);
 
       setStartedFileCount(studioFiles.length);
@@ -418,6 +419,7 @@ export function UploadPage() {
                           file={file}
                           index={index}
                           onRemove={removeFile}
+                          disabled={isUploading}
                         />
                       ))}
                     </SortableContext>

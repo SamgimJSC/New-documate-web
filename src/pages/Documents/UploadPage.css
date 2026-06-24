@@ -822,6 +822,11 @@ body:has(.upload-page) button[class*="fab"] {
   color: #475569;
 }
 
+.upload-file-row__drag-handle--disabled {
+  color: #cbd5e1;
+  cursor: not-allowed;
+}
+
 /* 헤더 드래그 핸들 자리 (빈 컬럼) */
 .upload-file-list__head-handle {
   display: block;
