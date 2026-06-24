@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Lock,
@@ -17,108 +17,91 @@ import CategoryPieChart, {
   getCategoryColor,
 } from "../../components/chart/CategoryPieChart";
 import { mockCurrentUser } from "../../data/mockUsers";
-import { mockReceipts, mockSpendCategories } from "../../data/mockReceipts";
-import { sumByCategory } from "../../utils/filterUtils";
+import { getReceipts } from "../../api/receipt";
+import { getMonthlySpend, getDailySpend, getCategorySummary } from "../../api/report";
+import type {
+  MonthlySpendResponse,
+  DailySpendResponse,
+  CategorySummaryResponse,
+} from "../../types/report";
 import { formatDate } from "../../utils/formatDate";
 import { formatKRW } from "../../utils/formatCurrency";
+import type { Receipt } from "../../types/receipt";
 import "./FinanceReport.css";
 
-const getMonthKey = (date: Date) => {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-};
-
-const getLatestReceiptMonth = () => {
-  const activeReceipts = mockReceipts.filter((r) => r.is_deleted === "N");
-
-  if (activeReceipts.length === 0) {
-    return getMonthKey(new Date());
-  }
-
-  const latestReceipt = [...activeReceipts].sort((a, b) =>
-    b.purchase_date.localeCompare(a.purchase_date),
-  )[0];
-
-  return latestReceipt.purchase_date.slice(0, 7);
-};
+const getMonthKey = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 
 const getPreviousMonth = (month: string) => {
   const [year, monthNumber] = month.split("-").map(Number);
   const date = new Date(year, monthNumber - 1, 1);
-
   date.setMonth(date.getMonth() - 1);
-
   return getMonthKey(date);
 };
 
 const getNextMonth = (month: string) => {
   const [year, monthNumber] = month.split("-").map(Number);
   const date = new Date(year, monthNumber - 1, 1);
-
   date.setMonth(date.getMonth() + 1);
-
   return getMonthKey(date);
 };
 
 const getMonthLabel = (month: string) => {
   const [year, monthNumber] = month.split("-");
-
   return `${year}년 ${Number(monthNumber)}월`;
-};
-
-const getDaysInMonth = (month: string) => {
-  const [year, monthNumber] = month.split("-").map(Number);
-
-  return new Date(year, monthNumber, 0).getDate();
-};
-
-const getDayNumber = (dateString: string) => {
-  return Number(dateString.slice(8, 10));
 };
 
 const FinanceReport: React.FC = () => {
   const navigate = useNavigate();
   const isPro = mockCurrentUser.plan === "PRO";
 
-  const [selectedMonth, setSelectedMonth] = useState(getLatestReceiptMonth());
+  const [selectedMonth, setSelectedMonth] = useState(getMonthKey(new Date()));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  const activeReceipts = mockReceipts.filter((r) => r.is_deleted === "N");
+  const [monthlyData, setMonthlyData] = useState<MonthlySpendResponse | null>(null);
+  const [dailyData, setDailyData] = useState<DailySpendResponse | null>(null);
+  const [categorySummary, setCategorySummary] = useState<CategorySummaryResponse | null>(null);
+  const [monthReceipts, setMonthReceipts] = useState<Receipt[]>([]);
 
-  const monthReceipts = useMemo(() => {
-    return activeReceipts.filter((r) =>
-      r.purchase_date.startsWith(selectedMonth),
-    );
-  }, [activeReceipts, selectedMonth]);
+  const [year, monthNum] = selectedMonth.split("-").map(Number);
 
-  const previousMonthReceipts = useMemo(() => {
-    const previousMonth = getPreviousMonth(selectedMonth);
+  useEffect(() => {
+    getMonthlySpend(year).then(setMonthlyData).catch(() => {});
+  }, [year]);
 
-    return activeReceipts.filter((r) =>
-      r.purchase_date.startsWith(previousMonth),
-    );
-  }, [activeReceipts, selectedMonth]);
+  useEffect(() => {
+    getDailySpend(year, monthNum).then(setDailyData).catch(() => {});
+  }, [year, monthNum]);
 
-  const reportReceipts = useMemo(() => {
-    if (!selectedDate) {
-      return monthReceipts;
+  useEffect(() => {
+    if (selectedDate) {
+      getCategorySummary({ date: selectedDate }).then(setCategorySummary).catch(() => {});
+    } else {
+      getCategorySummary({ year, month: monthNum }).then(setCategorySummary).catch(() => {});
     }
+  }, [year, monthNum, selectedDate]);
 
-    return monthReceipts.filter((r) => r.purchase_date === selectedDate);
-  }, [monthReceipts, selectedDate]);
+  useEffect(() => {
+    getReceipts({ year, month: monthNum, size: 100 })
+      .then((res) => setMonthReceipts(res.receipts))
+      .catch(() => {});
+  }, [year, monthNum]);
 
-  const reportKey = selectedDate || selectedMonth;
+  const monthTotalSpend = dailyData?.totalSpend ?? 0;
+  const totalSpend = categorySummary?.totalSpend ?? 0;
 
-  const totalSpend = reportReceipts.reduce((sum, r) => sum + r.total_amount, 0);
+  const prevMonthNum = monthNum === 1 ? 12 : monthNum - 1;
+  const prevYear = monthNum === 1 ? year - 1 : year;
 
-  const monthTotalSpend = monthReceipts.reduce(
-    (sum, r) => sum + r.total_amount,
-    0,
-  );
+  const previousMonthSpend = useMemo(() => {
+    if (!monthlyData || prevYear !== year) return 0;
+    return monthlyData.months.find((m) => m.month === prevMonthNum)?.totalSpend ?? 0;
+  }, [monthlyData, prevMonthNum, prevYear, year]);
 
-  const previousMonthSpend = previousMonthReceipts.reduce(
-    (sum, r) => sum + r.total_amount,
-    0,
-  );
+  const previousMonthReceiptCount = useMemo(() => {
+    if (!monthlyData || prevYear !== year) return 0;
+    return monthlyData.months.find((m) => m.month === prevMonthNum)?.receiptCount ?? 0;
+  }, [monthlyData, prevMonthNum, prevYear, year]);
 
   const monthChangeRate =
     previousMonthSpend > 0
@@ -127,63 +110,75 @@ const FinanceReport: React.FC = () => {
         ? 100
         : 0;
 
-  const daysInMonth = getDaysInMonth(selectedMonth);
-  const lastReceiptDay =
-    monthReceipts.length > 0
-      ? Math.max(...monthReceipts.map((r) => getDayNumber(r.purchase_date)))
-      : 1;
+  const lineData = useMemo(
+    () =>
+      (dailyData?.days ?? []).map((d) => ({
+        month: `${d.day}일`,
+        amount: d.totalSpend,
+        date: d.date,
+      })),
+    [dailyData],
+  );
+
+  const categoryData = useMemo(
+    () =>
+      (categorySummary?.categories ?? []).map((c) => ({
+        name: c.name,
+        value: c.totalSpend,
+      })),
+    [categorySummary],
+  );
+
+  const sortedCategoryData = useMemo(
+    () => [...categoryData].sort((a, b) => b.value - a.value),
+    [categoryData],
+  );
+
+  const categoryTotal = categorySummary?.totalSpend ?? 0;
+  const topCategory = sortedCategoryData[0];
+
+  const periodReceiptCount =
+    categorySummary?.categories.reduce((sum, c) => sum + c.receiptCount, 0) ?? 0;
+
+  const daysInMonth = dailyData?.days.length ?? 30;
+
+  const lastReceiptDay = useMemo(() => {
+    const days = dailyData?.days ?? [];
+    for (let i = days.length - 1; i >= 0; i--) {
+      if (days[i].totalSpend > 0) return days[i].day;
+    }
+    return 1;
+  }, [dailyData]);
 
   const expectedMonthlySpend =
     monthTotalSpend > 0
       ? Math.round((monthTotalSpend / lastReceiptDay) * daysInMonth)
       : 0;
 
+  const monthReceiptCount = dailyData?.days.reduce((sum, d) => sum + d.receiptCount, 0) ?? 0;
   const predictionConfidence =
-    monthReceipts.length >= 10 ? 82 : monthReceipts.length >= 5 ? 78 : 65;
-
-  const lineData = Array.from({ length: daysInMonth }, (_, index) => {
-    const day = index + 1;
-    const dateKey = `${selectedMonth}-${String(day).padStart(2, "0")}`;
-    const amount = monthReceipts
-      .filter((r) => r.purchase_date === dateKey)
-      .reduce((sum, r) => sum + r.total_amount, 0);
-
-    return {
-      month: `${day}일`,
-      amount,
-      date: dateKey,
-    };
-  });
-
-  const categoryData = useMemo(() => {
-    return sumByCategory(reportReceipts, mockSpendCategories);
-  }, [reportReceipts]);
-
-  const sortedCategoryData = useMemo(() => {
-    return [...categoryData].sort((a, b) => b.value - a.value);
-  }, [categoryData]);
-
-  const categoryTotal = categoryData.reduce((sum, c) => sum + c.value, 0);
-
-  const topCategory = sortedCategoryData[0];
+    monthReceiptCount >= 10 ? 82 : monthReceiptCount >= 5 ? 78 : 65;
 
   const recentReceipts = useMemo(() => {
-    return [...reportReceipts]
-      .sort((a, b) => b.purchase_date.localeCompare(a.purchase_date))
+    const filtered = selectedDate
+      ? monthReceipts.filter((r) => r.purchaseDate === selectedDate)
+      : monthReceipts;
+    return [...filtered]
+      .sort((a, b) => b.purchaseDate.localeCompare(a.purchaseDate))
       .slice(0, 5);
-  }, [reportReceipts]);
+  }, [monthReceipts, selectedDate]);
+
+  const reportKey = selectedDate || selectedMonth;
 
   const aiAnalysisText = useMemo(() => {
-    if (reportReceipts.length === 0) {
+    if (!categorySummary || categorySummary.categories.length === 0) {
       return selectedDate
         ? "선택한 날짜에는 소비 데이터가 없습니다. 다른 날짜를 선택하거나 월 전체 보기로 돌아가 소비패턴을 확인해보세요."
         : "선택한 기준에 해당하는 소비 데이터가 없습니다. 영수증을 등록하면 AI 소비패턴 분석을 확인할 수 있습니다.";
     }
 
     const compareText = selectedDate
-      ? `${formatDate(selectedDate)}에는 총 ${formatKRW(
-          totalSpend,
-        )}를 지출했습니다.`
+      ? `${formatDate(selectedDate)}에는 총 ${formatKRW(totalSpend)}를 지출했습니다.`
       : monthChangeRate >= 0
         ? `전월 대비 소비가 ${monthChangeRate.toFixed(1)}% 증가했습니다.`
         : `전월 대비 소비가 ${Math.abs(monthChangeRate).toFixed(1)}% 감소했습니다.`;
@@ -203,22 +198,15 @@ const FinanceReport: React.FC = () => {
       : "소비 데이터를 더 등록하면 맞춤형 절약 제안을 받을 수 있습니다.";
 
     return `${compareText} ${categoryText} ${adviceText}`;
-  }, [
-    categoryTotal,
-    monthChangeRate,
-    reportReceipts.length,
-    selectedDate,
-    topCategory,
-    totalSpend,
-  ]);
+  }, [categorySummary, selectedDate, monthChangeRate, totalSpend, topCategory, categoryTotal]);
 
   const handlePreviousMonth = () => {
-    setSelectedMonth((prev) => getPreviousMonth(prev));
+    setSelectedMonth((prev: string) => getPreviousMonth(prev));
     setSelectedDate(null);
   };
 
   const handleNextMonth = () => {
-    setSelectedMonth((prev) => getNextMonth(prev));
+    setSelectedMonth((prev: string) => getNextMonth(prev));
     setSelectedDate(null);
   };
 
@@ -298,16 +286,14 @@ const FinanceReport: React.FC = () => {
           <div className="finance-report__summary-icon finance-report__summary-icon--purple">
             <ReceiptText size={20} />
           </div>
-          <p className="finance-report__summary-value">
-            {reportReceipts.length}건
-          </p>
+          <p className="finance-report__summary-value">{periodReceiptCount}건</p>
           <p className="finance-report__summary-label">
             {selectedDate ? "선택 날짜 영수증" : "영수증 등록 건수"}
           </p>
           <p className="finance-report__summary-sub">
             {selectedDate
-              ? `${getMonthLabel(selectedMonth)} 전체 ${monthReceipts.length}건 중`
-              : `지난 달 ${previousMonthReceipts.length}건`}
+              ? `${getMonthLabel(selectedMonth)} 전체 ${monthReceiptCount}건 중`
+              : `지난 달 ${previousMonthReceiptCount}건`}
           </p>
         </Card>
 
@@ -375,7 +361,6 @@ const FinanceReport: React.FC = () => {
                   categoryTotal > 0
                     ? Math.round((c.value / categoryTotal) * 100)
                     : 0;
-
                 const categoryColor = getCategoryColor(c.name);
 
                 return (
@@ -385,11 +370,7 @@ const FinanceReport: React.FC = () => {
                   >
                     <span
                       className="finance-report__category-name"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                      }}
+                      style={{ display: "flex", alignItems: "center", gap: 6 }}
                     >
                       <span
                         style={{
@@ -405,10 +386,7 @@ const FinanceReport: React.FC = () => {
                     <div className="finance-report__category-bar-wrap">
                       <div
                         className="finance-report__category-bar"
-                        style={{
-                          width: `${pct}%`,
-                          backgroundColor: categoryColor,
-                        }}
+                        style={{ width: `${pct}%`, backgroundColor: categoryColor }}
                       />
                     </div>
                     <span className="finance-report__category-pct">{pct}%</span>
@@ -451,25 +429,19 @@ const FinanceReport: React.FC = () => {
           </p>
         ) : (
           <div className="finance-report__receipt-list">
-            {recentReceipts.map((receipt) => {
-              const category = mockSpendCategories.find(
-                (c) => c.spend_category_id === receipt.spend_category_id,
-              );
-
-              return (
-                <button
-                  key={`${reportKey}-${receipt.receipt_id}`}
-                  type="button"
-                  className="finance-report__receipt-row"
-                  onClick={() => navigate(`/receipts/${receipt.receipt_id}`)}
-                >
-                  <span>{formatDate(receipt.purchase_date)}</span>
-                  <strong>{receipt.store_name}</strong>
-                  <span>{category?.name || "-"}</span>
-                  <strong>{formatKRW(receipt.total_amount)}</strong>
-                </button>
-              );
-            })}
+            {recentReceipts.map((receipt) => (
+              <button
+                key={`${reportKey}-${receipt.receiptId}`}
+                type="button"
+                className="finance-report__receipt-row"
+                onClick={() => navigate(`/receipts/${receipt.receiptId}`)}
+              >
+                <span>{formatDate(receipt.purchaseDate)}</span>
+                <strong>{receipt.storeName}</strong>
+                <span>{receipt.categoryName || "-"}</span>
+                <strong>{formatKRW(Number(receipt.totalAmount))}</strong>
+              </button>
+            ))}
           </div>
         )}
       </Card>

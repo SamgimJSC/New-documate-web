@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Modal from "../common/Modal";
 import Button from "../common/Button";
 import { useToast } from "../common/Toast";
+import { startUpload, uploadTempFile, requestAiAnalyse } from "../../api/upload";
 
 interface Props {
   isOpen: boolean;
@@ -10,16 +11,28 @@ interface Props {
 
 const ReceiptUploadModal: React.FC<Props> = ({ isOpen, onClose }) => {
   const { showToast } = useToast();
-  const [fileName, setFileName] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) setFileName(file.name);
+    const selected = e.target.files?.[0];
+    if (selected) setFile(selected);
   };
 
-  const handleAnalyze = () => {
-    showToast("영수증 OCR 분석을 시작합니다.", "info");
-    onClose();
+  const handleAnalyze = async () => {
+    if (!file) return;
+    setAnalyzing(true);
+    try {
+      const { tempDocumentId } = await startUpload();
+      const { files } = await uploadTempFile(tempDocumentId, file, 1);
+      await requestAiAnalyse(tempDocumentId, [{ id: files[0].id, pageNo: 1 }]);
+      showToast("분석이 시작됐어요. 잠시 후 영수증 목록에서 확인하세요.", "success");
+      onClose();
+    } catch {
+      showToast("업로드 중 오류가 발생했습니다.", "error");
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   return (
@@ -33,8 +46,8 @@ const ReceiptUploadModal: React.FC<Props> = ({ isOpen, onClose }) => {
             textAlign: "center",
           }}
         >
-          {fileName ? (
-            <p style={{ color: "var(--color-primary)", fontWeight: 500 }}>{fileName}</p>
+          {file ? (
+            <p style={{ color: "var(--color-primary)", fontWeight: 500 }}>{file.name}</p>
           ) : (
             <p style={{ color: "var(--color-muted)", fontSize: "var(--font-size-sm)" }}>
               영수증 이미지를 드래그하거나 파일을 선택하세요
@@ -48,12 +61,14 @@ const ReceiptUploadModal: React.FC<Props> = ({ isOpen, onClose }) => {
             }}
           >
             파일 선택
-            <input type="file" accept="image/*" onChange={handleFileChange} style={{ display: "none" }} />
+            <input type="file" accept="image/jpeg,image/png" onChange={handleFileChange} style={{ display: "none" }} />
           </label>
         </div>
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-          <Button variant="ghost" onClick={onClose}>취소</Button>
-          <Button variant="primary" onClick={handleAnalyze} disabled={!fileName}>분석 시작</Button>
+          <Button variant="ghost" onClick={onClose} disabled={analyzing}>취소</Button>
+          <Button variant="primary" onClick={handleAnalyze} disabled={!file || analyzing}>
+            {analyzing ? "업로드 중..." : "분석 시작"}
+          </Button>
         </div>
       </div>
     </Modal>
