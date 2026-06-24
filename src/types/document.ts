@@ -19,6 +19,14 @@ export interface DocumentTagItem {
   name: string;
 }
 
+export interface DocumentFile {
+  file_id: number;
+  document_id: string;
+  file_url: string;
+  page_no: number;
+  created_at: string;
+}
+
 export interface Document {
   document_id: string;
   user_id: string;
@@ -26,6 +34,7 @@ export interface Document {
   title: string;
   file_url: string;
   file_name: string;
+  document_files: DocumentFile[];
   file_type: DocumentFileType;
   file_size_bytes: number;
   page_count?: number;

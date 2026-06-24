@@ -33,6 +33,7 @@ interface DocumentApiItem {
   updatedAt: string;
   isDeleted: boolean;
   documentTags?: Array<{ tag: { tagId: string; name: string } }>;
+  documentFiles?: Array<{ fileId: number; documentId: string; fileUrl: string; pageNo: number; createdAt: string }>;
 }
 
 interface DocumentListData {
@@ -48,7 +49,16 @@ const mapDocument = (raw: DocumentApiItem): Document => ({
   user_id: raw.userId,
   category_id: raw.categoryId,
   title: raw.title,
-  file_url: raw.fileUrl ?? "",
+  document_files: (raw.documentFiles ?? [])
+    .sort((a, b) => a.pageNo - b.pageNo)
+    .map((f) => ({
+      file_id: f.fileId,
+      document_id: f.documentId,
+      file_url: f.fileUrl,
+      page_no: f.pageNo,
+      created_at: f.createdAt,
+    })),
+  file_url: raw.documentFiles?.[0]?.fileUrl ?? raw.fileUrl ?? "",
   file_name: raw.fileName ?? "",
   file_type: raw.fileType ?? "JPG",
   file_size_bytes: Number(raw.fileSizeBytes),
@@ -95,8 +105,17 @@ export const documentService = {
     }));
   },
 
-  async getDocuments(): Promise<Document[]> {
-    const res = await api.get<ApiResponse<DocumentListData>>("/documents");
+  async getDocuments(params?: {
+    keyword?: string;
+    searchField?: "title" | "tag" | "ocr";
+    limit?: number;
+    page?: number;
+    categoryId?: number;
+    sort?: string;
+  }): Promise<Document[]> {
+    const res = await api.get<ApiResponse<DocumentListData>>("/documents", {
+      params,
+    });
     return res.data.data.items.map(mapDocument);
   },
 
