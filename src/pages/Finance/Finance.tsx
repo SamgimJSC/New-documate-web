@@ -37,7 +37,10 @@ const Finance: React.FC = () => {
       ? { date: fullDate }
       : { year: selectedYear, month: selectedMonth };
     getCategorySummary(params)
-      .then((res) => setCategoryData(res.categories.map((c) => ({ name: c.name, value: c.totalSpend }))))
+      .then((res) => setCategoryData(res.categories.map((c) => ({
+        name: (c as Record<string, unknown>).categoryName as string ?? c.name ?? "기타",
+        value: c.totalSpend,
+      }))))
       .catch(() => setCategoryData([]));
   }, [selectedYear, selectedMonth, selectedDate]);
 
