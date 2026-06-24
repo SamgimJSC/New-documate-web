@@ -38,9 +38,10 @@ const Dashboard: React.FC = () => {
   const thisMonthReceipts = mockReceipts.filter((r) => {
     const now = new Date();
     const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    return r.purchase_date.startsWith(month) && r.is_deleted === "N";
+    console.log(month)
+    return r.purchaseDate.startsWith(month);
   });
-  const thisMonthSpend = thisMonthReceipts.reduce((s, r) => s + r.total_amount, 0);
+  const thisMonthSpend = thisMonthReceipts.reduce((s, r) => s + r.totalAmount, 0);
   const latestReport = mockMonthlyReports[mockMonthlyReports.length - 1];
   const storagePercent = user.storage_quota_bytes > 0
     ? Math.round((user.storage_used_bytes / user.storage_quota_bytes) * 100)

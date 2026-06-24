@@ -1,34 +1,79 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Modal from "../common/Modal";
 import Button from "../common/Button";
 import Input from "../common/Input";
 import Select from "../common/Select";
 import { mockSpendCategories } from "../../data/mockReceipts";
 import { useToast } from "../common/Toast";
+import { createReceipt, updateReceipt } from "../../api/receipt";
 import type { ModalMode } from "../../types/common";
+import type { Receipt } from "../../types/receipt";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   mode?: ModalMode;
+  receipt?: Receipt;
+  onSaved?: (receipt: Receipt) => void;
 }
 
-const ReceiptManualModal: React.FC<Props> = ({ isOpen, onClose, mode = "CREATE" }) => {
+const ReceiptManualModal: React.FC<Props> = ({ isOpen, onClose, mode = "CREATE", receipt, onSaved }) => {
   const { showToast } = useToast();
   const [storeName, setStoreName] = useState("");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [memo, setMemo] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && mode === "EDIT" && receipt) {
+      setStoreName(receipt.storeName);
+      setAmount(String(receipt.totalAmount));
+      setDate(receipt.purchaseDate);
+      setCategoryId(receipt.spendCategoryId ? String(receipt.spendCategoryId) : "");
+      setMemo(receipt.memo ?? "");
+    } else if (isOpen && mode === "CREATE") {
+      setStoreName("");
+      setAmount("");
+      setDate("");
+      setCategoryId("");
+      setMemo("");
+    }
+  }, [isOpen, mode, receipt]);
 
   const categoryOptions = mockSpendCategories.map((c) => ({
-    value: String(c.spend_category_id),
+    value: String(c.spendCategoryId),
     label: c.name,
   }));
 
-  const handleSave = () => {
-    showToast(mode === "CREATE" ? "영수증이 추가되었습니다." : "영수증이 수정되었습니다.", "success");
-    onClose();
+  const handleSave = async () => {
+    if (!storeName || !amount || !date) return;
+    setSaving(true);
+    try {
+      const body = {
+        storeName,
+        totalAmount: Number(amount),
+        purchaseDate: date,
+        spendCategoryId: categoryId ? Number(categoryId) : null,
+        memo: memo || undefined,
+      };
+
+      let saved: Receipt;
+      if (mode === "EDIT" && receipt) {
+        saved = await updateReceipt(receipt.receiptId, body);
+      } else {
+        saved = await createReceipt({ ...body, inputMethod: "MANUAL" });
+      }
+
+      showToast(mode === "CREATE" ? "영수증이 추가되었습니다." : "영수증이 수정되었습니다.", "success");
+      onSaved?.(saved);
+      onClose();
+    } catch {
+      showToast("저장 중 오류가 발생했습니다.", "error");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -40,8 +85,10 @@ const ReceiptManualModal: React.FC<Props> = ({ isOpen, onClose, mode = "CREATE" 
         <Select label="카테고리" value={categoryId} options={categoryOptions} onChange={(e) => setCategoryId(e.target.value)} placeholder="카테고리 선택" />
         <Input label="메모" placeholder="메모를 입력하세요 (선택)" value={memo} onChange={(e) => setMemo(e.target.value)} />
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-          <Button variant="ghost" onClick={onClose}>취소</Button>
-          <Button variant="primary" onClick={handleSave} disabled={!storeName || !amount || !date}>저장</Button>
+          <Button variant="ghost" onClick={onClose} disabled={saving}>취소</Button>
+          <Button variant="primary" onClick={handleSave} disabled={!storeName || !amount || !date || saving}>
+            {saving ? "저장 중..." : "저장"}
+          </Button>
         </div>
       </div>
     </Modal>
