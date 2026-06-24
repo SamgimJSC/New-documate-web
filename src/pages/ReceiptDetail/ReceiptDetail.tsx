@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, AlertCircle } from "lucide-react";
 import Button from "../../components/common/Button";
 import ReceiptManualModal from "../../components/modal/ReceiptManualModal";
 import ReceiptDeleteConfirmModal from "../../components/modal/ReceiptDeleteConfirmModal";
@@ -10,6 +10,10 @@ import { formatKRW } from "../../utils/formatCurrency";
 import { useToast } from "../../components/common/Toast";
 import type { Receipt } from "../../types/receipt";
 import "./ReceiptDetail.css";
+
+const FieldMissing: React.FC<{ isOcr: boolean }> = ({ isOcr }) => (
+  <span className="receipt-detail__ocr-missing">{isOcr ? "미인식" : "미입력"}</span>
+);
 
 const ReceiptDetail: React.FC = () => {
   const { receipt_id } = useParams<{ receipt_id: string }>();
@@ -76,70 +80,131 @@ const ReceiptDetail: React.FC = () => {
     }
   })();
 
+  const isOcr = receipt.inputMethod === "OCR";
+  const missingCount = [
+    !receipt.storeName,
+    receipt.totalAmount == null,
+    !receipt.purchaseDate,
+    !receipt.categoryName,
+  ].filter(Boolean).length;
+  const hasMissingFields = missingCount > 0;
+
+  const fileExt = receipt.fileUrl
+    ? receipt.fileUrl.split(".").pop()?.toUpperCase() ?? "파일"
+    : null;
+
   return (
     <div className="receipt-detail">
       <button className="receipt-detail__back" onClick={() => navigate("/receipts")}>
-        <ArrowLeft size={16} /> 영수증 목록
+        <ArrowLeft size={14} /> 영수증 목록
       </button>
 
       <div className="receipt-detail__layout">
-        <div className="receipt-detail__image">
-          {receipt.fileUrl ? (
-            <img className="receipt-detail__image-file" src={receipt.fileUrl} alt="영수증" />
-          ) : (
-            <div className="receipt-detail__no-image">
-              <span className="receipt-detail__no-image-icon">🧾</span>
-              <p>영수증 이미지 없음</p>
-            </div>
-          )}
+        {/* ── 왼쪽: 미리보기 ── */}
+        <div className="receipt-detail__preview-card">
+          <div className="receipt-detail__preview-header">
+            <p className="receipt-detail__preview-title">영수증 미리보기</p>
+            {fileExt && <p className="receipt-detail__preview-meta">{fileExt}</p>}
+          </div>
+          <div className="receipt-detail__preview-body">
+            {receipt.fileUrl ? (
+              <img className="receipt-detail__image-file" src={receipt.fileUrl} alt="영수증" />
+            ) : (
+              <div className="receipt-detail__no-image">
+                <span className="receipt-detail__no-image-icon">🧾</span>
+                <p>영수증 이미지 없음</p>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="receipt-detail__info">
-          <div className="receipt-detail__info-header">
-            <div>
-              <p className="receipt-detail__store">{receipt.storeName ?? "-"}</p>
-              {receipt.storeAddress && (
-                <p className="receipt-detail__address">{receipt.storeAddress}</p>
-              )}
-            </div>
+        {/* ── 오른쪽: 문서 정보 ── */}
+        <div className="receipt-detail__info-card">
+          <div className="receipt-detail__info-card-header">
+            <span className="receipt-detail__info-card-title">영수증 정보</span>
             <div className="receipt-detail__actions">
               <button className="receipt-detail__icon-btn" onClick={() => setEditOpen(true)} title="수정">
-                <Pencil size={16} />
+                <Pencil size={14} />
               </button>
               <button className="receipt-detail__icon-btn receipt-detail__icon-btn--danger" onClick={() => setDeleteOpen(true)} title="삭제">
-                <Trash2 size={16} />
+                <Trash2 size={14} />
               </button>
             </div>
           </div>
 
-          <p className="receipt-detail__amount">{formatKRW(receipt.totalAmount)}</p>
+          {hasMissingFields && (
+            <div className="receipt-detail__ocr-banner">
+              <AlertCircle size={15} className="receipt-detail__ocr-banner-icon" />
+              <span>
+                {isOcr
+                  ? `OCR에서 인식하지 못한 항목이 ${missingCount}개 있습니다.`
+                  : `입력되지 않은 항목이 ${missingCount}개 있습니다.`}
+              </span>
+              <button className="receipt-detail__ocr-banner-btn" onClick={() => setEditOpen(true)}>
+                직접 입력하기
+              </button>
+            </div>
+          )}
 
-          <div className="receipt-detail__fields">
-            <div className="receipt-detail__field">
-              <span className="receipt-detail__field-label">결제일</span>
-              <span className="receipt-detail__field-value">{formatDate(receipt.purchaseDate)}</span>
-            </div>
-            <div className="receipt-detail__field">
-              <span className="receipt-detail__field-label">카테고리</span>
-              <span className="receipt-detail__field-value">{receipt.categoryName || "-"}</span>
-            </div>
-            <div className="receipt-detail__field">
-              <span className="receipt-detail__field-label">입력 방식</span>
-              <span className="receipt-detail__field-value">{receipt.inputMethod === "OCR" ? "OCR 스캔" : "직접 입력"}</span>
-            </div>
-            {formattedPaymentItem && (
-              <div className="receipt-detail__field">
-                <span className="receipt-detail__field-label">결제 항목</span>
-                <span className="receipt-detail__field-value">{formattedPaymentItem}</span>
+          <div className="receipt-detail__section">
+            <p className="receipt-detail__section-title">기본 정보</p>
+            <div className="receipt-detail__table">
+              <div className="receipt-detail__table-row">
+                <span className="receipt-detail__table-label">가게명</span>
+                <span className="receipt-detail__table-value">
+                  {receipt.storeName || <FieldMissing isOcr={isOcr} />}
+                </span>
               </div>
-            )}
-            {receipt.memo && (
-              <div className="receipt-detail__field">
-                <span className="receipt-detail__field-label">메모</span>
-                <span className="receipt-detail__field-value">{receipt.memo}</span>
+              <div className="receipt-detail__table-row">
+                <span className="receipt-detail__table-label">결제 금액</span>
+                <span className="receipt-detail__table-value receipt-detail__table-value--amount">
+                  {receipt.totalAmount != null ? formatKRW(receipt.totalAmount) : <FieldMissing isOcr={isOcr} />}
+                </span>
               </div>
-            )}
+              <div className="receipt-detail__table-row">
+                <span className="receipt-detail__table-label">결제일</span>
+                <span className="receipt-detail__table-value">
+                  {receipt.purchaseDate ? formatDate(receipt.purchaseDate) : <FieldMissing isOcr={isOcr} />}
+                </span>
+              </div>
+              <div className="receipt-detail__table-row">
+                <span className="receipt-detail__table-label">카테고리</span>
+                <span className="receipt-detail__table-value">
+                  {receipt.categoryName
+                    ? <span className="receipt-detail__category-badge">{receipt.categoryName}</span>
+                    : <FieldMissing isOcr={isOcr} />}
+                </span>
+              </div>
+              <div className="receipt-detail__table-row">
+                <span className="receipt-detail__table-label">입력 방식</span>
+                <span className="receipt-detail__table-value">
+                  <span className={`receipt-detail__method-badge receipt-detail__method-badge--${isOcr ? "ocr" : "manual"}`}>
+                    {isOcr ? "OCR 스캔" : "직접 입력"}
+                  </span>
+                </span>
+              </div>
+              {receipt.storeAddress && (
+                <div className="receipt-detail__table-row">
+                  <span className="receipt-detail__table-label">주소</span>
+                  <span className="receipt-detail__table-value" style={{ fontWeight: 400 }}>{receipt.storeAddress}</span>
+                </div>
+              )}
+            </div>
           </div>
+
+          {formattedPaymentItem && (
+            <div className="receipt-detail__section">
+              <p className="receipt-detail__section-title">결제 항목</p>
+              <p className="receipt-detail__memo-text">{formattedPaymentItem}</p>
+            </div>
+          )}
+
+          {receipt.memo && (
+            <div className="receipt-detail__section">
+              <p className="receipt-detail__section-title">메모</p>
+              <p className="receipt-detail__memo-text">{receipt.memo}</p>
+            </div>
+          )}
         </div>
       </div>
 
