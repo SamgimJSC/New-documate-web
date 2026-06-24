@@ -7,6 +7,7 @@ import {
 } from "../../services/uploadLocalService";
 import { uploadService } from "../../services/uploadService";
 import { documentService } from "../../services/documentService";
+import { getReceipts } from "../../api/receipt";
 import { useCategories } from "../../hooks/useCategories";
 import type { UploadDocumentCategory } from "../../types/upload";
 import {
@@ -110,27 +111,55 @@ export function ProcessingCenterPage() {
             if (found.aiStatus === "DONE") {
               documentService
                 .getDocuments()
-                .then((docs) => {
+                .then(async (docs) => {
                   const sorted = [...docs].sort((a, b) =>
                     b.created_at.localeCompare(a.created_at),
                   );
-                  const matched =
-                    sorted.find((d) => d.file_name === item.fileName) ?? sorted[0];
+                  const matchedDoc = sorted.find((d) => d.file_name === item.fileName);
 
-                  let category: UploadDocumentCategory = "기타";
-                  if (matched) {
+                  if (matchedDoc) {
                     const cat = categories.find(
-                      (c) => c.category_id === matched.category_id,
+                      (c) => c.category_id === matchedDoc.category_id,
                     );
-                    if (cat) category = cat.name as UploadDocumentCategory;
+                    const category: UploadDocumentCategory = cat
+                      ? (cat.name as UploadDocumentCategory)
+                      : "기타";
+                    updateItem(item.id, {
+                      status: "completed",
+                      progress: 100,
+                      savedTarget: "documents",
+                      category,
+                      memo: "AI 분석이 완료되어 디지털 캐비닛에 저장되었습니다.",
+                    });
+                    return;
+                  }
+
+                  // documents에 없으면 receipts에서 확인
+                  try {
+                    const res = await getReceipts({ size: 5, sort: "latest" });
+                    const matchedReceipt = res.receipts.find(
+                      (r) => new Date(r.createdAt) >= new Date(item.uploadedAt),
+                    );
+                    if (matchedReceipt) {
+                      updateItem(item.id, {
+                        status: "completed",
+                        progress: 100,
+                        savedTarget: "receipts",
+                        category: "영수증",
+                        memo: "AI 분석이 완료되어 영수증 보드에 저장되었습니다.",
+                      });
+                      return;
+                    }
+                  } catch {
+                    // receipts 조회 실패 시 무시
                   }
 
                   updateItem(item.id, {
                     status: "completed",
                     progress: 100,
                     savedTarget: "documents",
-                    category,
-                    memo: "AI 분석이 완료되어 디지털 캐비닛에 저장되었습니다.",
+                    category: "기타",
+                    memo: "AI 분석이 완료되어 저장되었습니다.",
                   });
                 })
                 .catch(() => {
@@ -503,7 +532,7 @@ export function ProcessingCenterPage() {
                     <i className={`process-chip process-chip--${item.status}`}>
                       {PROCESS_STATUS_LABEL[item.status]}
                     </i>
-                    <span>{item.category}</span>
+                    <span>{item.status === "analyzing" ? "" : item.category}</span>
                     <div
                       className="process-row-actions"
                       onClick={(event) => event.stopPropagation()}
