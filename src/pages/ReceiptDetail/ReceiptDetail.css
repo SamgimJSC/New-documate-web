@@ -41,15 +41,23 @@
 }
 
 .receipt-detail__preview-header {
-  padding: 14px var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: 10px var(--space-md);
   border-bottom: 1px solid var(--color-border);
 }
 
+.receipt-detail__preview-header-left {
+  min-width: 0;
+}
+
 .receipt-detail__preview-title {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
   font-weight: 700;
   color: var(--color-text);
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 .receipt-detail__preview-meta {
@@ -57,13 +65,71 @@
   color: var(--color-muted);
 }
 
+/* 줌 툴바 */
+.receipt-detail__preview-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.receipt-detail__toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-xs);
+  border: none;
+  background: none;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  text-decoration: none;
+}
+
+.receipt-detail__toolbar-btn:hover:not(:disabled) {
+  background: var(--color-bg-soft);
+  color: var(--color-text);
+}
+
+.receipt-detail__toolbar-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.receipt-detail__toolbar-zoom {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-muted);
+  min-width: 36px;
+  text-align: center;
+}
+
+.receipt-detail__toolbar-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--color-border);
+  margin: 0 4px;
+}
+
+/* 줌 이미지 래퍼 */
+.receipt-detail__zoom-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow: hidden;
+}
+
 .receipt-detail__preview-body {
   padding: var(--space-md);
   min-height: 380px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   background: var(--color-bg);
+  overflow: hidden;
 }
 
 .receipt-detail__image-file {
@@ -261,7 +327,6 @@
   color: var(--color-primary-dark);
   font-size: var(--font-size-sm);
   font-weight: 600;
-  border: 1px solid var(--color-primary-border);
 }
 
 /* 입력방식 배지 */
@@ -331,6 +396,48 @@
   color: var(--color-text-sub);
   line-height: 1.7;
   padding: 4px 0;
+}
+
+/* 전체화면 모달 */
+.receipt-detail__fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+}
+
+.receipt-detail__fullscreen-img {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  cursor: default;
+}
+
+.receipt-detail__fullscreen-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.receipt-detail__fullscreen-close:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 @media (max-width: 900px) {
