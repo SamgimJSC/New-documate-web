@@ -65,11 +65,24 @@ const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
   const location = useLocation();
   const pageName = getPageName(location.pathname);
   const breadcrumb = getHeaderBreadcrumb(location.pathname);
-
+  const isMyPage = location.pathname.startsWith("/mypage");
   return (
     <>
-      <header className="header">
-        {breadcrumb ? (
+      <header className={`header${isMyPage ? " header--mypage" : ""}`}>
+        {isMyPage ? (
+          <div className="header__mypage-start">
+            <button
+              type="button"
+              className="header__brand header__brand--mypage"
+              onClick={() => navigate("/mypage")}
+            >
+              <span>D</span>
+              <strong>DocuMate</strong>
+            </button>
+
+            <span className="header__mypage-title">마이페이지</span>
+          </div>
+        ) : breadcrumb ? (
           <nav className="header__breadcrumb" aria-label="현재 위치">
             <button
               type="button"
@@ -83,7 +96,6 @@ const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
         ) : (
           <span className="header__page-name">{pageName}</span>
         )}
-
         <div className="header__actions">
           <button className="header__icon-btn" aria-label="알림" title="알림">
             <Bell size={20} />
@@ -100,7 +112,7 @@ const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
             className="header__icon-btn"
             aria-label="마이페이지"
             title="마이페이지"
-            onClick={() => navigate("/mypage/profile")}
+            onClick={() => navigate("/mypage")}
           >
             <UserCircle size={22} />
           </button>

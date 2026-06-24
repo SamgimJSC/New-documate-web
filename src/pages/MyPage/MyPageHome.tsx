@@ -5,42 +5,73 @@ import {
   ChevronRight,
   CreditCard,
   HardDrive,
+  LogOut,
   Settings,
   ShieldCheck,
-  Trash2,
   UserRound,
 } from "lucide-react";
 import Badge from "../../components/common/Badge";
-import Button from "../../components/common/Button";
-import {
-  mockUserConsents,
-  mockUserSettings,
-} from "../../data/mockUsers";
+import { mockUserSettings } from "../../data/mockUsers";
 import { useUserStore } from "../../store/userStore";
-import { mockSubscription } from "../../data/mockPayments";
 import { formatDate } from "../../utils/formatDate";
+import { authService } from "../../services/authService";
 import "./MyPage.css";
+
+type StatusCard = {
+  type: "storage" | "plan" | "notification";
+  title: string;
+  value: string;
+  desc: string;
+  sub?: string;
+  icon: React.ReactNode;
+  to: string;
+};
+
+type MenuCard = {
+  title: string;
+  desc: string;
+  icon: React.ReactNode;
+  to?: string;
+  action?: () => void | Promise<void>;
+  danger?: boolean;
+};
 
 const MyPageHome: React.FC = () => {
   const navigate = useNavigate();
   const user = useUserStore((s) => s.user);
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } finally {
+      navigate("/login", { replace: true });
+    }
+  };
+
   if (!user) return null;
 
-  const storagePercent = user.storage_quota_bytes > 0
-    ? Math.min(100, Math.round((user.storage_used_bytes / user.storage_quota_bytes) * 100))
-    : 0;
+  const storagePercent =
+    user.storage_quota_bytes > 0
+      ? Math.min(
+          100,
+          Math.round(
+            (user.storage_used_bytes / user.storage_quota_bytes) * 100,
+          ),
+        )
+      : 0;
 
   const usedGB = (user.storage_used_bytes / 1024 / 1024 / 1024).toFixed(1);
-  const quotaGB = user.storage_quota_bytes > 0
-    ? (user.storage_quota_bytes / 1024 / 1024 / 1024).toFixed(0)
-    : "-";
+  const quotaGB =
+    user.storage_quota_bytes > 0
+      ? (user.storage_quota_bytes / 1024 / 1024 / 1024).toFixed(0)
+      : "-";
 
-  const marketingConsent = mockUserConsents.find(
-    (consent) => consent.consent_type === "MARKETING",
-  );
+  const hasAnyNotification =
+    mockUserSettings.email_noti_enabled || mockUserSettings.push_enabled;
 
-  const statusCards = [
+  const statusCards: StatusCard[] = [
     {
+      type: "storage",
       title: "스토리지",
       value: `${usedGB} GB`,
       desc: `${quotaGB}GB 중 ${storagePercent}% 사용`,
@@ -49,33 +80,24 @@ const MyPageHome: React.FC = () => {
       to: "/documents",
     },
     {
-      title: "현재 요금제",
-      value: `${user.plan} 플랜`,
-      desc: user.plan === "PRO" ? "카카오페이 결제 지원" : "기본 플랜 사용 중",
-      sub: `다음 결제일 ${
-        mockSubscription.current_period_end
-          ? formatDate(mockSubscription.current_period_end)
-          : "-"
-      }`,
+      type: "plan",
+      title: "요금제",
+      value: user.plan === "PRO" ? "PRO 플랜" : "FREE 플랜",
+      desc: user.plan === "PRO" ? "PRO 기능 사용 중" : "기본 기능 사용 중",
       icon: <CreditCard size={20} />,
       to: "/mypage/plan",
     },
     {
+      type: "notification",
       title: "알림 설정",
-      value:
-        mockUserSettings.email_noti_enabled || mockUserSettings.push_enabled
-          ? "사용 중"
-          : "꺼짐",
-      desc: `이메일 ${mockUserSettings.email_noti_enabled ? "ON" : "OFF"} · FCM ${
-        mockUserSettings.push_enabled ? "ON" : "OFF"
-      }`,
-      sub: `마케팅 수신 ${marketingConsent?.is_agreed ? "동의" : "미동의"}`,
+      value: "이메일 · 푸시 알림",
+      desc: hasAnyNotification ? "중요 알림 수신 중" : "알림 꺼짐",
       icon: <Bell size={20} />,
       to: "/mypage/settings",
     },
   ];
 
-  const menuCards = [
+  const menuCards: MenuCard[] = [
     {
       title: "회원정보 변경",
       desc: "닉네임, 프로필 사진, 계정 정보 수정",
@@ -95,26 +117,15 @@ const MyPageHome: React.FC = () => {
       to: "/mypage/plan",
     },
     {
-      title: "회원탈퇴",
-      desc: "시연용 UI만 제공됩니다",
-      icon: <Trash2 size={21} />,
-      to: "/mypage/withdraw",
-      danger: true,
+      title: "로그아웃",
+      desc: "현재 계정에서 로그아웃합니다",
+      icon: <LogOut size={21} />,
+      action: handleLogout,
     },
   ];
 
   return (
-    <div className="mypage-section mypage-home mypage-home--simple">
-      <header className="mypage-home__header">
-        <div>
-          <p className="mypage-home__eyebrow">DocuMate · 마이페이지</p>
-          <h2 className="mypage-section__title">프로필 메인</h2>
-          <p className="mypage-home__desc">
-            계정 상태와 주요 설정만 간단하게 확인해보세요.
-          </p>
-        </div>
-      </header>
-
+    <div className="mypage-section mypage-home mypage-home--wide">
       <section className="mypage-home__hero">
         <div className="mypage-home__profile">
           <div className="mypage-home__avatar">
@@ -136,74 +147,113 @@ const MyPageHome: React.FC = () => {
             <span>가입일 {formatDate(user.created_at)}</span>
           </div>
         </div>
-
-        <div className="mypage-home__hero-actions">
-          <Button variant="primary" onClick={() => navigate("/mypage/profile")}>
-            회원정보 변경
-          </Button>
-          <Button variant="ghost" onClick={() => navigate("/mypage/settings")}>
-            설정
-          </Button>
-        </div>
       </section>
 
-      <section>
-        <div className="mypage-home__section-heading">
-          <h3>계정 상태</h3>
-          <span>대시보드와 겹치지 않는 정보만 표시합니다</span>
-        </div>
+      <div className="mypage-home__overview-grid">
+        <section className="mypage-home__status-panel">
+          <div className="mypage-home__section-heading">
+            <h3>계정 상태</h3>
+          </div>
 
-        <div className="mypage-home__status-grid">
-          {statusCards.map((card) => (
-            <button
-              key={card.title}
-              className="mypage-home__status-card"
-              onClick={() => navigate(card.to)}
-            >
-              <span className="mypage-home__status-icon">{card.icon}</span>
-              <span className="mypage-home__status-content">
-                <em>{card.title}</em>
-                <strong>{card.value}</strong>
-                <span>{card.desc}</span>
-                <small>{card.sub}</small>
-              </span>
-            </button>
-          ))}
-        </div>
-      </section>
+          <div className="mypage-home__status-grid">
+            {statusCards.map((card) => (
+              <button
+                key={card.title}
+                className={`mypage-home__status-card mypage-home__status-card--${card.type}`}
+                onClick={() => navigate(card.to)}
+              >
+                <span className="mypage-home__status-icon">{card.icon}</span>
+                <span className="mypage-home__status-content">
+                  <em>{card.title}</em>
+                  <strong>{card.value}</strong>
+                  <span>{card.desc}</span>
+                  {card.sub && <small>{card.sub}</small>}
 
-      <section>
-        <div className="mypage-home__section-heading">
-          <h3>설정 메뉴</h3>
-          <span>필요한 메뉴로 바로 이동</span>
-        </div>
+                  {card.type === "storage" && (
+                    <span className="mypage-home__storage-bar">
+                      <span style={{ width: `${storagePercent}%` }} />
+                    </span>
+                  )}
+                </span>
 
-        <div className="mypage-home__menu-grid">
-          {menuCards.map((menu) => (
-            <button
-              key={menu.title}
-              className={`mypage-home__menu-card${
-                menu.danger ? " mypage-home__menu-card--danger" : ""
-              }`}
-              onClick={() => navigate(menu.to)}
-            >
-              <span className="mypage-home__menu-icon">{menu.icon}</span>
-              <span>
-                <strong>{menu.title}</strong>
-                <em>{menu.desc}</em>
-              </span>
-              <ChevronRight size={18} />
-            </button>
-          ))}
-        </div>
-      </section>
+                {card.type === "storage" && (
+                  <span className="mypage-home__storage-percent">
+                    {storagePercent}%
+                  </span>
+                )}
+
+                {card.type === "plan" && (
+                  <ChevronRight className="mypage-home__status-chevron" size={18} />
+                )}
+
+                {card.type === "notification" && (
+                  <span
+                    className={`mypage-home__status-switch${
+                      hasAnyNotification
+                        ? " mypage-home__status-switch--on"
+                        : ""
+                    }`}
+                    aria-hidden="true"
+                  >
+                    <span />
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="mypage-home__menu-panel">
+          <div className="mypage-home__section-heading">
+            <h3>설정 메뉴</h3>
+          </div>
+
+          <div className="mypage-home__menu-grid">
+            {menuCards.map((menu) => (
+              <button
+                key={menu.title}
+                className={`mypage-home__menu-card${
+                  menu.danger ? " mypage-home__menu-card--danger" : ""
+                }`}
+                onClick={() => {
+                  if (menu.action) {
+                    void menu.action();
+                    return;
+                  }
+
+                  if (menu.to) {
+                    navigate(menu.to);
+                  }
+                }}
+              >
+                <span className="mypage-home__menu-icon">{menu.icon}</span>
+                <span>
+                  <strong>{menu.title}</strong>
+                  <em>{menu.desc}</em>
+                </span>
+                <ChevronRight size={18} />
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
 
       <section className="mypage-home__security-note">
-        <ShieldCheck size={20} />
-        <div>
-          <strong>회원정보 변경 전 재인증이 필요해요.</strong>
-          <p>PIN 또는 비밀번호 확인 후 개인정보 수정 화면으로 이동합니다.</p>
+        <div className="mypage-home__security-main">
+          <ShieldCheck size={20} />
+          <div>
+            <strong>회원정보 변경 전 재인증이 필요해요.</strong>
+            <p>PIN 또는 비밀번호 확인 후 개인정보 수정 화면으로 이동합니다.</p>
+          </div>
         </div>
+
+        <button
+          type="button"
+          className="mypage-home__security-action"
+          onClick={() => navigate("/mypage/profile")}
+        >
+          재인증 하기
+        </button>
       </section>
     </div>
   );
