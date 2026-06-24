@@ -90,7 +90,7 @@ const Documents: React.FC = () => {
       </div>
 
       <p className="documents__policy-note">
-        계약서, 영수증, 병원/약국, 보증서/A·S, 기타 문서를 한 곳에서 확인할 수
+        계약서, 병원/약국, 보증서/A·S, 기타 문서를 한 곳에서 확인할 수
         있습니다.
       </p>
 
@@ -100,7 +100,7 @@ const Documents: React.FC = () => {
           selected={!categoryId}
           onClick={() => setCategoryId(undefined)}
         />
-        {categories.map((c) => (
+        {categories.filter((c) => c.name !== "영수증").map((c) => (
           <FilterChip
             key={c.category_id}
             label={c.name}
