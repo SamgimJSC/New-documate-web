@@ -1,4 +1,11 @@
 /* ================================
+   MyPage Wide Final CSS
+   - Profile full width
+   - Account status + settings menu two-column layout
+   - No duplicated override blocks
+================================ */
+
+/* ================================
    MyPage Common
 ================================ */
 
@@ -13,72 +20,69 @@
 
 .mypage-section__title {
   margin: 0;
-  font-size: var(--font-size-xl);
-  font-weight: 700;
   color: var(--color-text);
+  font-size: 22px;
+  line-height: 1.22;
+  font-weight: 900;
+  letter-spacing: -0.045em;
 }
 
 .mypage-section__subtitle {
   margin: 0;
-  font-size: var(--font-size-base);
-  font-weight: 600;
   color: var(--color-text);
+  font-size: var(--font-size-base);
+  font-weight: 800;
 }
 
 /* ================================
-   MyPage Home - Simple
+   MyPage Home Layout
 ================================ */
 
+.main-layout--top-only .main-layout__main {
+  padding: 62px clamp(36px, 3vw, 52px) 52px;
+}
+
 .mypage-section.mypage-home {
-  width: 100%;
-  max-width: 1040px;
+  width: min(100%, 1760px);
+  max-width: 1760px;
   margin: 0 auto;
-  gap: 20px;
+  padding-top: 0;
+  gap: 22px;
 }
 
 .mypage-home__header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 20px;
+  display: none;
 }
 
-.mypage-home__eyebrow {
-  margin: 0 0 6px;
-  font-size: var(--font-size-sm);
-  font-weight: 700;
-  color: var(--color-primary-dark);
-}
-
-.mypage-home__desc {
-  margin: 6px 0 0;
-  font-size: var(--font-size-md);
-  color: var(--color-muted);
-}
+/* ================================
+   Profile Hero Card
+================================ */
 
 .mypage-home__hero {
+  width: 100%;
+  min-height: 126px;
+  padding: 22px 28px;
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  background: var(--color-surface);
+  box-shadow: 0 2px 10px rgba(34, 48, 70, 0.035);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding: 28px;
-  background: #ffffff;
-  border: 1px solid var(--color-border);
-  border-radius: 20px;
-  box-shadow: 0 2px 10px rgba(34, 48, 70, 0.035);
+  gap: 24px;
 }
 
 .mypage-home__profile {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 20px;
   min-width: 0;
 }
 
 .mypage-home__avatar {
-  width: 72px;
-  height: 72px;
-  border-radius: 22px;
+  width: 68px;
+  height: 68px;
+  border-radius: 20px;
   background: var(--color-primary-light);
   color: var(--color-primary-dark);
   display: flex;
@@ -104,20 +108,24 @@
 
 .mypage-home__name-row h3 {
   margin: 0;
-  font-size: 22px;
-  font-weight: 800;
   color: var(--color-text);
+  font-size: 21px;
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: -0.045em;
 }
 
 .mypage-home__profile p {
-  margin: 0 0 4px;
-  font-size: var(--font-size-md);
+  margin: 0 0 6px;
   color: var(--color-text-sub);
+  font-size: 13px;
+  font-weight: 750;
 }
 
 .mypage-home__profile span {
-  font-size: var(--font-size-sm);
   color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 650;
 }
 
 .mypage-home__hero-actions {
@@ -127,54 +135,93 @@
   flex-shrink: 0;
 }
 
+.mypage-home__hero-actions .btn,
+.mypage-home__hero-actions button {
+  min-height: 40px;
+  border-radius: 13px;
+}
+
+/* ================================
+   Overview Two Column Layout
+================================ */
+
+.mypage-home__overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.42fr) minmax(440px, 0.82fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.mypage-home__status-panel,
+.mypage-home__menu-panel {
+  min-width: 0;
+}
+
 .mypage-home__section-heading {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .mypage-home__section-heading h3 {
   margin: 0;
-  font-size: var(--font-size-lg);
-  font-weight: 800;
   color: var(--color-text);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
 }
 
 .mypage-home__section-heading span {
-  font-size: var(--font-size-sm);
   color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 650;
 }
+
+/* ================================
+   Account Status
+   Storage full + plan/notification half
+================================ */
 
 .mypage-home__status-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
+  align-items: stretch;
 }
 
 .mypage-home__status-card {
   width: 100%;
-  min-height: 148px;
-  padding: 20px;
+  min-height: 132px;
+  padding: 18px 20px;
   border: 1px solid var(--color-border);
   border-radius: 18px;
-  background: #ffffff;
+  background: var(--color-surface);
   box-shadow: 0 2px 10px rgba(34, 48, 70, 0.035);
   cursor: pointer;
   text-align: left;
   display: flex;
+  align-items: center;
   gap: 14px;
   font-family: inherit;
+  transform: none;
   transition:
-    transform 0.15s ease,
     box-shadow 0.15s ease,
-    border-color 0.15s ease;
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.mypage-home__status-card:first-child {
+  position: relative;
+  grid-column: 1 / -1;
+  min-height: 186px;
+  padding: 24px 28px;
 }
 
 .mypage-home__status-card:hover {
-  transform: translateY(-1px);
   border-color: var(--color-primary-border);
+  background: #ffffff;
   box-shadow: 0 5px 14px rgba(34, 48, 70, 0.055);
 }
 
@@ -191,92 +238,192 @@
 }
 
 .mypage-home__status-content {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 5px;
-  min-width: 0;
 }
 
 .mypage-home__status-content em {
-  font-style: normal;
-  font-size: var(--font-size-sm);
   color: var(--color-muted);
-  font-weight: 700;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
 }
 
 .mypage-home__status-content strong {
-  font-size: 21px;
-  font-weight: 800;
   color: var(--color-text);
+  font-size: 20px;
+  line-height: 1.12;
+  font-weight: 900;
+  letter-spacing: -0.035em;
 }
 
-.mypage-home__status-content span {
-  font-size: var(--font-size-sm);
+.mypage-home__status-card:first-child .mypage-home__status-content strong {
+  font-size: 23px;
+}
+
+.mypage-home__status-content > span:not(.mypage-home__storage-bar) {
   color: var(--color-text-sub);
+  font-size: 12.5px;
+  line-height: 1.35;
+  font-weight: 650;
 }
 
 .mypage-home__status-content small {
-  margin-top: auto;
-  font-size: var(--font-size-xs);
+  margin-top: 18px;
   color: var(--color-muted);
+  font-size: 11.5px;
+  line-height: 1.35;
 }
+
+.mypage-home__storage-bar {
+  display: block;
+  width: 100%;
+  height: 8px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e5ebf0;
+}
+
+.mypage-home__storage-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primary);
+}
+
+.mypage-home__storage-percent {
+  position: absolute;
+  right: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 44px;
+  padding: 7px 10px;
+  border-radius: 12px;
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  font-size: 14px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.mypage-home__status-arrow {
+  margin-left: auto;
+  color: var(--color-text-sub);
+  flex-shrink: 0;
+}
+
+.mypage-home__status-card--notification {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+}
+
+.mypage-home__status-card--notification .mypage-home__status-content strong {
+  font-size: 18px;
+  line-height: 1.15;
+}
+
+.mypage-home__switch {
+  position: relative;
+  display: inline-flex;
+  width: 44px;
+  height: 26px;
+  border-radius: 999px;
+  background: #d9e3e8;
+  flex-shrink: 0;
+  transition: background-color 0.16s ease;
+}
+
+.mypage-home__switch > span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 2px 5px rgba(34, 48, 70, 0.18);
+  transition: transform 0.16s ease;
+}
+
+.mypage-home__switch--on {
+  background: var(--color-primary);
+}
+
+.mypage-home__switch--on > span {
+  transform: translateX(18px);
+}
+
+/* ================================
+   Settings Menu - Right Column
+================================ */
 
 .mypage-home__menu-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: 1fr;
+  gap: 16px;
 }
 
 .mypage-home__menu-card {
   width: 100%;
-  padding: 18px;
+  min-height: 86px;
+  padding: 16px 20px;
   border: 1px solid var(--color-border);
   border-radius: 18px;
-  background: #ffffff;
+  background: var(--color-surface);
   box-shadow: 0 2px 10px rgba(34, 48, 70, 0.035);
   cursor: pointer;
   text-align: left;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   font-family: inherit;
+  transform: none;
   transition:
-    transform 0.15s ease,
     box-shadow 0.15s ease,
-    border-color 0.15s ease;
+    border-color 0.15s ease,
+    background-color 0.15s ease;
 }
 
 .mypage-home__menu-card:hover {
-  transform: translateY(-1px);
   border-color: var(--color-primary-border);
+  background: #ffffff;
   box-shadow: 0 5px 14px rgba(34, 48, 70, 0.055);
 }
 
 .mypage-home__menu-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 13px;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
   background: var(--color-primary-light);
   color: var(--color-primary-dark);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .mypage-home__menu-card strong {
   display: block;
   margin-bottom: 5px;
-  font-size: var(--font-size-base);
   color: var(--color-text);
+  font-size: 15px;
+  font-weight: 900;
 }
 
 .mypage-home__menu-card em {
   display: block;
-  font-style: normal;
-  font-size: var(--font-size-xs);
-  line-height: 1.45;
   color: var(--color-muted);
+  font-size: 12px;
+  line-height: 1.45;
+  font-style: normal;
+  font-weight: 650;
 }
 
 .mypage-home__menu-card--danger .mypage-home__menu-icon {
@@ -288,27 +435,86 @@
   color: var(--color-danger);
 }
 
+/* ================================
+   Security Note
+================================ */
+
 .mypage-home__security-note {
+  width: 100%;
+  min-height: 72px;
+  padding: 17px 22px;
+  border: 1px solid var(--color-primary-border);
+  border-radius: 18px;
+  background: var(--color-chip-bg);
+  color: var(--color-primary-dark);
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px 18px;
-  border: 1px solid #dbeafe;
-  background: #eff6ff;
-  border-radius: 16px;
-  color: #1d4ed8;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
 }
 
 .mypage-home__security-note strong {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
   font-size: var(--font-size-sm);
+  font-weight: 900;
 }
 
 .mypage-home__security-note p {
   margin: 0;
+  color: var(--color-text-sub);
   font-size: var(--font-size-xs);
-  color: #2563eb;
+  line-height: 1.5;
+}
+
+.mypage-home__security-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.mypage-home__security-action {
+  min-height: 40px;
+  padding: 0 18px;
+  border: 1px solid var(--color-primary-border);
+  border-radius: 12px;
+  background: #ffffff;
+  color: var(--color-primary-dark);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.mypage-home__security-action:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  transform: translateY(-1px);
+}
+
+/* ================================
+   Sub Page Shared Cards
+================================ */
+
+.mypage-profile__info,
+.mypage-profile__storage,
+.mypage-profile__payment-section,
+.mypage-profile__reauth,
+.mypage-settings__group,
+.mypage-plan__current,
+.mypage-plan__col,
+.mypage-plan__history,
+.mypage-withdraw__form {
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-surface);
+  box-shadow: 0 2px 10px rgba(34, 48, 70, 0.035);
 }
 
 /* ================================
@@ -340,22 +546,20 @@
   object-fit: cover;
 }
 
-.mypage-profile__change-photo {
+.mypage-profile__change-photo,
+.mypage-profile__edit-btn {
   font-size: var(--font-size-sm);
   color: var(--color-primary);
   background: none;
   border: none;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .mypage-profile__info {
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
-  background-color: var(--color-surface);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
   padding: var(--space-lg);
 }
 
@@ -379,20 +583,8 @@
   flex: 1;
 }
 
-.mypage-profile__edit-btn {
-  font-size: var(--font-size-sm);
-  color: var(--color-primary);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
-}
-
 .mypage-profile__storage,
 .mypage-profile__payment-section {
-  background-color: var(--color-surface);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
   padding: var(--space-lg);
 }
 
@@ -404,7 +596,8 @@
   margin-bottom: var(--space-md);
 }
 
-.mypage-profile__storage-text {
+.mypage-profile__storage-text,
+.mypage-profile__payment-sub {
   font-size: var(--font-size-sm);
   color: var(--color-muted);
 }
@@ -429,13 +622,11 @@
 }
 
 .mypage-profile__payment-method {
-  font-weight: 600;
+  font-weight: 700;
   font-size: var(--font-size-base);
 }
 
 .mypage-profile__payment-sub {
-  font-size: var(--font-size-sm);
-  color: var(--color-muted);
   margin-top: 4px;
 }
 
@@ -446,10 +637,6 @@
 .mypage-profile__reauth {
   padding: 28px;
   max-width: 560px;
-  background: #ffffff;
-  border: 1px solid var(--color-border);
-  border-radius: 20px;
-  box-shadow: 0 2px 10px rgba(34, 48, 70, 0.035);
 }
 
 .mypage-profile__reauth-icon {
@@ -463,11 +650,19 @@
   margin-bottom: 14px;
 }
 
-.mypage-profile__reauth-desc {
-  margin-top: 6px;
+.mypage-profile__reauth-desc,
+.mypage-profile__reauth-note {
   font-size: var(--font-size-sm);
   line-height: 1.6;
   color: var(--color-muted);
+}
+
+.mypage-profile__reauth-desc {
+  margin-top: 6px;
+}
+
+.mypage-profile__reauth-note {
+  font-size: var(--font-size-xs);
 }
 
 .mypage-profile__reauth-tabs {
@@ -501,20 +696,11 @@
   gap: 14px;
 }
 
-.mypage-profile__reauth-note {
-  font-size: var(--font-size-xs);
-  line-height: 1.6;
-  color: var(--color-muted);
-}
-
 /* ================================
    Settings
 ================================ */
 
 .mypage-settings__group {
-  background-color: var(--color-surface);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
   padding: var(--space-lg);
   display: flex;
   flex-direction: column;
@@ -531,7 +717,7 @@
 
 .mypage-settings__toggle-label {
   font-size: var(--font-size-md);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .mypage-settings__toggle-desc {
@@ -543,7 +729,7 @@
 .mypage-settings__toggle-required {
   font-size: var(--font-size-xs);
   color: var(--color-danger);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .mypage-settings__disabled-note {
@@ -607,10 +793,9 @@
    Plan
 ================================ */
 
-.mypage-plan__current {
-  background-color: var(--color-surface);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
+.mypage-plan__current,
+.mypage-plan__col,
+.mypage-plan__history {
   padding: var(--space-lg);
   display: flex;
   flex-direction: column;
@@ -625,7 +810,7 @@
 
 .mypage-plan__plan-name {
   font-size: var(--font-size-base);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .mypage-plan__plan-expire {
@@ -636,16 +821,6 @@
 .mypage-plan__compare {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-md);
-}
-
-.mypage-plan__col {
-  background-color: var(--color-surface);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
-  padding: var(--space-lg);
-  display: flex;
-  flex-direction: column;
   gap: var(--space-md);
 }
 
@@ -667,7 +842,7 @@
 
 .mypage-plan__price {
   font-size: var(--font-size-xl);
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .mypage-plan__price span {
@@ -689,16 +864,6 @@
   gap: var(--space-sm);
   font-size: var(--font-size-sm);
   color: var(--color-text-sub);
-}
-
-.mypage-plan__history {
-  background-color: var(--color-surface);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
-  padding: var(--space-lg);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
 }
 
 .mypage-plan__history-list {
@@ -743,7 +908,7 @@
 
 .mypage-withdraw__warning-title {
   font-size: var(--font-size-base);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-danger);
   margin-bottom: var(--space-sm);
 }
@@ -762,9 +927,6 @@
 }
 
 .mypage-withdraw__form {
-  background-color: var(--color-surface);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
   padding: var(--space-lg);
   display: flex;
   flex-direction: column;
@@ -785,22 +947,25 @@
    Responsive
 ================================ */
 
-@media (max-width: 1100px) {
-  .mypage-home__status-grid {
+@media (max-width: 1180px) {
+  .mypage-section.mypage-home {
+    max-width: 100%;
+  }
+
+  .mypage-home__overview-grid {
     grid-template-columns: 1fr;
   }
 
   .mypage-home__menu-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .mypage-plan__compare {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 720px) {
-  .mypage-home__header,
+  .main-layout--top-only .main-layout__main {
+    padding: 24px 18px 40px;
+  }
+
   .mypage-home__hero,
   .mypage-home__hero-actions {
     flex-direction: column;
@@ -812,8 +977,27 @@
     align-items: flex-start;
   }
 
+  .mypage-home__security-note {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mypage-home__security-action {
+    width: 100%;
+  }
+
   .mypage-home__profile {
     align-items: flex-start;
+  }
+
+  .mypage-home__status-grid,
+  .mypage-home__menu-grid,
+  .mypage-plan__compare {
+    grid-template-columns: 1fr;
+  }
+
+  .mypage-home__status-card:first-child {
+    min-height: 160px;
   }
 
   .mypage-profile__field,
@@ -828,317 +1012,5 @@
 
   .mypage-profile__label {
     width: auto;
-  }
-}
-
-/* =========================================
-   MyPage design-system final tuning
-   메인 앱 카드 톤과 맞춤: 약한 그림자, 낮은 카드, 민트/네이비 통일
-========================================= */
-
-.mypage-section.mypage-home {
-  max-width: 1040px;
-  gap: 20px;
-}
-
-.mypage-section__title {
-  color: var(--color-text);
-  font-size: 22px;
-  line-height: 1.22;
-  font-weight: 900;
-  letter-spacing: -0.045em;
-}
-
-.mypage-home__eyebrow {
-  margin-bottom: 6px;
-  color: var(--color-primary-dark);
-  font-size: 13px;
-  font-weight: 900;
-}
-
-.mypage-home__desc {
-  margin-top: 6px;
-  color: var(--color-muted);
-  font-size: 13px;
-  line-height: 1.55;
-  font-weight: 650;
-}
-
-.mypage-home__hero,
-.mypage-home__status-card,
-.mypage-home__menu-card,
-.mypage-profile__info,
-.mypage-profile__storage,
-.mypage-profile__payment-section,
-.mypage-profile__reauth,
-.mypage-settings__group,
-.mypage-plan__current,
-.mypage-plan__col,
-.mypage-plan__history,
-.mypage-withdraw__form {
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  box-shadow: 0 2px 10px rgba(34, 48, 70, 0.035);
-}
-
-.mypage-home__hero {
-  min-height: 118px;
-  padding: 22px 24px;
-  border-radius: 22px;
-}
-
-.mypage-home__avatar {
-  width: 64px;
-  height: 64px;
-  border-radius: 20px;
-  background: var(--color-primary-light);
-  color: var(--color-primary-dark);
-}
-
-.mypage-home__name-row {
-  margin-bottom: 6px;
-}
-
-.mypage-home__name-row h3 {
-  font-size: 21px;
-  line-height: 1.2;
-  font-weight: 900;
-  letter-spacing: -0.045em;
-}
-
-.mypage-home__profile p {
-  color: var(--color-text-sub);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.mypage-home__profile span {
-  color: var(--color-muted);
-  font-size: 12px;
-  font-weight: 650;
-}
-
-.mypage-home__hero-actions .button,
-.mypage-home__hero-actions button {
-  min-height: 40px;
-  border-radius: 12px;
-}
-
-.mypage-home__section-heading {
-  margin-bottom: 10px;
-}
-
-.mypage-home__section-heading h3 {
-  font-size: 17px;
-  font-weight: 900;
-  letter-spacing: -0.03em;
-}
-
-.mypage-home__section-heading span {
-  color: var(--color-muted);
-  font-size: 12px;
-  font-weight: 650;
-}
-
-.mypage-home__status-grid {
-  gap: 14px;
-}
-
-.mypage-home__status-card {
-  min-height: 126px;
-  padding: 18px;
-  border-radius: 20px;
-  transform: none;
-}
-
-.mypage-home__status-card:hover,
-.mypage-home__menu-card:hover {
-  transform: none;
-  border-color: var(--color-primary-border);
-  box-shadow: 0 5px 14px rgba(34, 48, 70, 0.055);
-}
-
-.mypage-home__status-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 13px;
-  background: var(--color-primary-light);
-  color: var(--color-primary-dark);
-}
-
-.mypage-home__status-content {
-  gap: 4px;
-}
-
-.mypage-home__status-content em {
-  color: var(--color-muted);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.mypage-home__status-content strong {
-  color: var(--color-text);
-  font-size: 20px;
-  line-height: 1.12;
-  font-weight: 900;
-  letter-spacing: -0.035em;
-}
-
-.mypage-home__status-content span {
-  color: var(--color-text-sub);
-  font-size: 12.5px;
-  line-height: 1.35;
-  font-weight: 650;
-}
-
-.mypage-home__status-content small {
-  color: var(--color-muted);
-  font-size: 11.5px;
-  line-height: 1.35;
-}
-
-.mypage-home__menu-grid {
-  gap: 12px;
-}
-
-.mypage-home__menu-card {
-  min-height: 76px;
-  padding: 16px;
-  border-radius: 18px;
-  transform: none;
-}
-
-.mypage-home__menu-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 13px;
-  background: var(--color-primary-light);
-  color: var(--color-primary-dark);
-}
-
-.mypage-home__menu-card strong {
-  margin-bottom: 4px;
-  color: var(--color-text);
-  font-size: 14px;
-  font-weight: 900;
-}
-
-.mypage-home__menu-card em {
-  color: var(--color-muted);
-  font-size: 11.5px;
-  line-height: 1.45;
-  font-weight: 650;
-}
-
-.mypage-home__security-note {
-  border: 1px solid var(--color-primary-border);
-  background: var(--color-chip-bg);
-  color: var(--color-primary-dark);
-  border-radius: 18px;
-}
-
-.mypage-home__security-note p {
-  color: var(--color-text-sub);
-}
-
-/* sub page cards */
-.mypage-profile__info,
-.mypage-profile__storage,
-.mypage-profile__payment-section,
-.mypage-profile__reauth,
-.mypage-settings__group,
-.mypage-plan__current,
-.mypage-plan__col,
-.mypage-plan__history,
-.mypage-withdraw__form {
-  border-radius: 20px;
-}
-
-@media (max-width: 1100px) {
-  .mypage-section.mypage-home {
-    max-width: 100%;
-  }
-}
-/* =========================================
-   MyPage Home layout retuning
-   - 중앙 몰림 개선
-   - 대시보드처럼 왼쪽 기준 정렬
-   - 카드 높이/간격 살짝 정돈
-========================================= */
-
-.mypage-section.mypage-home {
-  width: min(100%, 1120px);
-  max-width: 1120px;
-  margin: 0;
-  gap: 18px;
-}
-
-.mypage-home__header {
-  margin-bottom: 2px;
-}
-
-.mypage-home__hero {
-  min-height: 112px;
-  padding: 20px 24px;
-  border-radius: 20px;
-}
-
-.mypage-home__avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 18px;
-}
-
-.mypage-home__name-row h3 {
-  font-size: 20px;
-}
-
-.mypage-home__desc {
-  font-size: 13px;
-}
-
-.mypage-home__section-heading {
-  margin-bottom: 8px;
-}
-
-.mypage-home__status-grid {
-  gap: 12px;
-}
-
-.mypage-home__status-card {
-  min-height: 116px;
-  padding: 16px;
-  border-radius: 18px;
-}
-
-.mypage-home__status-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-}
-
-.mypage-home__status-content strong {
-  font-size: 19px;
-}
-
-.mypage-home__menu-grid {
-  gap: 12px;
-}
-
-.mypage-home__menu-card {
-  min-height: 72px;
-  padding: 15px 16px;
-  border-radius: 17px;
-}
-
-.mypage-home__security-note {
-  padding: 14px 16px;
-  border-radius: 16px;
-}
-
-/* 화면이 너무 넓을 때도 오른쪽으로 과하게 늘어나지 않게 */
-@media (min-width: 1440px) {
-  .mypage-section.mypage-home {
-    max-width: 1060px;
   }
 }
