@@ -114,6 +114,7 @@ const DocumentDetail: React.FC = () => {
   const [tagInput, setTagInput] = useState("");
   const [zoom, setZoom] = useState(100);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [selectedPage, setSelectedPage] = useState(0);
   const [form, setForm] = useState<EditableDocumentState>(EMPTY_FORM);
 
   useEffect(() => {
@@ -266,17 +267,12 @@ const DocumentDetail: React.FC = () => {
     }
   };
 
-  const handleDownload = () => {
-    if (!previewUrl) {
-      showToast("다운로드할 파일이 없습니다.", "info");
-      return;
+  const handleDownload = async () => {
+    try {
+      await documentService.downloadAsPdf(doc.document_id, doc.title);
+    } catch {
+      showToast("PDF 다운로드에 실패했습니다.", "error");
     }
-    const a = document.createElement("a");
-    a.href = previewUrl;
-    a.download = doc.file_name || doc.title;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
   };
 
   const handleEditStart = () => {
@@ -320,11 +316,12 @@ const DocumentDetail: React.FC = () => {
 
   const fileSizeText = formatFileSize(doc.file_size_bytes);
 
-  const previewUrl = (doc.file_url ?? "").trim();
+  const docFiles = doc.document_files ?? [];
+  const previewUrl = docFiles.length > 0
+    ? docFiles[selectedPage]?.file_url ?? docFiles[0].file_url
+    : (doc.file_url ?? "").trim();
   const hasPreviewFile = previewUrl.length > 0;
-  const previewPageCount = hasPreviewFile
-    ? Math.max(1, doc.page_count ?? 1)
-    : 0;
+  const previewPageCount = docFiles.length > 0 ? docFiles.length : hasPreviewFile ? Math.max(1, doc.page_count ?? 1) : 0;
 
   return (
     <section className="doc-detail">
@@ -452,7 +449,8 @@ const DocumentDetail: React.FC = () => {
                   <button
                     type="button"
                     key={index + 1}
-                    className={index === 0 ? "is-active" : ""}
+                    className={index === selectedPage ? "is-active" : ""}
+                    onClick={() => setSelectedPage(index)}
                   >
                     <span>
                       <i />
