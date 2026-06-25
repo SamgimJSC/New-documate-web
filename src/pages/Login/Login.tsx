@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import Input from "../../components/common/Input";
 import Button from "../../components/common/Button";
@@ -10,6 +10,7 @@ import "./Login.css";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -25,7 +26,8 @@ const Login: React.FC = () => {
       await authService.login(email, password, remember);
       const user = await userService.getMe();
       setUser(user);
-      navigate("/dashboard");
+      const redirect = new URLSearchParams(location.search).get("redirect");
+      navigate(redirect || "/dashboard");
     } catch {
       setError("이메일 또는 비밀번호가 올바르지 않습니다.");
     }
