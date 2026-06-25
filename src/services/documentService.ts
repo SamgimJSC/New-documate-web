@@ -1,8 +1,10 @@
 import { api } from "./api";
 import type {
   Document,
+  DocumentAlert,
   DocumentCategory,
   DocumentTagItem,
+  AlertOffsetType,
 } from "../types/document";
 
 interface ApiResponse<T> {
@@ -35,6 +37,38 @@ interface DocumentApiItem {
   documentTags?: Array<{ tag: { tagId: string; name: string } }>;
   documentFiles?: Array<{ fileId: number; documentId: string; fileUrl: string; pageNo: number; createdAt: string }>;
 }
+
+interface DocumentAlertApiItem {
+  alertId: string;
+  documentId: string;
+  userId: string;
+  offsetType: string;
+  notifyDate: string;
+  reason: string | null;
+  channelEmail: boolean;
+  channelAppPush: boolean;
+  channelWebPush: boolean;
+  isSent: boolean;
+  sentAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const mapAlert = (raw: DocumentAlertApiItem): DocumentAlert => ({
+  alert_id: raw.alertId,
+  document_id: raw.documentId,
+  user_id: raw.userId,
+  offset_type: raw.offsetType as AlertOffsetType,
+  notify_date: raw.notifyDate,
+  reason: raw.reason ?? undefined,
+  channel_email: raw.channelEmail,
+  channel_app_push: raw.channelAppPush,
+  channel_web_push: raw.channelWebPush,
+  is_sent: raw.isSent,
+  sent_at: raw.sentAt ?? undefined,
+  created_at: raw.createdAt,
+  updated_at: raw.updatedAt,
+});
 
 interface DocumentListData {
   items: DocumentApiItem[];
@@ -172,6 +206,46 @@ export const documentService = {
 
   async deleteDocument(id: string): Promise<void> {
     await api.delete(`/documents/${id}`);
+  },
+
+  async getAlerts(documentId: string): Promise<DocumentAlert[]> {
+    const res = await api.get<ApiResponse<DocumentAlertApiItem[]>>(`/documents/${documentId}/alerts`);
+    return res.data.data.map(mapAlert);
+  },
+
+  async createAlert(
+    documentId: string,
+    body: {
+      offsetType: string;
+      notifyDate: string;
+      reason?: string | null;
+      channelEmail?: boolean;
+      channelAppPush?: boolean;
+      channelWebPush?: boolean;
+    },
+  ): Promise<DocumentAlert> {
+    const res = await api.post<ApiResponse<DocumentAlertApiItem>>(`/documents/${documentId}/alerts`, body);
+    return mapAlert(res.data.data);
+  },
+
+  async updateAlert(
+    documentId: string,
+    alertId: string,
+    body: {
+      offsetType?: string;
+      notifyDate?: string;
+      reason?: string | null;
+      channelEmail?: boolean;
+      channelAppPush?: boolean;
+      channelWebPush?: boolean;
+    },
+  ): Promise<DocumentAlert> {
+    const res = await api.patch<ApiResponse<DocumentAlertApiItem>>(`/documents/${documentId}/alerts/${alertId}`, body);
+    return mapAlert(res.data.data);
+  },
+
+  async deleteAlert(documentId: string, alertId: string): Promise<void> {
+    await api.delete(`/documents/${documentId}/alerts/${alertId}`);
   },
 
   async downloadAsPdf(id: string, title: string): Promise<void> {
