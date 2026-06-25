@@ -68,6 +68,7 @@ export const uploadService = {
     expiryDate?: string;
     renewalDate?: string;
     extractedData?: Record<string, string>;
+    files?: Array<{ fileUrl: string; pageNo: number }>;
   }): Promise<string> {
     const res = await api.post<ApiResponse<CreateDocumentData>>("/documents", body);
     return res.data.data.documentId;

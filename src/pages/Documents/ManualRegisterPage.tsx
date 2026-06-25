@@ -413,12 +413,20 @@ export function ManualRegisterPage() {
         extractedData["수리일"] = manualForm.repairDate;
       if (memoForSave) extractedData["메모"] = memoForSave;
 
+      let files: Array<{ fileUrl: string; pageNo: number }> | undefined;
+      if (attachmentFile) {
+        const tempDocumentId = await uploadService.startSession();
+        const uploaded = await uploadService.uploadPage(tempDocumentId, attachmentFile, 1);
+        files = uploaded.files.map((f) => ({ fileUrl: f.fileUrl, pageNo: f.pageNo }));
+      }
+
       await uploadService.createDocument({
         inputMethod: "MANUAL",
         categoryId: categoryToId(manualForm.category),
         title: manualForm.title.trim(),
         issueDate: normalizedDate || undefined,
         extractedData,
+        files,
       });
 
       window.localStorage.removeItem(MANUAL_UPLOAD_DRAFT_KEY);
@@ -430,9 +438,14 @@ export function ManualRegisterPage() {
     }
   };
 
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+
   const handleAttachment = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) updateManual("attachmentName", file.name);
+    if (file) {
+      updateManual("attachmentName", file.name);
+      setAttachmentFile(file);
+    }
     event.target.value = "";
   };
 
