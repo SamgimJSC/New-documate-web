@@ -19,6 +19,12 @@ const ReceiptUploadModal: React.FC<Props> = ({ isOpen, onClose }) => {
     if (selected) setFile(selected);
   };
 
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const dropped = e.dataTransfer.files?.[0];
+    if (dropped) setFile(dropped);
+  };
+
   const handleAnalyze = async () => {
     if (!file) return;
     setAnalyzing(true);
@@ -39,6 +45,8 @@ const ReceiptUploadModal: React.FC<Props> = ({ isOpen, onClose }) => {
     <Modal isOpen={isOpen} onClose={onClose} title="영수증 업로드 (OCR)">
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
           style={{
             border: "2px dashed var(--color-border)",
             borderRadius: "var(--radius-md)",
