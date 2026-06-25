@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Bell, FileText, UserCircle } from "lucide-react";
+import { FileText } from "lucide-react";
 import "./Header.css";
 
 const PAGE_NAMES: Record<string, string> = {
@@ -53,6 +53,38 @@ const getHeaderBreadcrumb = (pathname: string): HeaderBreadcrumb | null => {
     };
   }
 
+  if (pathname === "/mypage/profile") {
+    return {
+      parentLabel: "마이페이지",
+      parentPath: "/mypage",
+      currentLabel: "회원정보 변경",
+    };
+  }
+
+  if (pathname === "/mypage/settings") {
+    return {
+      parentLabel: "마이페이지",
+      parentPath: "/mypage",
+      currentLabel: "설정",
+    };
+  }
+
+  if (pathname === "/mypage/plan") {
+    return {
+      parentLabel: "마이페이지",
+      parentPath: "/mypage",
+      currentLabel: "요금제 관리",
+    };
+  }
+
+  if (pathname === "/mypage/withdraw") {
+    return {
+      parentLabel: "마이페이지",
+      parentPath: "/mypage",
+      currentLabel: "회원탈퇴",
+    };
+  }
+
   return null;
 };
 
@@ -63,43 +95,43 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
+
   const pageName = getPageName(location.pathname);
   const breadcrumb = getHeaderBreadcrumb(location.pathname);
   const isMyPage = location.pathname.startsWith("/mypage");
+
   return (
     <>
       <header className={`header${isMyPage ? " header--mypage" : ""}`}>
-        {isMyPage ? (
-          <div className="header__mypage-start">
-            <button
-              type="button"
-              className="header__brand header__brand--mypage"
-              onClick={() => navigate("/mypage")}
-            >
-              <span>D</span>
-              <strong>DocuMate</strong>
-            </button>
-
-            <span className="header__mypage-title">마이페이지</span>
-          </div>
-        ) : breadcrumb ? (
-          <nav className="header__breadcrumb" aria-label="현재 위치">
-            <button
-              type="button"
-              onClick={() => navigate(breadcrumb.parentPath)}
-            >
-              {breadcrumb.parentLabel}
-            </button>
-            <span>/</span>
-            <b>{breadcrumb.currentLabel}</b>
-          </nav>
-        ) : (
-          <span className="header__page-name">{pageName}</span>
-        )}
-        <div className="header__actions">
-          <button className="header__icon-btn" aria-label="알림" title="알림">
-            <Bell size={20} />
+        <div className="header__left">
+          <button
+            type="button"
+            className="header__brand header__brand--mypage"
+            onClick={() => navigate(isMyPage ? "/mypage" : "/dashboard")}
+          >
+            <span>D</span>
+            <strong>DocuMate</strong>
           </button>
+
+          {breadcrumb ? (
+            <nav className="header__breadcrumb" aria-label="현재 위치">
+              <button
+                type="button"
+                onClick={() => navigate(breadcrumb.parentPath)}
+              >
+                {breadcrumb.parentLabel}
+              </button>
+              <span>/</span>
+              <b>{breadcrumb.currentLabel}</b>
+            </nav>
+          ) : isMyPage ? (
+            <span className="header__mypage-title">마이페이지</span>
+          ) : (
+            <span className="header__page-name">{pageName}</span>
+          )}
+        </div>
+
+        <div className="header__actions">
           <button
             className="header__icon-btn"
             aria-label="처리 센터"
@@ -107,14 +139,6 @@ const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
             onClick={() => navigate("/processing-center")}
           >
             <FileText size={20} />
-          </button>
-          <button
-            className="header__icon-btn"
-            aria-label="마이페이지"
-            title="마이페이지"
-            onClick={() => navigate("/mypage")}
-          >
-            <UserCircle size={22} />
           </button>
         </div>
       </header>
