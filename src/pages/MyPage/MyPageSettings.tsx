@@ -1,4 +1,17 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Bell,
+  ChevronRight,
+  FileCheck2,
+  LockKeyhole,
+  Mail,
+  Megaphone,
+  ShieldCheck,
+  Smartphone,
+  UserX,
+} from "lucide-react";
+import Badge from "../../components/common/Badge";
 import PinResetModal from "../../components/modal/PinResetModal";
 import { mockUserSettings, mockUserConsents } from "../../data/mockUsers";
 import { useToast } from "../../components/common/Toast";
@@ -12,11 +25,21 @@ const CONSENT_LABELS: Record<ConsentType, string> = {
   THIRD_PARTY: "제3자 정보 제공 동의",
 };
 
+const CONSENT_DESCS: Record<ConsentType, string> = {
+  TERMS: "서비스 이용을 위한 필수 약관입니다.",
+  PRIVACY: "개인정보 처리 및 보관에 대한 필수 동의입니다.",
+  MARKETING: "혜택, 이벤트, 기능 안내를 받을 수 있습니다.",
+  THIRD_PARTY: "제휴 서비스 제공 시 필요한 선택 동의입니다.",
+};
+
 const MyPageSettings: React.FC = () => {
+  const navigate = useNavigate();
   const { showToast } = useToast();
+
   const [settings, setSettings] = useState(mockUserSettings);
   const [consents, setConsents] = useState(mockUserConsents);
   const [pinOpen, setPinOpen] = useState(false);
+  const [showSavedNote, setShowSavedNote] = useState(false);
 
   const marketingConsent =
     consents.find((c) => c.consent_type === "MARKETING")?.is_agreed ?? false;
@@ -32,126 +55,208 @@ const MyPageSettings: React.FC = () => {
 
     setSettings((prev) => ({
       ...prev,
-      [key]: !prev[key as keyof typeof prev],
+      [key]: !prev[key],
+      updated_at: new Date().toISOString(),
     }));
+
+    setShowSavedNote(true);
     showToast("설정이 변경되었습니다.", "success");
   };
 
   const toggleConsent = (consentId: string) => {
     setConsents((prev) =>
-      prev.map((c) => {
-        if (c.consent_id !== consentId) return c;
+      prev.map((consent) => {
+        if (consent.consent_id !== consentId) return consent;
+        if (consent.is_required) return consent;
 
-        const nextAgreed = !c.is_agreed;
-        if (c.consent_type === "MARKETING" && !nextAgreed) {
-          setSettings((current) => ({ ...current, push_enabled: false }));
+        const nextAgreed = !consent.is_agreed;
+
+        if (consent.consent_type === "MARKETING" && !nextAgreed) {
+          setSettings((current) => ({
+            ...current,
+            push_enabled: false,
+            updated_at: new Date().toISOString(),
+          }));
         }
 
         return {
-          ...c,
+          ...consent,
           is_agreed: nextAgreed,
           agreed_at: nextAgreed ? new Date().toISOString() : undefined,
         };
       }),
     );
+
+    setShowSavedNote(true);
     showToast("동의 설정이 변경되었습니다.", "success");
   };
 
   return (
-    <div className="mypage-section">
-      <h2 className="mypage-section__title">설정</h2>
-
-      <div className="mypage-settings__group">
-        <h3 className="mypage-section__subtitle">알림</h3>
-        <div className="mypage-settings__toggle-row">
+    <div className="mypage-section mypage-settings-figma">
+      <section className="mypage-settings-figma__panel">
+        <div className="mypage-settings-figma__panel-head">
           <div>
-            <p className="mypage-settings__toggle-label">이메일 알림</p>
-            <p className="mypage-settings__toggle-desc">
-              중요 알림과 문서 만료 알림을 이메일로 받습니다.
-            </p>
+            <h3>알림 설정</h3>
+            <p>중요 알림과 서비스 안내 수신 방식을 선택하세요.</p>
           </div>
-          <label className="mypage-settings__switch">
-            <input
-              type="checkbox"
-              checked={settings.email_noti_enabled}
-              onChange={() => toggleSetting("email_noti_enabled")}
-            />
-            <span className="mypage-settings__slider" />
-          </label>
+          <Bell size={20} />
         </div>
-        <div className="mypage-settings__toggle-row">
-          <div>
-            <p className="mypage-settings__toggle-label">FCM 푸시 알림</p>
-            <p className="mypage-settings__toggle-desc">
-              웹/앱 공통으로 푸시 알림을 받습니다.
-            </p>
-          </div>
-          <label
-            className={`mypage-settings__switch${!marketingConsent ? " mypage-settings__switch--disabled" : ""}`}
-          >
-            <input
-              type="checkbox"
-              checked={marketingConsent && settings.push_enabled}
-              onChange={() => toggleSetting("push_enabled")}
-              disabled={!marketingConsent}
-            />
-            <span className="mypage-settings__slider" />
-          </label>
-        </div>
-        {!marketingConsent && (
-          <p className="mypage-settings__disabled-note">
-            마케팅 정보 수신 동의가 꺼져 있어 FCM 푸시 알림 설정이
-            비활성화되었습니다.
-          </p>
-        )}
-      </div>
 
-      <div className="mypage-settings__group">
-        <h3 className="mypage-section__subtitle">동의 항목</h3>
-        {consents.map((c) => (
-          <div key={c.consent_id} className="mypage-settings__toggle-row">
-            <div>
-              <p className="mypage-settings__toggle-label">
-                {CONSENT_LABELS[c.consent_type]}
-              </p>
-              {c.is_required ? (
-                <p className="mypage-settings__toggle-required">필수</p>
-              ) : (
-                <p className="mypage-settings__toggle-desc">선택</p>
-              )}
+        <div className="mypage-settings-figma__rows">
+          <div className="mypage-settings-figma__row">
+            <span className="mypage-settings-figma__icon">
+              <Mail size={18} />
+            </span>
+
+            <div className="mypage-settings-figma__copy">
+              <strong>이메일 알림</strong>
+              <p>문서 만료, 결제, 보안 관련 중요 알림을 이메일로 받습니다.</p>
             </div>
-            <label
-              className={`mypage-settings__switch${c.is_required ? " mypage-settings__switch--disabled" : ""}`}
-            >
+
+            <label className="mypage-settings__switch">
               <input
                 type="checkbox"
-                checked={c.is_agreed}
-                onChange={() => !c.is_required && toggleConsent(c.consent_id)}
-                disabled={c.is_required}
+                checked={settings.email_noti_enabled}
+                onChange={() => toggleSetting("email_noti_enabled")}
               />
               <span className="mypage-settings__slider" />
             </label>
           </div>
-        ))}
-      </div>
 
-      <div className="mypage-settings__group">
-        <h3 className="mypage-section__subtitle">보안</h3>
-        <div className="mypage-settings__toggle-row">
-          <div>
-            <p className="mypage-settings__toggle-label">캐비닛 PIN 재설정</p>
-            <p className="mypage-settings__toggle-desc">
-              디지털 캐비닛 잠금 PIN을 변경합니다.
-            </p>
+          <div className="mypage-settings-figma__row">
+            <span className="mypage-settings-figma__icon">
+              <Smartphone size={18} />
+            </span>
+
+            <div className="mypage-settings-figma__copy">
+              <strong>FCM 푸시 알림</strong>
+              <p>
+                웹/앱 공통 푸시 알림을 받습니다. 마케팅 동의가 꺼져 있으면
+                사용할 수 없어요.
+              </p>
+            </div>
+
+            <label
+              className={`mypage-settings__switch${
+                !marketingConsent ? " mypage-settings__switch--disabled" : ""
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={marketingConsent && settings.push_enabled}
+                onChange={() => toggleSetting("push_enabled")}
+                disabled={!marketingConsent}
+              />
+              <span className="mypage-settings__slider" />
+            </label>
           </div>
-          <button
-            className="mypage-profile__edit-btn"
-            onClick={() => setPinOpen(true)}
-          >
-            재설정
-          </button>
+
+          {!marketingConsent && (
+            <div className="mypage-settings-figma__warning">
+              <Megaphone size={16} />
+              <p>
+                마케팅 정보 수신 동의가 꺼져 있어 FCM 푸시 알림이
+                비활성화되었습니다.
+              </p>
+            </div>
+          )}
         </div>
-      </div>
+      </section>
+
+      <section className="mypage-settings-figma__panel">
+        <div className="mypage-settings-figma__panel-head">
+          <div>
+            <h3>약관 및 정보 수신 동의</h3>
+            <p>필수 약관과 선택 동의 상태를 확인할 수 있어요.</p>
+          </div>
+          <FileCheck2 size={20} />
+        </div>
+
+        <div className="mypage-settings-figma__consent-list">
+          {consents.map((consent) => (
+            <div
+              key={consent.consent_id}
+              className="mypage-settings-figma__consent-row"
+            >
+              <div className="mypage-settings-figma__copy">
+                <div className="mypage-settings-figma__title-line">
+                  <strong>{CONSENT_LABELS[consent.consent_type]}</strong>
+                  <Badge variant={consent.is_required ? "default" : "primary"}>
+                    {consent.is_required ? "필수" : "선택"}
+                  </Badge>
+                </div>
+                <p>{CONSENT_DESCS[consent.consent_type]}</p>
+              </div>
+
+              <label
+                className={`mypage-settings__switch${
+                  consent.is_required ? " mypage-settings__switch--disabled" : ""
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={consent.is_agreed}
+                  onChange={() => toggleConsent(consent.consent_id)}
+                  disabled={consent.is_required}
+                />
+                <span className="mypage-settings__slider" />
+              </label>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mypage-settings-figma__panel">
+        <button
+          type="button"
+          className="mypage-settings-figma__link-row"
+          onClick={() => setPinOpen(true)}
+        >
+          <span className="mypage-settings-figma__icon mypage-settings-figma__icon--purple">
+            <LockKeyhole size={18} />
+          </span>
+
+          <span className="mypage-settings-figma__copy">
+            <strong>캐비닛 PIN 재설정</strong>
+            <p>문서를 잠글 때 사용하는 디지털 캐비닛 PIN을 변경합니다.</p>
+          </span>
+
+          <ChevronRight size={18} />
+        </button>
+      </section>
+
+      <section className="mypage-settings-figma__danger-title">
+        Danger Zone
+      </section>
+
+      <section className="mypage-settings-figma__danger-panel">
+        <button
+          type="button"
+          className="mypage-settings-figma__link-row mypage-settings-figma__link-row--danger"
+          onClick={() => navigate("/mypage/withdraw")}
+        >
+          <span className="mypage-settings-figma__icon mypage-settings-figma__icon--danger">
+            <UserX size={18} />
+          </span>
+
+          <span className="mypage-settings-figma__copy">
+            <strong>회원탈퇴</strong>
+            <p>계정과 모든 문서, 영수증, 분석 데이터가 삭제됩니다.</p>
+          </span>
+
+          <ChevronRight size={18} />
+        </button>
+      </section>
+
+      {showSavedNote && (
+        <section className="mypage-settings-figma__safe-note">
+          <ShieldCheck size={18} />
+          <div>
+            <strong>설정 변경 내용이 저장되었습니다.</strong>
+            <p>필수 동의 항목은 서비스 이용을 위해 해제할 수 없습니다.</p>
+          </div>
+        </section>
+      )}
 
       <PinResetModal isOpen={pinOpen} onClose={() => setPinOpen(false)} />
     </div>

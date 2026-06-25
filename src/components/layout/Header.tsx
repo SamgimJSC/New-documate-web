@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Bell, FileText, UserCircle } from "lucide-react";
+import { Bell, FileText } from "lucide-react";
 import "./Header.css";
 import NotificationPanel from "./NotificationPanel";
 import { notificationService } from "../../services/notificationService";
@@ -55,6 +55,38 @@ const getHeaderBreadcrumb = (pathname: string): HeaderBreadcrumb | null => {
     };
   }
 
+  if (pathname === "/mypage/profile") {
+    return {
+      parentLabel: "마이페이지",
+      parentPath: "/mypage",
+      currentLabel: "회원정보 변경",
+    };
+  }
+
+  if (pathname === "/mypage/settings") {
+    return {
+      parentLabel: "마이페이지",
+      parentPath: "/mypage",
+      currentLabel: "설정",
+    };
+  }
+
+  if (pathname === "/mypage/plan") {
+    return {
+      parentLabel: "마이페이지",
+      parentPath: "/mypage",
+      currentLabel: "요금제 관리",
+    };
+  }
+
+  if (pathname === "/mypage/withdraw") {
+    return {
+      parentLabel: "마이페이지",
+      parentPath: "/mypage",
+      currentLabel: "회원탈퇴",
+    };
+  }
+
   return null;
 };
 
@@ -65,6 +97,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
+
   const pageName = getPageName(location.pathname);
   const breadcrumb = getHeaderBreadcrumb(location.pathname);
   const isMyPage = location.pathname.startsWith("/mypage");
@@ -136,14 +169,6 @@ const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
             onClick={() => navigate("/processing-center")}
           >
             <FileText size={20} />
-          </button>
-          <button
-            className="header__icon-btn"
-            aria-label="마이페이지"
-            title="마이페이지"
-            onClick={() => navigate("/mypage")}
-          >
-            <UserCircle size={22} />
           </button>
         </div>
       </header>

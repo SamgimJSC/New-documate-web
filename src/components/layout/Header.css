@@ -12,6 +12,64 @@
   backdrop-filter: blur(10px);
 }
 
+.header--mypage {
+  padding-left: 0;
+}
+
+.header__brand {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 9px;
+  width: var(--sidebar-width);
+  height: 100%;
+  padding: 0 16px;
+  border: 0;
+  border-right: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.header__brand span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: var(--color-primary);
+  color: #ffffff;
+  font-size: var(--font-size-md);
+  font-weight: 900;
+}
+
+.header__brand strong {
+  color: var(--color-text);
+  font-size: var(--font-size-base);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.header__left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+.header--mypage .header__left {
+  padding-left: 28px;
+}
+
+.header__page-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
 .header__page-name {
   color: var(--color-text);
   font-size: var(--font-size-lg);
@@ -19,9 +77,52 @@
   letter-spacing: -0.02em;
 }
 
+.header__page-title .badge {
+  transform: translateY(1px);
+}
+
+.header__breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--color-text-sub);
+  font-size: var(--font-size-base);
+  font-weight: 800;
+}
+
+.header__breadcrumb button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
+  font-family: inherit;
+  font-size: var(--font-size-base);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.header__breadcrumb button:hover {
+  color: var(--color-primary-dark);
+}
+
+.header__breadcrumb span {
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.header__breadcrumb b {
+  color: var(--color-text);
+  font-size: var(--font-size-lg);
+  font-weight: 900;
+  letter-spacing: -0.035em;
+}
+
 .header__actions {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
   gap: 6px;
 }
 
@@ -70,141 +171,4 @@
 .fab:hover {
   background-color: var(--color-primary-dark);
   transform: translateY(-2px) scale(1.03);
-}
-
-.header__breadcrumb {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--color-muted);
-  font-size: var(--font-size-md);
-  font-weight: 750;
-}
-
-.header__breadcrumb button {
-  padding: 0;
-  color: var(--color-muted);
-  font: inherit;
-  cursor: pointer;
-}
-
-.header__breadcrumb button:hover {
-  color: var(--color-primary-dark);
-}
-
-.header__breadcrumb span {
-  color: #b4bec9;
-}
-
-.header__breadcrumb b {
-  color: var(--color-text);
-  font-weight: 850;
-}
-.header__brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--color-text);
-  font-family: inherit;
-  cursor: pointer;
-}
-
-.header__brand span {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 10px;
-  background: var(--color-primary);
-  color: #ffffff;
-  font-size: var(--font-size-md);
-  font-weight: 900;
-}
-
-.header__brand strong {
-  font-size: var(--font-size-base);
-  font-weight: 900;
-  letter-spacing: -0.02em;
-}
-
-/* MyPage header title */
-.header__brand--mypage {
-  gap: 12px;
-}
-
-.header__brand-text {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-}
-
-.header__brand-text strong {
-  color: var(--color-text);
-  font-size: var(--font-size-base);
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-}
-
-.header__brand-text em {
-  color: var(--color-primary-dark);
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 800;
-  line-height: 1.15;
-}
-.header__brand--mypage {
-  gap: 10px;
-}
-
-.header__brand--mypage em {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--color-muted);
-  font-size: var(--font-size-sm);
-  font-style: normal;
-  font-weight: 800;
-}
-
-.header__brand--mypage em::before {
-  content: "";
-  width: 1px;
-  height: 14px;
-  background: var(--color-border);
-}
-/* =========================================
-   MyPage header: 일반 페이지 상단바와 동일한 구조
-   왼쪽 로고 영역 + 오른쪽 페이지명
-========================================= */
-
-.header--mypage {
-  padding-left: 0;
-}
-
-.header__mypage-start {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  min-width: 0;
-}
-
-.header__brand--mypage {
-  width: var(--sidebar-width);
-  height: 100%;
-  padding: 0 16px;
-  border-right: 1px solid var(--color-border);
-  gap: 9px;
-}
-
-.header__mypage-title {
-  padding-left: 28px;
-  color: var(--color-text);
-  font-size: var(--font-size-lg);
-  font-weight: 850;
-  letter-spacing: -0.02em;
 }

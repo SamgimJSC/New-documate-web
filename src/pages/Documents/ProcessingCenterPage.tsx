@@ -20,12 +20,7 @@ import "./ProcessingCenterPage.css";
 
 type ProcessTab = "all" | UploadProcessStatus;
 
-const statusTabs: ProcessTab[] = [
-  "all",
-  "analyzing",
-  "failed",
-  "completed",
-];
+const statusTabs: ProcessTab[] = ["all", "analyzing", "failed", "completed"];
 
 const getTabLabel = (tab: ProcessTab) =>
   tab === "all" ? "전체" : PROCESS_STATUS_LABEL[tab];
@@ -105,7 +100,9 @@ export function ProcessingCenterPage() {
         .getTempList()
         .then((list) => {
           analyzingItems.forEach((item) => {
-            const found = list.find((d) => d.tempDocumentId === item.savedRecordId);
+            const found = list.find(
+              (d) => d.tempDocumentId === item.savedRecordId,
+            );
             if (!found) return;
 
             if (found.aiStatus === "DONE") {
@@ -115,7 +112,9 @@ export function ProcessingCenterPage() {
                   const sorted = [...docs].sort((a, b) =>
                     b.created_at.localeCompare(a.created_at),
                   );
-                  const matchedDoc = sorted.find((d) => d.file_name === item.fileName);
+                  const matchedDoc = sorted.find(
+                    (d) => d.file_name === item.fileName,
+                  );
 
                   if (matchedDoc) {
                     const cat = categories.find(
@@ -180,7 +179,9 @@ export function ProcessingCenterPage() {
             }
           });
         })
-        .catch(() => {/* 네트워크 오류는 다음 폴링에서 재시도 */});
+        .catch(() => {
+          /* 네트워크 오류는 다음 폴링에서 재시도 */
+        });
     }, 5000);
 
     return () => window.clearInterval(timer);
@@ -189,9 +190,11 @@ export function ProcessingCenterPage() {
   const stats = useMemo(
     () => ({
       total: processItems.length,
-      analyzing: processItems.filter((item) => item.status === "analyzing").length,
+      analyzing: processItems.filter((item) => item.status === "analyzing")
+        .length,
       failed: processItems.filter((item) => item.status === "failed").length,
-      completed: processItems.filter((item) => item.status === "completed").length,
+      completed: processItems.filter((item) => item.status === "completed")
+        .length,
     }),
     [processItems],
   );
@@ -226,7 +229,8 @@ export function ProcessingCenterPage() {
     if (!item?.savedRecordId || !item.uploadedFileIds?.length) {
       updateItem(itemId, {
         status: "failed",
-        errorMessage: "재분석에 필요한 파일 정보가 없습니다. 다시 업로드해 주세요.",
+        errorMessage:
+          "재분석에 필요한 파일 정보가 없습니다. 다시 업로드해 주세요.",
       });
       return;
     }
@@ -253,7 +257,6 @@ export function ProcessingCenterPage() {
   const deleteProcessItem = (itemId: string) => {
     setProcessItems((current) => current.filter((item) => item.id !== itemId));
   };
-
 
   const renderDetailPanel = () => {
     if (!selectedItem) {
@@ -415,7 +418,9 @@ export function ProcessingCenterPage() {
             문서 관리 · AI 분석 현황
           </p>
           <h1>업로드 현황</h1>
-          <p>분석 상태를 확인하고 완료된 문서를 디지털 캐비닛에서 확인하세요.</p>
+          <p>
+            분석 상태를 확인하고 완료된 문서를 디지털 캐비닛에서 확인하세요.
+          </p>
         </div>
       </div>
 
@@ -532,7 +537,9 @@ export function ProcessingCenterPage() {
                     <i className={`process-chip process-chip--${item.status}`}>
                       {PROCESS_STATUS_LABEL[item.status]}
                     </i>
-                    <span>{item.status === "analyzing" ? "" : item.category}</span>
+                    <span>
+                      {item.status === "analyzing" ? "" : item.category}
+                    </span>
                     <div
                       className="process-row-actions"
                       onClick={(event) => event.stopPropagation()}
