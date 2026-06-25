@@ -16,6 +16,10 @@
   padding-left: 0;
 }
 
+.header--mypage .header__brand--mypage {
+  border-right: none;
+}
+
 .header__brand {
   display: inline-flex;
   align-items: center;

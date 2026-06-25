@@ -93,7 +93,7 @@ export function ProcessingCenterPage() {
       (item) => item.status === "analyzing" && item.savedRecordId,
     );
 
-    if (analyzingItems.length === 0) return;
+    if (analyzingItems.length === 0 || categories.length === 0) return;
 
     const timer = window.setInterval(() => {
       uploadService

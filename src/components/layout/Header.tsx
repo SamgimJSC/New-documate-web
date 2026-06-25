@@ -124,13 +124,11 @@ const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
             <button
               type="button"
               className="header__brand header__brand--mypage"
-              onClick={() => navigate("/mypage")}
+              onClick={() => navigate("/dashboard")}
             >
               <span>D</span>
               <strong>DocuMate</strong>
             </button>
-
-            <span className="header__mypage-title">마이페이지</span>
           </div>
         ) : breadcrumb ? (
           <nav className="header__breadcrumb" aria-label="현재 위치">
