@@ -26,13 +26,13 @@ function ReceiptBranchModal({ isOpen = false, onClose, onSaved }: ReceiptBranchM
             variant="ghost"
             onClick={() => { onClose?.(); setUploadOpen(true); }}
           >
-            📷 OCR 스캔 (이미지 업로드)
+            OCR 스캔 (이미지 업로드)
           </Button>
           <Button
             variant="ghost"
             onClick={() => { onClose?.(); setManualOpen(true); }}
           >
-            ✏️ 직접 입력
+            직접 입력
           </Button>
         </div>
       </Modal>
