@@ -1,8 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Modal from "../common/Modal";
 import Button from "../common/Button";
 import { useToast } from "../common/Toast";
 import { startUpload, uploadTempFile, requestAiAnalyse } from "../../api/upload";
+import { AnalysisStartedModal } from "../upload/AnalysisStartedModal";
+import { uploadLocalService } from "../../services/uploadLocalService";
 
 interface Props {
   isOpen: boolean;
@@ -10,13 +13,21 @@ interface Props {
 }
 
 const ReceiptUploadModal: React.FC<Props> = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [analysisStarted, setAnalysisStarted] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (selected) setFile(selected);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const dropped = e.dataTransfer.files?.[0];
+    if (dropped) setFile(dropped);
   };
 
   const handleAnalyze = async () => {
@@ -25,9 +36,24 @@ const ReceiptUploadModal: React.FC<Props> = ({ isOpen, onClose }) => {
     try {
       const { tempDocumentId } = await startUpload();
       const { files } = await uploadTempFile(tempDocumentId, file, 1);
-      await requestAiAnalyse(tempDocumentId, [{ id: files[0].id, pageNo: 1 }]);
-      showToast("분석이 시작됐어요. 잠시 후 영수증 목록에서 확인하세요.", "success");
-      onClose();
+      const uploadedFileIds = [{ id: files[0].id, pageNo: 1 }];
+      await requestAiAnalyse(tempDocumentId, uploadedFileIds);
+
+      // 처리 센터가 폴링으로 추적할 수 있도록 로컬스토리지에 등록
+      uploadLocalService.writeProcessItems([
+        ...uploadLocalService.readProcessItems(),
+        uploadLocalService.buildProcessDocument({
+          fileName: file.name,
+          sizeMb: file.size / (1024 * 1024),
+          fileSizeBytes: file.size,
+          pageCount: 1,
+          status: "analyzing",
+          savedRecordId: tempDocumentId,
+          uploadedFileIds,
+        }),
+      ]);
+
+      setAnalysisStarted(true);
     } catch {
       showToast("업로드 중 오류가 발생했습니다.", "error");
     } finally {
@@ -35,10 +61,35 @@ const ReceiptUploadModal: React.FC<Props> = ({ isOpen, onClose }) => {
     }
   };
 
+  const handleStay = () => {
+    setAnalysisStarted(false);
+    setFile(null);
+    onClose();
+  };
+
+  const handleMoveCenter = () => {
+    setAnalysisStarted(false);
+    setFile(null);
+    onClose();
+    navigate("/processing-center");
+  };
+
+  if (analysisStarted) {
+    return (
+      <AnalysisStartedModal
+        fileCount={1}
+        onStay={handleStay}
+        onMoveCenter={handleMoveCenter}
+      />
+    );
+  }
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="영수증 업로드 (OCR)">
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
           style={{
             border: "2px dashed var(--color-border)",
             borderRadius: "var(--radius-md)",

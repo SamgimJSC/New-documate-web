@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Star, Grid, List } from "lucide-react";
+import { Star, Grid, List } from "lucide-react";
 import FilterChip from "../../components/common/FilterChip";
 import Select from "../../components/common/Select";
 import Badge from "../../components/common/Badge";
 import EmptyState from "../../components/common/EmptyState";
+import { SearchBar } from "../../components/common/SearchBar";
 import { documentService } from "../../services/documentService";
 import { useCategories } from "../../hooks/useCategories";
-import { filterDocuments } from "../../utils/filterUtils";
 import { formatDate, getDday } from "../../utils/formatDate";
 import type { Document } from "../../types/document";
 import type { AiStatus } from "../../types/common";
@@ -33,42 +33,44 @@ const AI_STATUS_VARIANT: Record<
 const Documents: React.FC = () => {
   const navigate = useNavigate();
   const categories = useCategories();
-  const [query, setQuery] = useState("");
+  const [keyword, setKeyword] = useState("");
+  const [searchField, setSearchField] = useState<"title" | "tag" | "ocr" | undefined>();
   const [categoryId, setCategoryId] = useState<number | undefined>();
   const [sort, setSort] = useState("latest");
   const [viewMode, setViewMode] = useState<"card" | "list">("card");
-  const [allDocs, setAllDocs] = useState<Document[]>([]);
+  const [docs, setDocs] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
+  const fetchRef = useRef(0);
 
   useEffect(() => {
+    const id = ++fetchRef.current;
+    setLoading(true);
     documentService
-      .getDocuments()
-      .then(setAllDocs)
-      .catch(() => setAllDocs([]))
-      .finally(() => setLoading(false));
-  }, []);
+      .getDocuments({
+        keyword: keyword || undefined,
+        searchField,
+        categoryId,
+      })
+      .then((data) => {
+        if (fetchRef.current === id) setDocs(data);
+      })
+      .catch(() => {
+        if (fetchRef.current === id) setDocs([]);
+      })
+      .finally(() => {
+        if (fetchRef.current === id) setLoading(false);
+      });
+  }, [keyword, searchField, categoryId]);
 
-  const docs = filterDocuments(allDocs, query, categoryId);
+  const handleSearch = (kw: string, field?: "title" | "tag" | "ocr") => {
+    setKeyword(kw);
+    setSearchField(field);
+  };
 
   const sorted = [...docs].sort((a, b) => {
     if (sort === "latest") return b.created_at.localeCompare(a.created_at);
     return a.title.localeCompare(b.title, "ko");
   });
-
-  if (loading) {
-    return (
-      <div
-        className="documents"
-        style={{
-          padding: 48,
-          textAlign: "center",
-          color: "var(--color-muted)",
-        }}
-      >
-        문서를 불러오는 중...
-      </div>
-    );
-  }
 
   return (
     <div className="documents">
@@ -77,15 +79,7 @@ const Documents: React.FC = () => {
           <h2 className="documents__count">
             전체 문서 <span>{docs.length}</span>건
           </h2>
-          <div className="documents__search">
-            <Search size={16} className="documents__search-icon" />
-            <input
-              className="documents__search-input"
-              placeholder="문서명, 태그, OCR 본문 검색..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
+          <SearchBar onSearch={handleSearch} />
         </div>
       </div>
 
@@ -139,7 +133,13 @@ const Documents: React.FC = () => {
         </div>
       </div>
 
-      {sorted.length === 0 ? (
+      {loading ? (
+        <div
+          style={{ padding: 48, textAlign: "center", color: "var(--color-muted)" }}
+        >
+          문서를 불러오는 중...
+        </div>
+      ) : sorted.length === 0 ? (
         <EmptyState
           title="문서가 없습니다"
           description="문서를 업로드하여 디지털 캐비닛을 채워보세요."
@@ -151,6 +151,7 @@ const Documents: React.FC = () => {
             const category = categories.find(
               (c) => c.category_id === doc.category_id,
             );
+            const aiStatus = doc.ai_status as AiStatus;
             return (
               <div
                 key={doc.document_id}
@@ -183,8 +184,8 @@ const Documents: React.FC = () => {
                       {getDday(doc.expiry_date)}
                     </Badge>
                   )}
-                  <Badge variant={AI_STATUS_VARIANT[doc.ai_status]}>
-                    {AI_STATUS_LABEL[doc.ai_status]}
+                  <Badge variant={AI_STATUS_VARIANT[aiStatus]}>
+                    {AI_STATUS_LABEL[aiStatus]}
                   </Badge>
                 </div>
                 <p className="document-card__date">
@@ -207,6 +208,7 @@ const Documents: React.FC = () => {
             const category = categories.find(
               (c) => c.category_id === doc.category_id,
             );
+            const aiStatus = doc.ai_status as AiStatus;
             return (
               <div
                 key={doc.document_id}
@@ -230,8 +232,8 @@ const Documents: React.FC = () => {
                     : "-"}
                 </span>
                 <span>
-                  <Badge variant={AI_STATUS_VARIANT[doc.ai_status]}>
-                    {AI_STATUS_LABEL[doc.ai_status]}
+                  <Badge variant={AI_STATUS_VARIANT[aiStatus]}>
+                    {AI_STATUS_LABEL[aiStatus]}
                   </Badge>
                 </span>
                 <span>{formatDate(doc.created_at)}</span>

@@ -17,7 +17,7 @@ import {
 import Button from "../../components/common/Button";
 import AlertSettingModal from "../../components/modal/AlertSettingModal";
 import { documentService } from "../../services/documentService";
-import { mockDocumentAlerts } from "../../data/mockDocuments";
+import type { DocumentAlert } from "../../types/document";
 import { useCategories } from "../../hooks/useCategories";
 import type { DocumentTagItem } from "../../types/document";
 import { formatDate } from "../../utils/formatDate";
@@ -108,12 +108,14 @@ const DocumentDetail: React.FC = () => {
   const [doc, setDoc] = useState<Document | null>(null);
   const [loading, setLoading] = useState(true);
   const [alertOpen, setAlertOpen] = useState(false);
+  const [alerts, setAlerts] = useState<DocumentAlert[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [tags, setTags] = useState<DocumentTagItem[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [zoom, setZoom] = useState(100);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [selectedPage, setSelectedPage] = useState(0);
   const [form, setForm] = useState<EditableDocumentState>(EMPTY_FORM);
 
   useEffect(() => {
@@ -125,12 +127,15 @@ const DocumentDetail: React.FC = () => {
 
     setLoading(true);
 
-    documentService
-      .getDocument(document_id)
-      .then((d) => {
+    Promise.all([
+      documentService.getDocument(document_id),
+      documentService.getAlerts(document_id),
+    ])
+      .then(([d, a]) => {
         setDoc(d);
         setIsFavorite(d.is_favorite);
         setTags(d.tags);
+        setAlerts(a);
       })
       .catch(() => {
         setDoc(null);
@@ -145,14 +150,6 @@ const DocumentDetail: React.FC = () => {
 
     return categories.find(
       (category) => category.category_id === doc.category_id,
-    );
-  }, [doc]);
-
-  const alerts = useMemo(() => {
-    if (!doc) return [];
-
-    return mockDocumentAlerts.filter(
-      (alert) => alert.document_id === doc.document_id,
     );
   }, [doc]);
 
@@ -266,17 +263,26 @@ const DocumentDetail: React.FC = () => {
     }
   };
 
-  const handleDownload = () => {
-    if (!previewUrl) {
-      showToast("다운로드할 파일이 없습니다.", "info");
-      return;
+  const handleAlertSaved = (saved: DocumentAlert) => {
+    setAlerts([saved]);
+  };
+
+  const handleAlertDelete = async (alertId: string) => {
+    if (!document_id) return;
+    try {
+      await documentService.deleteAlert(document_id, alertId);
+      setAlerts([]);
+    } catch {
+      showToast("알림 삭제에 실패했습니다.", "error");
     }
-    const a = document.createElement("a");
-    a.href = previewUrl;
-    a.download = doc.file_name || doc.title;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  };
+
+  const handleDownload = async () => {
+    try {
+      await documentService.downloadAsPdf(doc.document_id, doc.title);
+    } catch {
+      showToast("PDF 다운로드에 실패했습니다.", "error");
+    }
   };
 
   const handleEditStart = () => {
@@ -320,11 +326,12 @@ const DocumentDetail: React.FC = () => {
 
   const fileSizeText = formatFileSize(doc.file_size_bytes);
 
-  const previewUrl = (doc.file_url ?? "").trim();
+  const docFiles = doc.document_files ?? [];
+  const previewUrl = docFiles.length > 0
+    ? docFiles[selectedPage]?.file_url ?? docFiles[0].file_url
+    : (doc.file_url ?? "").trim();
   const hasPreviewFile = previewUrl.length > 0;
-  const previewPageCount = hasPreviewFile
-    ? Math.max(1, doc.page_count ?? 1)
-    : 0;
+  const previewPageCount = docFiles.length > 0 ? docFiles.length : hasPreviewFile ? Math.max(1, doc.page_count ?? 1) : 0;
 
   return (
     <section className="doc-detail">
@@ -452,7 +459,8 @@ const DocumentDetail: React.FC = () => {
                   <button
                     type="button"
                     key={index + 1}
-                    className={index === 0 ? "is-active" : ""}
+                    className={index === selectedPage ? "is-active" : ""}
+                    onClick={() => setSelectedPage(index)}
                   >
                     <span>
                       <i />
@@ -605,13 +613,15 @@ const DocumentDetail: React.FC = () => {
             <div className="doc-detail__manage-block">
               <div className="doc-detail__manage-block-header">
                 <span>알림 설정</span>
-                <button
-                  type="button"
-                  className="doc-detail__text-button"
-                  onClick={() => setAlertOpen(true)}
-                >
-                  <Plus size={12} /> 알림 추가
-                </button>
+                {alerts.length === 0 && (
+                  <button
+                    type="button"
+                    className="doc-detail__text-button"
+                    onClick={() => setAlertOpen(true)}
+                  >
+                    <Plus size={12} /> 알림 추가
+                  </button>
+                )}
               </div>
 
               {alerts.length === 0 ? (
@@ -626,9 +636,27 @@ const DocumentDetail: React.FC = () => {
                       className="doc-detail__alert-item"
                     >
                       <Calendar size={15} />
-                      <div>
-                        <b>{alert.notify_date}</b>
-                        <span>{alert.reason}</span>
+                      <div style={{ flex: 1 }}>
+                        <b>{alert.notify_date.slice(0, 10)}</b>
+                        {alert.reason && <span>{alert.reason}</span>}
+                      </div>
+                      <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                        <button
+                          type="button"
+                          className="doc-detail__text-button"
+                          onClick={() => setAlertOpen(true)}
+                          style={{ fontSize: "var(--font-size-xs)" }}
+                        >
+                          수정
+                        </button>
+                        <button
+                          type="button"
+                          className="doc-detail__text-button"
+                          onClick={() => handleAlertDelete(alert.alert_id)}
+                          style={{ fontSize: "var(--font-size-xs)", color: "var(--color-danger, #ef4444)" }}
+                        >
+                          삭제
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -726,6 +754,9 @@ const DocumentDetail: React.FC = () => {
         isOpen={alertOpen}
         onClose={() => setAlertOpen(false)}
         documentId={doc.document_id}
+        existingAlert={alerts[0] ?? null}
+        expiryDate={doc.expiry_date ?? null}
+        onSaved={handleAlertSaved}
       />
     </section>
   );

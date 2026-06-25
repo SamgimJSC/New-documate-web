@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FileText } from "lucide-react";
-import Badge from "../common/Badge";
+import { Bell, FileText } from "lucide-react";
 import "./Header.css";
+import NotificationPanel from "./NotificationPanel";
+import { notificationService } from "../../services/notificationService";
 
 const PAGE_NAMES: Record<string, string> = {
   "/dashboard": "대시보드",
@@ -100,44 +101,67 @@ const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
   const pageName = getPageName(location.pathname);
   const breadcrumb = getHeaderBreadcrumb(location.pathname);
   const isMyPage = location.pathname.startsWith("/mypage");
-  const isProPage = location.pathname === "/finance/report";
+
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const list = await notificationService.getMyNotifications();
+      setUnreadCount(list.filter((n) => !n.isRead).length);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    fetchUnreadCount();
+  }, [fetchUnreadCount]);
 
   return (
     <>
       <header className={`header${isMyPage ? " header--mypage" : ""}`}>
-        {isMyPage && (
-          <button
-            type="button"
-            className="header__brand"
-            onClick={() => navigate("/mypage")}
-            aria-label="마이페이지로 이동"
-          >
-            <span>D</span>
-            <strong>DocuMate</strong>
-          </button>
+        {isMyPage ? (
+          <div className="header__mypage-start">
+            <button
+              type="button"
+              className="header__brand header__brand--mypage"
+              onClick={() => navigate("/mypage")}
+            >
+              <span>D</span>
+              <strong>DocuMate</strong>
+            </button>
+
+            <span className="header__mypage-title">마이페이지</span>
+          </div>
+        ) : breadcrumb ? (
+          <nav className="header__breadcrumb" aria-label="현재 위치">
+            <button
+              type="button"
+              onClick={() => navigate(breadcrumb.parentPath)}
+            >
+              {breadcrumb.parentLabel}
+            </button>
+            <span>/</span>
+            <b>{breadcrumb.currentLabel}</b>
+          </nav>
+        ) : (
+          <span className="header__page-name">{pageName}</span>
         )}
-
-        <div className="header__left">
-          {breadcrumb ? (
-            <nav className="header__breadcrumb" aria-label="현재 위치">
-              <button
-                type="button"
-                onClick={() => navigate(breadcrumb.parentPath)}
-              >
-                {breadcrumb.parentLabel}
-              </button>
-              <span>/</span>
-              <b>{breadcrumb.currentLabel}</b>
-            </nav>
-          ) : (
-            <span className="header__page-title">
-              <span className="header__page-name">{pageName}</span>
-              {isProPage && <Badge variant="pro">PRO</Badge>}
-            </span>
-          )}
-        </div>
-
         <div className="header__actions">
+          <div className="notif-bell-wrap">
+            <button
+              className="header__icon-btn"
+              aria-label="알림"
+              title="알림"
+              onClick={() => setPanelOpen((v) => !v)}
+            >
+              <Bell size={20} />
+            </button>
+            {unreadCount > 0 && (
+              <span className="notif-badge">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </div>
           <button
             className="header__icon-btn"
             aria-label="처리 센터"
@@ -153,6 +177,13 @@ const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
         <button className="fab" onClick={onFabClick} aria-label="업로드">
           +
         </button>
+      )}
+
+      {panelOpen && (
+        <NotificationPanel
+          onClose={() => setPanelOpen(false)}
+          onUnreadCountChange={setUnreadCount}
+        />
       )}
     </>
   );

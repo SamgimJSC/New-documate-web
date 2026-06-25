@@ -1,8 +1,10 @@
 import { api } from "./api";
 import type {
   Document,
+  DocumentAlert,
   DocumentCategory,
   DocumentTagItem,
+  AlertOffsetType,
 } from "../types/document";
 
 interface ApiResponse<T> {
@@ -33,7 +35,40 @@ interface DocumentApiItem {
   updatedAt: string;
   isDeleted: boolean;
   documentTags?: Array<{ tag: { tagId: string; name: string } }>;
+  documentFiles?: Array<{ fileId: number; documentId: string; fileUrl: string; pageNo: number; createdAt: string }>;
 }
+
+interface DocumentAlertApiItem {
+  alertId: string;
+  documentId: string;
+  userId: string;
+  offsetType: string;
+  notifyDate: string;
+  reason: string | null;
+  channelEmail: boolean;
+  channelAppPush: boolean;
+  channelWebPush: boolean;
+  isSent: boolean;
+  sentAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const mapAlert = (raw: DocumentAlertApiItem): DocumentAlert => ({
+  alert_id: raw.alertId,
+  document_id: raw.documentId,
+  user_id: raw.userId,
+  offset_type: raw.offsetType as AlertOffsetType,
+  notify_date: raw.notifyDate,
+  reason: raw.reason ?? undefined,
+  channel_email: raw.channelEmail,
+  channel_app_push: raw.channelAppPush,
+  channel_web_push: raw.channelWebPush,
+  is_sent: raw.isSent,
+  sent_at: raw.sentAt ?? undefined,
+  created_at: raw.createdAt,
+  updated_at: raw.updatedAt,
+});
 
 interface DocumentListData {
   items: DocumentApiItem[];
@@ -48,7 +83,16 @@ const mapDocument = (raw: DocumentApiItem): Document => ({
   user_id: raw.userId,
   category_id: raw.categoryId,
   title: raw.title,
-  file_url: raw.fileUrl ?? "",
+  document_files: (raw.documentFiles ?? [])
+    .sort((a, b) => a.pageNo - b.pageNo)
+    .map((f) => ({
+      file_id: f.fileId,
+      document_id: f.documentId,
+      file_url: f.fileUrl,
+      page_no: f.pageNo,
+      created_at: f.createdAt,
+    })),
+  file_url: raw.documentFiles?.[0]?.fileUrl ?? raw.fileUrl ?? "",
   file_name: raw.fileName ?? "",
   file_type: raw.fileType ?? "JPG",
   file_size_bytes: Number(raw.fileSizeBytes),
@@ -95,8 +139,17 @@ export const documentService = {
     }));
   },
 
-  async getDocuments(): Promise<Document[]> {
-    const res = await api.get<ApiResponse<DocumentListData>>("/documents");
+  async getDocuments(params?: {
+    keyword?: string;
+    searchField?: "title" | "tag" | "ocr";
+    limit?: number;
+    page?: number;
+    categoryId?: number;
+    sort?: string;
+  }): Promise<Document[]> {
+    const res = await api.get<ApiResponse<DocumentListData>>("/documents", {
+      params,
+    });
     return res.data.data.items.map(mapDocument);
   },
 
@@ -153,5 +206,60 @@ export const documentService = {
 
   async deleteDocument(id: string): Promise<void> {
     await api.delete(`/documents/${id}`);
+  },
+
+  async getAlerts(documentId: string): Promise<DocumentAlert[]> {
+    const res = await api.get<ApiResponse<DocumentAlertApiItem[]>>(`/documents/${documentId}/alerts`);
+    return res.data.data.map(mapAlert);
+  },
+
+  async createAlert(
+    documentId: string,
+    body: {
+      offsetType: string;
+      notifyDate: string;
+      reason?: string | null;
+      channelEmail?: boolean;
+      channelAppPush?: boolean;
+      channelWebPush?: boolean;
+    },
+  ): Promise<DocumentAlert> {
+    const res = await api.post<ApiResponse<DocumentAlertApiItem>>(`/documents/${documentId}/alerts`, body);
+    return mapAlert(res.data.data);
+  },
+
+  async updateAlert(
+    documentId: string,
+    alertId: string,
+    body: {
+      offsetType?: string;
+      notifyDate?: string;
+      reason?: string | null;
+      channelEmail?: boolean;
+      channelAppPush?: boolean;
+      channelWebPush?: boolean;
+    },
+  ): Promise<DocumentAlert> {
+    const res = await api.patch<ApiResponse<DocumentAlertApiItem>>(`/documents/${documentId}/alerts/${alertId}`, body);
+    return mapAlert(res.data.data);
+  },
+
+  async deleteAlert(documentId: string, alertId: string): Promise<void> {
+    await api.delete(`/documents/${documentId}/alerts/${alertId}`);
+  },
+
+  async downloadAsPdf(id: string, title: string): Promise<void> {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
+    const res = await fetch(`${baseUrl}/documents/${id}/download`, {
+      credentials: "include",
+    });
+    if (!res.ok) throw new Error("PDF 다운로드 실패");
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${title || id}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
   },
 };
