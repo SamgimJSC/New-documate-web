@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Bell, FileText, UserCircle } from "lucide-react";
 import "./Header.css";
+import NotificationPanel from "./NotificationPanel";
+import { notificationService } from "../../services/notificationService";
 
 const PAGE_NAMES: Record<string, string> = {
   "/dashboard": "대시보드",
@@ -66,6 +68,21 @@ const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
   const pageName = getPageName(location.pathname);
   const breadcrumb = getHeaderBreadcrumb(location.pathname);
   const isMyPage = location.pathname.startsWith("/mypage");
+
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const list = await notificationService.getMyNotifications();
+      setUnreadCount(list.filter((n) => !n.isRead).length);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    fetchUnreadCount();
+  }, [fetchUnreadCount]);
+
   return (
     <>
       <header className={`header${isMyPage ? " header--mypage" : ""}`}>
@@ -97,9 +114,21 @@ const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
           <span className="header__page-name">{pageName}</span>
         )}
         <div className="header__actions">
-          <button className="header__icon-btn" aria-label="알림" title="알림">
-            <Bell size={20} />
-          </button>
+          <div className="notif-bell-wrap">
+            <button
+              className="header__icon-btn"
+              aria-label="알림"
+              title="알림"
+              onClick={() => setPanelOpen((v) => !v)}
+            >
+              <Bell size={20} />
+            </button>
+            {unreadCount > 0 && (
+              <span className="notif-badge">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </div>
           <button
             className="header__icon-btn"
             aria-label="처리 센터"
@@ -123,6 +152,13 @@ const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
         <button className="fab" onClick={onFabClick} aria-label="업로드">
           +
         </button>
+      )}
+
+      {panelOpen && (
+        <NotificationPanel
+          onClose={() => setPanelOpen(false)}
+          onUnreadCountChange={setUnreadCount}
+        />
       )}
     </>
   );
