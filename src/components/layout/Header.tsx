@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FileText } from "lucide-react";
+import Badge from "../common/Badge";
 import "./Header.css";
 
 const PAGE_NAMES: Record<string, string> = {
@@ -99,20 +100,24 @@ const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
   const pageName = getPageName(location.pathname);
   const breadcrumb = getHeaderBreadcrumb(location.pathname);
   const isMyPage = location.pathname.startsWith("/mypage");
+  const isProPage = location.pathname === "/finance/report";
 
   return (
     <>
       <header className={`header${isMyPage ? " header--mypage" : ""}`}>
-        <div className="header__left">
+        {isMyPage && (
           <button
             type="button"
-            className="header__brand header__brand--mypage"
-            onClick={() => navigate(isMyPage ? "/mypage" : "/dashboard")}
+            className="header__brand"
+            onClick={() => navigate("/mypage")}
+            aria-label="마이페이지로 이동"
           >
             <span>D</span>
             <strong>DocuMate</strong>
           </button>
+        )}
 
+        <div className="header__left">
           {breadcrumb ? (
             <nav className="header__breadcrumb" aria-label="현재 위치">
               <button
@@ -124,10 +129,11 @@ const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
               <span>/</span>
               <b>{breadcrumb.currentLabel}</b>
             </nav>
-          ) : isMyPage ? (
-            <span className="header__mypage-title">마이페이지</span>
           ) : (
-            <span className="header__page-name">{pageName}</span>
+            <span className="header__page-title">
+              <span className="header__page-name">{pageName}</span>
+              {isProPage && <Badge variant="pro">PRO</Badge>}
+            </span>
           )}
         </div>
 

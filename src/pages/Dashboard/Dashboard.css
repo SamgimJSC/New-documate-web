@@ -20,7 +20,7 @@
 
 .dashboard__eyebrow {
   margin: 0 0 6px;
-  color: var(--color-primary);
+  color: #3e7773;
   font-size: var(--font-size-sm);
   font-weight: 950;
 }
@@ -184,7 +184,9 @@
   font-size: var(--font-size-sm);
   font-weight: 850;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .dashboard__view-all:hover {
@@ -215,7 +217,10 @@
   font-size: var(--font-size-sm);
   font-weight: 800;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .dashboard__tab:hover {
@@ -247,7 +252,9 @@
   background: transparent;
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .dashboard__doc-item:hover {
@@ -315,7 +322,10 @@
   color: var(--color-muted);
   text-align: center;
   cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .dashboard__upload-zone:hover {
@@ -402,7 +412,9 @@
   font-size: var(--font-size-sm);
   font-weight: 900;
   cursor: pointer;
-  transition: background-color 0.15s ease, transform 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    transform 0.15s ease;
 }
 
 .dashboard__upgrade-btn:hover {
@@ -445,7 +457,6 @@
   }
 }
 
-
 /* Dashboard final tuning: 그림자는 낮추고, 상단 요약 카드는 조금 더 컴팩트하게 */
 .dashboard .card,
 .dashboard__section {
@@ -457,7 +468,6 @@
 .dashboard__right .card:hover {
   box-shadow: var(--shadow-card-soft) !important;
 }
-
 
 /* Step3 compact KPI cards: page-level summary card normalization */
 .dashboard__summary-card.card {

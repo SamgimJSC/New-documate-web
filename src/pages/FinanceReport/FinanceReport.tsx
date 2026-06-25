@@ -18,7 +18,11 @@ import CategoryPieChart, {
 } from "../../components/chart/CategoryPieChart";
 import { mockCurrentUser } from "../../data/mockUsers";
 import { getReceipts } from "../../api/receipt";
-import { getMonthlySpend, getDailySpend, getCategorySummary } from "../../api/report";
+import {
+  getMonthlySpend,
+  getDailySpend,
+  getCategorySummary,
+} from "../../api/report";
 import type {
   MonthlySpendResponse,
   DailySpendResponse,
@@ -58,26 +62,37 @@ const FinanceReport: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState(getMonthKey(new Date()));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  const [monthlyData, setMonthlyData] = useState<MonthlySpendResponse | null>(null);
+  const [monthlyData, setMonthlyData] = useState<MonthlySpendResponse | null>(
+    null,
+  );
   const [dailyData, setDailyData] = useState<DailySpendResponse | null>(null);
-  const [categorySummary, setCategorySummary] = useState<CategorySummaryResponse | null>(null);
+  const [categorySummary, setCategorySummary] =
+    useState<CategorySummaryResponse | null>(null);
   const [monthReceipts, setMonthReceipts] = useState<Receipt[]>([]);
 
   const [year, monthNum] = selectedMonth.split("-").map(Number);
 
   useEffect(() => {
-    getMonthlySpend(year).then(setMonthlyData).catch(() => {});
+    getMonthlySpend(year)
+      .then(setMonthlyData)
+      .catch(() => {});
   }, [year]);
 
   useEffect(() => {
-    getDailySpend(year, monthNum).then(setDailyData).catch(() => {});
+    getDailySpend(year, monthNum)
+      .then(setDailyData)
+      .catch(() => {});
   }, [year, monthNum]);
 
   useEffect(() => {
     if (selectedDate) {
-      getCategorySummary({ date: selectedDate }).then(setCategorySummary).catch(() => {});
+      getCategorySummary({ date: selectedDate })
+        .then(setCategorySummary)
+        .catch(() => {});
     } else {
-      getCategorySummary({ year, month: monthNum }).then(setCategorySummary).catch(() => {});
+      getCategorySummary({ year, month: monthNum })
+        .then(setCategorySummary)
+        .catch(() => {});
     }
   }, [year, monthNum, selectedDate]);
 
@@ -95,12 +110,17 @@ const FinanceReport: React.FC = () => {
 
   const previousMonthSpend = useMemo(() => {
     if (!monthlyData || prevYear !== year) return 0;
-    return monthlyData.months.find((m) => m.month === prevMonthNum)?.totalSpend ?? 0;
+    return (
+      monthlyData.months.find((m) => m.month === prevMonthNum)?.totalSpend ?? 0
+    );
   }, [monthlyData, prevMonthNum, prevYear, year]);
 
   const previousMonthReceiptCount = useMemo(() => {
     if (!monthlyData || prevYear !== year) return 0;
-    return monthlyData.months.find((m) => m.month === prevMonthNum)?.receiptCount ?? 0;
+    return (
+      monthlyData.months.find((m) => m.month === prevMonthNum)?.receiptCount ??
+      0
+    );
   }, [monthlyData, prevMonthNum, prevYear, year]);
 
   const monthChangeRate =
@@ -122,13 +142,20 @@ const FinanceReport: React.FC = () => {
 
   const categoryData = useMemo(
     () =>
-      (categorySummary?.categories ?? []).map((c) => ({
-        name: (c as Record<string, unknown>).categoryName as string ?? c.name ?? "기타",
-        value: c.totalSpend,
-      })),
+      (categorySummary?.categories ?? []).map((category) => {
+        const item = category as unknown as {
+          categoryName?: string;
+          name?: string;
+          totalSpend?: number | string;
+        };
+
+        return {
+          name: item.categoryName ?? item.name ?? "기타",
+          value: Number(item.totalSpend ?? 0),
+        };
+      }),
     [categorySummary],
   );
-
   const sortedCategoryData = useMemo(
     () => [...categoryData].sort((a, b) => b.value - a.value),
     [categoryData],
@@ -138,7 +165,8 @@ const FinanceReport: React.FC = () => {
   const topCategory = sortedCategoryData[0];
 
   const periodReceiptCount =
-    categorySummary?.categories.reduce((sum, c) => sum + c.receiptCount, 0) ?? 0;
+    categorySummary?.categories.reduce((sum, c) => sum + c.receiptCount, 0) ??
+    0;
 
   const daysInMonth = dailyData?.days.length ?? 30;
 
@@ -155,7 +183,8 @@ const FinanceReport: React.FC = () => {
       ? Math.round((monthTotalSpend / lastReceiptDay) * daysInMonth)
       : 0;
 
-  const monthReceiptCount = dailyData?.days.reduce((sum, d) => sum + d.receiptCount, 0) ?? 0;
+  const monthReceiptCount =
+    dailyData?.days.reduce((sum, d) => sum + d.receiptCount, 0) ?? 0;
   const predictionConfidence =
     monthReceiptCount >= 10 ? 82 : monthReceiptCount >= 5 ? 78 : 65;
 
@@ -198,7 +227,14 @@ const FinanceReport: React.FC = () => {
       : "소비 데이터를 더 등록하면 맞춤형 절약 제안을 받을 수 있습니다.";
 
     return `${compareText} ${categoryText} ${adviceText}`;
-  }, [categorySummary, selectedDate, monthChangeRate, totalSpend, topCategory, categoryTotal]);
+  }, [
+    categorySummary,
+    selectedDate,
+    monthChangeRate,
+    totalSpend,
+    topCategory,
+    categoryTotal,
+  ]);
 
   const handlePreviousMonth = () => {
     setSelectedMonth((prev: string) => getPreviousMonth(prev));
@@ -229,10 +265,7 @@ const FinanceReport: React.FC = () => {
     <div className="finance-report">
       <div className="finance-report__header">
         <div>
-          <div className="finance-report__title-row">
-            <h2 className="finance-report__title">소비 리포트</h2>
-            <Badge variant="pro">PRO</Badge>
-          </div>
+          <p className="finance-report__eyebrow">월간 소비 인사이트</p>
           <p className="finance-report__subtitle">
             선택한 월의 소비 흐름과 AI 인사이트를 확인하세요.
           </p>
@@ -286,7 +319,9 @@ const FinanceReport: React.FC = () => {
           <div className="finance-report__summary-icon finance-report__summary-icon--purple">
             <ReceiptText size={20} />
           </div>
-          <p className="finance-report__summary-value">{periodReceiptCount}건</p>
+          <p className="finance-report__summary-value">
+            {periodReceiptCount}건
+          </p>
           <p className="finance-report__summary-label">
             {selectedDate ? "선택 날짜 영수증" : "영수증 등록 건수"}
           </p>
@@ -386,7 +421,10 @@ const FinanceReport: React.FC = () => {
                     <div className="finance-report__category-bar-wrap">
                       <div
                         className="finance-report__category-bar"
-                        style={{ width: `${pct}%`, backgroundColor: categoryColor }}
+                        style={{
+                          width: `${pct}%`,
+                          backgroundColor: categoryColor,
+                        }}
                       />
                     </div>
                     <span className="finance-report__category-pct">{pct}%</span>

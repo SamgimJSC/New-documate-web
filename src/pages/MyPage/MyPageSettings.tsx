@@ -39,6 +39,7 @@ const MyPageSettings: React.FC = () => {
   const [settings, setSettings] = useState(mockUserSettings);
   const [consents, setConsents] = useState(mockUserConsents);
   const [pinOpen, setPinOpen] = useState(false);
+  const [showSavedNote, setShowSavedNote] = useState(false);
 
   const marketingConsent =
     consents.find((c) => c.consent_type === "MARKETING")?.is_agreed ?? false;
@@ -58,6 +59,7 @@ const MyPageSettings: React.FC = () => {
       updated_at: new Date().toISOString(),
     }));
 
+    setShowSavedNote(true);
     showToast("설정이 변경되었습니다.", "success");
   };
 
@@ -85,6 +87,7 @@ const MyPageSettings: React.FC = () => {
       }),
     );
 
+    setShowSavedNote(true);
     showToast("동의 설정이 변경되었습니다.", "success");
   };
 
@@ -175,14 +178,6 @@ const MyPageSettings: React.FC = () => {
               key={consent.consent_id}
               className="mypage-settings-figma__consent-row"
             >
-              <span
-                className={`mypage-settings-figma__check${
-                  consent.is_agreed ? " mypage-settings-figma__check--on" : ""
-                }`}
-              >
-                ✓
-              </span>
-
               <div className="mypage-settings-figma__copy">
                 <div className="mypage-settings-figma__title-line">
                   <strong>{CONSENT_LABELS[consent.consent_type]}</strong>
@@ -195,9 +190,7 @@ const MyPageSettings: React.FC = () => {
 
               <label
                 className={`mypage-settings__switch${
-                  consent.is_required
-                    ? " mypage-settings__switch--disabled"
-                    : ""
+                  consent.is_required ? " mypage-settings__switch--disabled" : ""
                 }`}
               >
                 <input
@@ -255,13 +248,15 @@ const MyPageSettings: React.FC = () => {
         </button>
       </section>
 
-      <section className="mypage-settings-figma__safe-note">
-        <ShieldCheck size={18} />
-        <div>
-          <strong>설정 변경 내용이 저장되었습니다.</strong>
-          <p>필수 동의 항목은 서비스 이용을 위해 해제할 수 없습니다.</p>
-        </div>
-      </section>
+      {showSavedNote && (
+        <section className="mypage-settings-figma__safe-note">
+          <ShieldCheck size={18} />
+          <div>
+            <strong>설정 변경 내용이 저장되었습니다.</strong>
+            <p>필수 동의 항목은 서비스 이용을 위해 해제할 수 없습니다.</p>
+          </div>
+        </section>
+      )}
 
       <PinResetModal isOpen={pinOpen} onClose={() => setPinOpen(false)} />
     </div>

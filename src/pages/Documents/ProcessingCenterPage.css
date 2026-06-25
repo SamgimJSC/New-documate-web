@@ -1074,3 +1074,18 @@ body:has(.processing-center-page) button[class*="fab"] {
     grid-template-columns: 1fr;
   }
 }
+/* 처리 센터 상단 키커 점 제거 */
+.processing-center-page__kicker::before {
+  display: none;
+}
+
+.processing-center-page__kicker {
+  padding-left: 0;
+  color: var(--color-primary-dark);
+  font-size: var(--font-size-sm);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+.processing-center-page__kicker {
+  gap: 0;
+}
