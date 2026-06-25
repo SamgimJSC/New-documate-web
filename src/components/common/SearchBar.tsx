@@ -26,7 +26,9 @@ export const SearchBar: React.FC<Props> = ({ onSearch, placeholder }) => {
   const [suggestions, setSuggestions] = useState<Document[]>([]);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -97,7 +99,11 @@ export const SearchBar: React.FC<Props> = ({ onSearch, placeholder }) => {
     if (value.trim()) onSearch(value, next);
   };
 
-  const showDropdown = open && (recentSearches.length > 0 || suggestions.length > 0 || value.trim().length > 0);
+  const showDropdown =
+    open &&
+    (recentSearches.length > 0 ||
+      suggestions.length > 0 ||
+      value.trim().length > 0);
 
   return (
     <div className="search-bar" ref={containerRef}>
