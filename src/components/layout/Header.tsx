@@ -130,7 +130,20 @@ const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
               <strong>DocuMate</strong>
             </button>
 
-            <span className="header__mypage-title">마이페이지</span>
+            {breadcrumb ? (
+              <nav className="header__mypage-path" aria-label="현재 위치">
+                <button
+                  type="button"
+                  onClick={() => navigate(breadcrumb.parentPath)}
+                >
+                  {breadcrumb.parentLabel}
+                </button>
+                <span>/</span>
+                <b>{breadcrumb.currentLabel}</b>
+              </nav>
+            ) : (
+              <span className="header__mypage-title">마이페이지</span>
+            )}
           </div>
         ) : breadcrumb ? (
           <nav className="header__breadcrumb" aria-label="현재 위치">

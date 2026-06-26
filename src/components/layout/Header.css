@@ -172,3 +172,143 @@
   background-color: var(--color-primary-dark);
   transform: translateY(-2px) scale(1.03);
 }
+
+/* MyPage header title alignment */
+.header__mypage-start {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+.header__brand--mypage {
+  width: var(--sidebar-width);
+}
+
+.header__mypage-title {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  padding-left: 28px;
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  white-space: nowrap;
+}
+
+/* MyPage breadcrumb in top bar */
+.header__mypage-path {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  padding-left: 28px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.header__mypage-path button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  cursor: pointer;
+}
+
+.header__mypage-path button:hover {
+  color: var(--color-primary-dark);
+}
+
+.header__mypage-path span {
+  color: var(--color-muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.header__mypage-path b {
+  color: var(--color-text);
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+}
+/* ================================
+   MyPage Header Breadcrumb
+   - 문서 관리 / 처리 센터 스타일과 통일
+================================ */
+
+.header__mypage-start {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 100%;
+}
+
+.header__brand--mypage {
+  width: var(--sidebar-width);
+  height: 100%;
+  padding: 0 16px;
+  border-right: 1px solid var(--color-border);
+}
+
+.header__mypage-path {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: 100%;
+  padding-left: 28px;
+  color: var(--color-text-sub);
+  font-size: var(--font-size-base);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.header__mypage-path button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-sub);
+  font-family: inherit;
+  font-size: var(--font-size-base);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.header__mypage-path button:hover {
+  color: var(--color-primary-dark);
+}
+
+.header__mypage-path span {
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.header__mypage-path b {
+  color: var(--color-text);
+  font-size: var(--font-size-lg);
+  font-weight: 900;
+  letter-spacing: -0.035em;
+}
+
+.header__mypage-title {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding-left: 28px;
+  color: var(--color-text);
+  font-size: var(--font-size-lg);
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  white-space: nowrap;
+}
