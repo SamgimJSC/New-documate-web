@@ -116,6 +116,20 @@ const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
     fetchUnreadCount();
   }, [fetchUnreadCount]);
 
+  const handleLogoClick = () => {
+    if (location.pathname === "/mypage") {
+      navigate("/dashboard");
+      return;
+    }
+
+    if (location.pathname.startsWith("/mypage")) {
+      navigate("/mypage");
+      return;
+    }
+
+    navigate("/dashboard");
+  };
+
   return (
     <>
       <header className={`header${isMyPage ? " header--mypage" : ""}`}>
@@ -124,13 +138,26 @@ const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
             <button
               type="button"
               className="header__brand header__brand--mypage"
-              onClick={() => navigate("/mypage")}
+              onClick={handleLogoClick}
             >
               <span>D</span>
               <strong>DocuMate</strong>
             </button>
 
-            <span className="header__mypage-title">마이페이지</span>
+            {breadcrumb ? (
+              <nav className="header__mypage-path" aria-label="현재 위치">
+                <button
+                  type="button"
+                  onClick={() => navigate(breadcrumb.parentPath)}
+                >
+                  {breadcrumb.parentLabel}
+                </button>
+                <span>/</span>
+                <b>{breadcrumb.currentLabel}</b>
+              </nav>
+            ) : (
+              <span className="header__mypage-title">마이페이지</span>
+            )}
           </div>
         ) : breadcrumb ? (
           <nav className="header__breadcrumb" aria-label="현재 위치">
