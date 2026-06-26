@@ -1,18 +1,13 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Bell,
-  ChevronRight,
   FileCheck2,
-  LockKeyhole,
   Mail,
   Megaphone,
   ShieldCheck,
   Smartphone,
-  UserX,
 } from "lucide-react";
 import Badge from "../../components/common/Badge";
-import PinResetModal from "../../components/modal/PinResetModal";
 import { mockUserSettings, mockUserConsents } from "../../data/mockUsers";
 import { useToast } from "../../components/common/Toast";
 import type { ConsentType } from "../../types/user";
@@ -33,12 +28,10 @@ const CONSENT_DESCS: Record<ConsentType, string> = {
 };
 
 const MyPageSettings: React.FC = () => {
-  const navigate = useNavigate();
   const { showToast } = useToast();
 
   const [settings, setSettings] = useState(mockUserSettings);
   const [consents, setConsents] = useState(mockUserConsents);
-  const [pinOpen, setPinOpen] = useState(false);
   const [showSavedNote, setShowSavedNote] = useState(false);
 
   const marketingConsent =
@@ -206,48 +199,6 @@ const MyPageSettings: React.FC = () => {
         </div>
       </section>
 
-      <section className="mypage-settings-figma__panel">
-        <button
-          type="button"
-          className="mypage-settings-figma__link-row"
-          onClick={() => setPinOpen(true)}
-        >
-          <span className="mypage-settings-figma__icon mypage-settings-figma__icon--purple">
-            <LockKeyhole size={18} />
-          </span>
-
-          <span className="mypage-settings-figma__copy">
-            <strong>캐비닛 PIN 재설정</strong>
-            <p>문서를 잠글 때 사용하는 디지털 캐비닛 PIN을 변경합니다.</p>
-          </span>
-
-          <ChevronRight size={18} />
-        </button>
-      </section>
-
-      <section className="mypage-settings-figma__danger-title">
-        Danger Zone
-      </section>
-
-      <section className="mypage-settings-figma__danger-panel">
-        <button
-          type="button"
-          className="mypage-settings-figma__link-row mypage-settings-figma__link-row--danger"
-          onClick={() => navigate("/mypage/withdraw")}
-        >
-          <span className="mypage-settings-figma__icon mypage-settings-figma__icon--danger">
-            <UserX size={18} />
-          </span>
-
-          <span className="mypage-settings-figma__copy">
-            <strong>회원탈퇴</strong>
-            <p>계정과 모든 문서, 영수증, 분석 데이터가 삭제됩니다.</p>
-          </span>
-
-          <ChevronRight size={18} />
-        </button>
-      </section>
-
       {showSavedNote && (
         <section className="mypage-settings-figma__safe-note">
           <ShieldCheck size={18} />
@@ -258,7 +209,6 @@ const MyPageSettings: React.FC = () => {
         </section>
       )}
 
-      <PinResetModal isOpen={pinOpen} onClose={() => setPinOpen(false)} />
     </div>
   );
 };

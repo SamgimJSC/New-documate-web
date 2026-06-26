@@ -1,36 +1,46 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  CalendarDays,
+  Camera,
+  ChevronRight,
   CreditCard,
   HardDrive,
+  Info,
   LockKeyhole,
   Mail,
   PencilLine,
   ShieldCheck,
+  Trash2,
   UserCircle,
   UserRound,
+  UserX,
 } from "lucide-react";
-import Badge from "../../components/common/Badge";
 import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
 import ProfilePhotoModal from "../../components/modal/ProfilePhotoModal";
-import PaymentMethodModal from "../../components/modal/PaymentMethodModal";
+import PinResetModal from "../../components/modal/PinResetModal";
 import { useUserStore } from "../../store/userStore";
-import { mockSubscription } from "../../data/mockPayments";
-import { formatDate } from "../../utils/formatDate";
 import { useToast } from "../../components/common/Toast";
 import "./MyPage.css";
 
 const MyPageProfile: React.FC = () => {
+  const navigate = useNavigate();
   const user = useUserStore((s) => s.user);
   const { showToast } = useToast();
 
   const [isReauthed, setIsReauthed] = useState(false);
-  const [password, setPassword] = useState("");
+  const [reauthPassword, setReauthPassword] = useState("");
+
   const [editNickname, setEditNickname] = useState(false);
   const [nickname, setNickname] = useState("");
+
+  const [editPassword, setEditPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
   const [photoOpen, setPhotoOpen] = useState(false);
-  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [pinOpen, setPinOpen] = useState(false);
 
   useEffect(() => {
     if (user?.nickname) {
@@ -56,16 +66,32 @@ const MyPageProfile: React.FC = () => {
       ? (user.storage_quota_bytes / 1024 / 1024 / 1024).toFixed(0)
       : "-";
 
-  const isPasswordValid = password.trim().length >= 1;
+  const planLabel = user.plan === "PRO" ? "PRO 플랜" : "FREE 플랜";
+  const planCaption =
+    user.plan === "PRO"
+      ? "확장된 저장 공간과 고급 기능을 사용 중입니다."
+      : "기본 문서 관리 기능을 사용 중입니다.";
+  const paymentLabel =
+    user.plan === "PRO" ? "등록된 결제 수단" : "PRO 결제 시 등록";
+  const paymentCaption =
+    user.plan === "PRO"
+      ? "결제 수단 관리는 요금제 관리에서 변경할 수 있어요."
+      : "업그레이드할 때 결제 수단을 등록할 수 있어요.";
+
+  const resetPasswordForm = () => {
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+  };
 
   const handleReauth = () => {
-    if (!isPasswordValid) {
+    if (!reauthPassword.trim()) {
       showToast("비밀번호를 입력해주세요.", "error");
       return;
     }
 
     setIsReauthed(true);
-    setPassword("");
+    setReauthPassword("");
     showToast("재인증이 완료되었습니다.", "success");
   };
 
@@ -75,13 +101,45 @@ const MyPageProfile: React.FC = () => {
       return;
     }
 
+    setNickname(nickname.trim());
     setEditNickname(false);
     showToast("닉네임이 변경되었습니다.", "success");
   };
 
   const handleCancelNickname = () => {
-    setNickname(user.nickname);
+    setNickname(user.nickname ?? "");
     setEditNickname(false);
+  };
+
+  const handleSavePassword = () => {
+    if (!currentPassword.trim()) {
+      showToast("현재 비밀번호를 입력해주세요.", "error");
+      return;
+    }
+
+    if (!newPassword.trim() || !confirmPassword.trim()) {
+      showToast("새 비밀번호를 모두 입력해주세요.", "error");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      showToast("새 비밀번호는 8자 이상 입력해주세요.", "error");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      showToast("새 비밀번호가 일치하지 않습니다.", "error");
+      return;
+    }
+
+    resetPasswordForm();
+    setEditPassword(false);
+    showToast("비밀번호가 변경되었습니다.", "success");
+  };
+
+  const handleCancelPassword = () => {
+    resetPasswordForm();
+    setEditPassword(false);
   };
 
   if (!isReauthed) {
@@ -95,8 +153,7 @@ const MyPageProfile: React.FC = () => {
           <div className="mypage-profile__gate-copy">
             <h2>회원 확인이 필요해요</h2>
             <p>
-              마이페이지는 개인정보 보호를 위해 비밀번호 확인 후 접근할 수
-              있어요.
+              개인정보 보호를 위해 비밀번호 확인 후 회원정보를 수정할 수 있어요.
             </p>
           </div>
 
@@ -112,15 +169,15 @@ const MyPageProfile: React.FC = () => {
               type="password"
               label="비밀번호"
               placeholder="현재 비밀번호를 입력해주세요"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={reauthPassword}
+              onChange={(e) => setReauthPassword(e.target.value)}
               prefix={<LockKeyhole size={16} />}
               autoComplete="current-password"
             />
 
             <Button
               variant="primary"
-              disabled={!isPasswordValid}
+              disabled={!reauthPassword.trim()}
               onClick={handleReauth}
               fullWidth
             >
@@ -147,59 +204,74 @@ const MyPageProfile: React.FC = () => {
 
   return (
     <div className="mypage-section mypage-profile mypage-profile--edit-page">
-      <section className="mypage-profile__top-card">
-        <div className="mypage-profile__top-main">
-          <div className="mypage-profile__avatar mypage-profile__avatar--square">
-            {user.profile_img_url ? (
-              <img src={user.profile_img_url} alt="프로필" />
-            ) : (
-              <UserCircle size={54} />
-            )}
-          </div>
-
-          <div>
-            <div className="mypage-profile__title-row">
-              <h2>회원정보 변경</h2>
-              <Badge variant={user.plan === "PRO" ? "pro" : "default"}>
-                {user.plan}
-              </Badge>
+      <section className="mypage-profile__unified-card">
+        <div className="mypage-profile__unified-photo">
+          <div className="mypage-profile__photo-cardlet mypage-profile__photo-cardlet--large">
+            <div className="mypage-profile__card-title">
+              <h3>프로필 사진</h3>
             </div>
-            <p>{user.email}</p>
-            <span>가입일 {formatDate(user.created_at)}</span>
+
+            <div className="mypage-profile__photo-preview">
+              {user.profile_img_url ? (
+                <img src={user.profile_img_url} alt="프로필" />
+              ) : (
+                <UserCircle size={84} />
+              )}
+            </div>
+
+            <div className="mypage-profile__photo-actions">
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setPhotoOpen(true)}
+              >
+                <Camera size={15} />
+                사진 변경
+              </Button>
+
+              <button
+                type="button"
+                className="mypage-profile__danger-outline"
+                onClick={() =>
+                  showToast(
+                    "프로필 사진 삭제 기능은 추후 연결 예정입니다.",
+                    "success",
+                  )
+                }
+              >
+                <Trash2 size={15} />
+                삭제
+              </button>
+
+              <p>JPG, PNG / 5MB 이하 권장</p>
+            </div>
           </div>
         </div>
 
-        <Button variant="secondary" onClick={() => setPhotoOpen(true)}>
-          프로필 사진 변경
-        </Button>
-      </section>
+        <div className="mypage-profile__unified-divider" />
 
-      <section className="mypage-profile__content-grid">
-        <div className="mypage-profile__panel mypage-profile__panel--main">
-          <div className="mypage-profile__panel-header">
-            <div>
-              <h3>기본 정보</h3>
-              <p>닉네임과 계정 정보를 확인하고 수정할 수 있어요.</p>
-            </div>
+        <div className="mypage-profile__unified-account">
+          <div className="mypage-profile__card-title">
+            <h3>기본 정보</h3>
           </div>
 
-          <div className="mypage-profile__field-list">
-            <div className="mypage-profile__info-row">
+          <div className="mypage-profile__account-rows">
+            <div className="mypage-profile__account-row">
               <span className="mypage-profile__row-icon">
                 <UserRound size={18} />
               </span>
 
-              <div className="mypage-profile__row-body">
-                <span className="mypage-profile__row-label">닉네임</span>
+              <span className="mypage-profile__row-title">닉네임</span>
 
+              <div className="mypage-profile__row-main">
                 {editNickname ? (
-                  <div className="mypage-profile__nickname-edit">
+                  <div className="mypage-profile__inline-edit">
                     <Input
                       value={nickname}
                       onChange={(e) => setNickname(e.target.value)}
-                      placeholder="닉네임 입력"
+                      placeholder="닉네임을 입력해주세요"
                     />
-                    <div className="mypage-profile__nickname-actions">
+                    <div className="mypage-profile__inline-actions">
                       <Button size="sm" onClick={handleSaveNickname}>
                         저장
                       </Button>
@@ -213,14 +285,14 @@ const MyPageProfile: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="mypage-profile__row-value-wrap">
-                    <strong>{nickname}</strong>
+                  <div className="mypage-profile__row-value-line">
+                    <strong>{nickname || user.nickname}</strong>
                     <button
                       type="button"
-                      className="mypage-profile__text-btn"
+                      className="mypage-profile__row-action"
                       onClick={() => setEditNickname(true)}
                     >
-                      <PencilLine size={14} />
+                      <PencilLine size={15} />
                       수정
                     </button>
                   </div>
@@ -228,125 +300,240 @@ const MyPageProfile: React.FC = () => {
               </div>
             </div>
 
-            <div className="mypage-profile__info-row">
+            <div className="mypage-profile__account-row">
               <span className="mypage-profile__row-icon">
                 <Mail size={18} />
               </span>
 
-              <div className="mypage-profile__row-body">
-                <span className="mypage-profile__row-label">이메일</span>
-                <div className="mypage-profile__row-value-wrap">
-                  <strong>{user.email}</strong>
-                  <Badge
-                    variant={user.is_email_verified ? "success" : "warning"}
-                  >
-                    {user.is_email_verified ? "인증 완료" : "미인증"}
-                  </Badge>
-                </div>
-              </div>
-            </div>
+              <span className="mypage-profile__row-title">이메일</span>
 
-            <div className="mypage-profile__info-row">
-              <span className="mypage-profile__row-icon">
-                <CreditCard size={18} />
-              </span>
-
-              <div className="mypage-profile__row-body">
-                <span className="mypage-profile__row-label">현재 플랜</span>
-                <div className="mypage-profile__row-value-wrap">
-                  <strong>
-                    {user.plan === "PRO" ? "PRO 플랜" : "FREE 플랜"}
+              <div className="mypage-profile__row-main">
+                <div className="mypage-profile__row-value-line">
+                  <strong className="mypage-profile__muted-value">
+                    {user.email}
                   </strong>
-                  <Badge variant={user.plan === "PRO" ? "pro" : "default"}>
-                    {user.plan}
-                  </Badge>
+                  <span className="mypage-profile__disabled-chip">
+                    변경 불가
+                  </span>
                 </div>
+                <small>이메일은 변경할 수 없습니다.</small>
               </div>
             </div>
 
-            <div className="mypage-profile__info-row">
+            <div className="mypage-profile__account-subtitle">보안 정보</div>
+
+            <div
+              className={`mypage-profile__account-row mypage-profile__account-row--password${
+                editPassword ? " mypage-profile__account-row--expanded" : ""
+              }`}
+            >
               <span className="mypage-profile__row-icon">
-                <CalendarDays size={18} />
+                <LockKeyhole size={18} />
               </span>
 
-              <div className="mypage-profile__row-body">
-                <span className="mypage-profile__row-label">가입일</span>
-                <strong>{formatDate(user.created_at)}</strong>
+              <span className="mypage-profile__row-title">비밀번호</span>
+
+              <div className="mypage-profile__row-main">
+                {!editPassword && (
+                  <div className="mypage-profile__row-value-line">
+                    <strong>••••••••</strong>
+                    <button
+                      type="button"
+                      className="mypage-profile__row-action"
+                      aria-expanded={editPassword}
+                      onClick={() => setEditPassword(true)}
+                    >
+                      <PencilLine size={15} />
+                      수정
+                    </button>
+                  </div>
+                )}
+
+                {editPassword && (
+                  <div className="mypage-profile__password-edit">
+                    <div className="mypage-profile__password-edit-grid">
+                      <Input
+                        type="password"
+                        label="현재 비밀번호"
+                        placeholder="현재 비밀번호를 입력해주세요"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        prefix={<LockKeyhole size={16} />}
+                        autoComplete="current-password"
+                      />
+
+                      <Input
+                        type="password"
+                        label="새 비밀번호"
+                        placeholder="영문, 숫자, 특수문자 포함 8자 이상"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        prefix={<LockKeyhole size={16} />}
+                        autoComplete="new-password"
+                      />
+
+                      <Input
+                        type="password"
+                        label="새 비밀번호 확인"
+                        placeholder="새 비밀번호를 다시 입력해주세요"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        prefix={<LockKeyhole size={16} />}
+                        autoComplete="new-password"
+                      />
+                    </div>
+
+                    <div className="mypage-profile__password-help">
+                      <Info size={16} />
+                      <span>
+                        비밀번호 변경 시 현재 비밀번호 확인이 필요합니다.
+                      </span>
+                    </div>
+
+                    <div className="mypage-profile__inline-actions mypage-profile__password-actions">
+                      <Button size="sm" onClick={handleSavePassword}>
+                        변경하기
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleCancelPassword}
+                      >
+                        취소
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="mypage-profile__account-row">
+              <span className="mypage-profile__row-icon">
+                <LockKeyhole size={18} />
+              </span>
+
+              <span className="mypage-profile__row-title">캐비닛 PIN</span>
+
+              <div className="mypage-profile__row-main">
+                <div className="mypage-profile__row-value-line">
+                  <strong>설정됨</strong>
+                  <button
+                    type="button"
+                    className="mypage-profile__row-action"
+                    onClick={() => setPinOpen(true)}
+                  >
+                    <PencilLine size={15} />
+                    재설정
+                  </button>
+                </div>
+                <small>문서를 잠글 때 사용하는 디지털 캐비닛 PIN입니다.</small>
               </div>
             </div>
           </div>
         </div>
-
-        <aside className="mypage-profile__side">
-          <div className="mypage-profile__panel">
-            <div className="mypage-profile__panel-header">
-              <div>
-                <h3>스토리지</h3>
-                <p>문서/영수증 저장 공간</p>
-              </div>
-              <span className="mypage-profile__storage-chip">
-                {storagePercent}%
-              </span>
-            </div>
-
-            <div className="mypage-profile__storage-summary">
-              <HardDrive size={20} />
-              <strong>{usedMB}MB</strong>
-              <span>/ {quotaGB}GB 사용 중</span>
-            </div>
-
-            <div className="mypage-profile__storage-bar">
-              <div
-                className="mypage-profile__storage-fill"
-                style={{ width: `${storagePercent}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="mypage-profile__panel">
-            <div className="mypage-profile__panel-header">
-              <div>
-                <h3>결제 수단</h3>
-                <p>PRO 결제에 사용되는 수단</p>
-              </div>
-              <button
-                type="button"
-                className="mypage-profile__text-btn"
-                onClick={() => setPaymentOpen(true)}
-              >
-                변경
-              </button>
-            </div>
-
-            <div className="mypage-profile__payment-card">
-              <p className="mypage-profile__payment-method">카카오페이</p>
-              <p className="mypage-profile__payment-sub">
-                다음 결제일:{" "}
-                {mockSubscription.current_period_end
-                  ? formatDate(mockSubscription.current_period_end)
-                  : "-"}
-              </p>
-            </div>
-          </div>
-        </aside>
       </section>
 
-      <section className="mypage-profile__safe-note">
-        <ShieldCheck size={18} />
-        <div>
-          <strong>회원정보는 재인증 후에만 수정할 수 있어요.</strong>
-          <p>비밀번호 확인 후 안전하게 개인정보를 수정할 수 있습니다.</p>
+      <section className="mypage-profile__usage-card">
+        <div className="mypage-profile__usage-head">
+          <div>
+            <h3>이용 정보</h3>
+            <p>현재 계정 상태를 한눈에 확인할 수 있어요.</p>
+          </div>
+
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => navigate("/mypage/plan")}
+          >
+            요금제 관리
+          </Button>
+        </div>
+
+        <div className="mypage-profile__usage-grid">
+          <div className="mypage-profile__usage-item">
+            <span className="mypage-profile__usage-icon">
+              <CreditCard size={18} />
+            </span>
+
+            <div className="mypage-profile__usage-body">
+              <span>현재 플랜</span>
+              <div className="mypage-profile__usage-value-line">
+                <strong>{planLabel}</strong>
+                <em className={user.plan === "PRO" ? "is-pro" : ""}>
+                  {user.plan}
+                </em>
+              </div>
+              <p>{planCaption}</p>
+            </div>
+          </div>
+
+          <div className="mypage-profile__usage-item">
+            <span className="mypage-profile__usage-icon">
+              <HardDrive size={18} />
+            </span>
+
+            <div className="mypage-profile__usage-body">
+              <span>스토리지</span>
+              <div className="mypage-profile__usage-value-line">
+                <strong>{usedMB}MB</strong>
+                <small>/ {quotaGB}GB 사용 중</small>
+              </div>
+              <div className="mypage-profile__mini-storage-bar">
+                <span style={{ width: `${storagePercent}%` }} />
+              </div>
+            </div>
+          </div>
+
+          <div className="mypage-profile__usage-item">
+            <span className="mypage-profile__usage-icon">
+              <CreditCard size={18} />
+            </span>
+
+            <div className="mypage-profile__usage-body">
+              <span>결제 수단</span>
+              <strong>{paymentLabel}</strong>
+              <p>{paymentCaption}</p>
+            </div>
+          </div>
         </div>
       </section>
+
+      <section className="mypage-profile__footer-grid">
+        <section className="mypage-profile__safe-note mypage-profile__safe-note--single">
+          <ShieldCheck size={20} />
+          <div>
+            <strong>안전한 계정 관리</strong>
+            <p>
+              회원정보는 안전하게 암호화되어 저장되며, 개인정보 보호를
+              최우선으로 합니다.
+            </p>
+          </div>
+        </section>
+
+        <button
+          type="button"
+          className="mypage-profile__withdraw-card"
+          onClick={() => navigate("/mypage/withdraw")}
+        >
+          <span className="mypage-profile__withdraw-icon">
+            <UserX size={18} />
+          </span>
+
+          <span className="mypage-profile__withdraw-copy">
+            <strong>회원탈퇴</strong>
+            <p>계정과 모든 문서, 영수증, 분석 데이터가 삭제됩니다.</p>
+          </span>
+
+          <ChevronRight size={18} />
+        </button>
+      </section>
+
       <ProfilePhotoModal
         isOpen={photoOpen}
         onClose={() => setPhotoOpen(false)}
       />
 
-      <PaymentMethodModal
-        isOpen={paymentOpen}
-        onClose={() => setPaymentOpen(false)}
-      />
+      <PinResetModal isOpen={pinOpen} onClose={() => setPinOpen(false)} />
     </div>
   );
 };

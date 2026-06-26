@@ -1,230 +1,144 @@
+/* ================================
+   Signup Page PIN Flow
+================================ */
+
 .signup-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--color-bg);
-  padding: var(--space-md);
-}
-
-.signup-box {
-  width: 100%;
-  max-width: 440px;
-  background-color: var(--color-surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-modal);
-  padding: var(--space-xl);
-}
-
-.signup-logo {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-lg);
-  justify-content: center;
-}
-
-.signup-logo__mark {
-  width: 32px;
-  height: 32px;
-  background-color: var(--color-primary);
-  color: #fff;
-  font-size: var(--font-size-base);
-  font-weight: 800;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.signup-logo__text {
-  font-size: var(--font-size-lg);
-  font-weight: 800;
-  color: var(--color-text);
-}
-
-.signup-title {
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  text-align: center;
-  margin-bottom: var(--space-lg);
-}
-
-.signup-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
-.signup-email-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: var(--space-sm);
-  align-items: end;
-}
-
-.signup-pin-label {
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--color-text-sub);
-  margin-bottom: var(--space-sm);
-}
-
-.signup-pin-row {
-  display: flex;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-sm);
-  justify-content: center;
-}
-
-.signup-pin-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid var(--color-border);
-  background: transparent;
-  transition: background-color 0.15s;
-}
-
-.signup-pin-dot--filled {
-  background-color: var(--color-primary);
-  border-color: var(--color-primary);
-}
-
-.signup-links {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  margin-top: var(--space-lg);
-  font-size: var(--font-size-sm);
-  color: var(--color-muted);
-}
-
-.signup-links a {
-  color: var(--color-primary);
-  font-weight: 500;
+  align-items: flex-start;
+  padding: 40px 18px;
 }
 
 .signup-box {
   max-width: 520px;
 }
 
-.signup-section {
-  padding: 16px;
-  border: 1px solid #e7edf1;
-  border-radius: 18px;
-  background: #ffffff;
+.signup-form {
+  gap: 15px;
+}
+
+.signup-step-badge {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--color-primary-light, #eaf7f5);
+  color: var(--color-primary-dark, #3e7773);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.signup-success-text {
+  margin: -6px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--color-chip-bg, #f2fbf9);
+  color: var(--color-primary-dark, #3e7773);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.signup-pin-card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid var(--color-primary-border, #c8dcda);
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fcfb 100%);
 }
 
-.signup-section__head {
+.signup-pin-card__head {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 16px;
+  color: var(--color-primary-dark, #3e7773);
 }
 
-.signup-section__head strong {
-  color: var(--color-text);
-  font-size: var(--font-size-base);
+.signup-pin-card__head h2 {
+  margin: 10px 0 0;
+  color: var(--color-text, #223046);
+  font-size: 17px;
+  line-height: 1.25;
+  font-weight: 950;
+  letter-spacing: -0.04em;
 }
 
-.signup-section__head span {
-  padding: 4px 8px;
-  border-radius: var(--radius-full);
-  background: var(--color-success-light);
-  color: #15803d;
-  font-size: var(--font-size-xs);
-  font-weight: 800;
+.signup-pin-card__head p {
+  margin: 6px 0 0;
+  color: var(--color-muted, #657084);
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 650;
 }
 
-.signup-helper {
-  margin-top: -4px;
-  font-size: var(--font-size-xs);
-  line-height: 1.6;
-  color: var(--color-muted);
-}
-
-.signup-helper--success {
-  color: #15803d;
-  font-weight: 700;
-}
-
-.signup-eye-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--color-muted);
-  display: flex;
-}
-
-.signup-password-rules {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: -8px;
-}
-
-.signup-password-rules span {
-  padding: 5px 8px;
-  border-radius: var(--radius-full);
-  background: #f1f5f9;
-  color: var(--color-muted);
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.signup-password-rules span.is-ok {
-  background: var(--color-success-light);
-  color: #15803d;
-}
-
-.signup-pin-action-row {
+.signup-pin-done {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-sm);
-  align-items: end;
+  gap: 7px;
+  justify-items: start;
+  padding: 16px;
+  border: 1px solid var(--color-primary-border, #c8dcda);
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.signup-pin-done strong {
+  color: var(--color-primary-dark, #3e7773);
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.signup-pin-done p {
+  margin: 0 0 6px;
+  color: var(--color-muted, #657084);
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 650;
+}
+
+.signup-consents {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 2px 0 4px;
 }
 
 .signup-checkbox {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-sub);
+  align-items: flex-start;
+  gap: 9px;
+  color: var(--color-text-sub, #3d4b63);
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 700;
   cursor: pointer;
 }
 
 .signup-checkbox input {
   width: 16px;
   height: 16px;
-  min-width: 16px;
-  accent-color: var(--color-primary);
+  margin-top: 1px;
+  accent-color: var(--color-primary, #5b9d99);
+  flex-shrink: 0;
 }
 
 .signup-checkbox strong {
-  color: var(--color-danger);
-  font-size: var(--font-size-xs);
+  color: var(--color-danger, #ef4444);
+  font-size: 11.5px;
 }
 
-.signup-checkbox em,
-.signup-checkbox span {
-  color: var(--color-muted);
+.signup-checkbox em {
+  color: var(--color-muted, #657084);
   font-style: normal;
-  font-size: var(--font-size-xs);
-}
-
-.signup-checkbox--disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
+  font-size: 11.5px;
 }
 
 @media (max-width: 520px) {
-  .signup-email-row,
-  .signup-pin-action-row {
-    grid-template-columns: 1fr;
+  .signup-page {
+    padding: 24px 14px;
+  }
+
+  .signup-pin-card {
+    padding: 15px;
   }
 }

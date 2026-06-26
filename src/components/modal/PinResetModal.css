@@ -1,0 +1,70 @@
+/* ================================
+   PIN Reset / Verify Modal
+================================ */
+
+.pin-reset,
+.pin-verify {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.pin-reset__steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--color-bg-cool, #f8fafc);
+}
+
+.pin-reset__steps span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  border-radius: 11px;
+  color: var(--color-muted, #657084);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.pin-reset__steps span.is-active {
+  background: #ffffff;
+  color: var(--color-primary-dark, #3e7773);
+  box-shadow: 0 2px 8px rgba(34, 48, 70, 0.06);
+}
+
+.pin-reset__actions,
+.pin-verify__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.pin-verify__notice {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border: 1px solid var(--color-primary-border, #c8dcda);
+  border-radius: 14px;
+  background: var(--color-chip-bg, #f2fbf9);
+  color: var(--color-primary-dark, #3e7773);
+}
+
+.pin-verify__notice strong {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--color-text, #223046);
+  font-size: 12.5px;
+  font-weight: 950;
+}
+
+.pin-verify__notice p {
+  margin: 0;
+  color: var(--color-text-sub, #3d4b63);
+  font-size: 11.5px;
+  line-height: 1.5;
+  font-weight: 650;
+}

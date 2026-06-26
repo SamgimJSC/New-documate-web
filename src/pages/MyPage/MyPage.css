@@ -1309,7 +1309,10 @@
   font-size: var(--font-size-xs);
   font-weight: 850;
   cursor: pointer;
-  transition: background-color 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    transform 0.16s ease;
 }
 
 .mypage-profile__text-btn:hover {
@@ -1614,7 +1617,10 @@
   background: #ffffff;
   color: var(--color-text-sub);
   cursor: pointer;
-  transition: background-color 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    transform 0.16s ease;
 }
 
 .mypage-plan-figma__current,
@@ -2070,7 +2076,9 @@
   text-align: left;
   font-family: inherit;
   cursor: pointer;
-  transition: background-color 0.16s ease, transform 0.16s ease;
+  transition:
+    background-color 0.16s ease,
+    transform 0.16s ease;
 }
 
 .mypage-settings-figma__link-row:hover {
@@ -2159,11 +2167,17 @@
   transition: transform 0.18s ease;
 }
 
-.mypage-settings-figma .mypage-settings__switch input:checked + .mypage-settings__slider {
+.mypage-settings-figma
+  .mypage-settings__switch
+  input:checked
+  + .mypage-settings__slider {
   background-color: var(--color-primary);
 }
 
-.mypage-settings-figma .mypage-settings__switch input:checked + .mypage-settings__slider::before {
+.mypage-settings-figma
+  .mypage-settings__switch
+  input:checked
+  + .mypage-settings__slider::before {
   transform: translateX(20px);
 }
 
@@ -2172,7 +2186,9 @@
   cursor: not-allowed;
 }
 
-.mypage-settings-figma .mypage-settings__switch--disabled .mypage-settings__slider {
+.mypage-settings-figma
+  .mypage-settings__switch--disabled
+  .mypage-settings__slider {
   cursor: not-allowed;
 }
 
@@ -2241,3 +2257,2760 @@
     padding: 28px 24px 24px;
   }
 }
+
+/* ================================
+   MyPage Profile Compact Final
+   - Profile photo card + compact account rows
+   - Password edit is collapsed by default
+   - No plan/join date/storage/payment duplication
+================================ */
+
+.mypage-section.mypage-profile--edit-page {
+  width: min(100%, 1500px);
+  max-width: 1500px;
+  margin: 0 auto;
+  gap: 22px;
+}
+
+.mypage-profile__page-head {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-bottom: 10px;
+}
+
+.mypage-profile__back-btn {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: #ffffff;
+  color: var(--color-text-sub);
+  box-shadow: 0 5px 14px rgba(34, 48, 70, 0.045);
+  cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.mypage-profile__back-btn:hover {
+  border-color: var(--color-primary-border);
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
+
+.mypage-profile__page-copy h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 28px;
+  line-height: 1.15;
+  font-weight: 950;
+  letter-spacing: -0.055em;
+}
+
+.mypage-profile__page-copy p {
+  margin: 10px 0 0;
+  color: var(--color-muted);
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
+.mypage-profile__profile-card {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  background: var(--color-surface);
+  box-shadow: 0 2px 10px rgba(34, 48, 70, 0.035);
+}
+
+.mypage-profile__card-title h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 950;
+  letter-spacing: -0.04em;
+}
+
+.mypage-profile__profile-card--photo {
+  padding: 24px 32px 26px;
+}
+
+.mypage-profile__photo-content {
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  margin-top: 22px;
+}
+
+.mypage-profile__photo-preview {
+  display: grid;
+  place-items: center;
+  width: 136px;
+  height: 136px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, var(--color-primary-light), #f8fbfb);
+  color: var(--color-primary-dark);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.mypage-profile__photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mypage-profile__photo-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(128px, auto));
+  align-items: center;
+  gap: 12px 14px;
+}
+
+.mypage-profile__photo-actions .btn {
+  min-height: 44px;
+  border-radius: 13px;
+  gap: 7px;
+  font-weight: 900;
+}
+
+.mypage-profile__danger-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 22px;
+  border: 1px solid #f5a7a7;
+  border-radius: 13px;
+  background: #ffffff;
+  color: var(--color-danger);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 900;
+  cursor: pointer;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.mypage-profile__danger-outline:hover {
+  border-color: var(--color-danger);
+  background: var(--color-danger-light);
+  transform: translateY(-1px);
+}
+
+.mypage-profile__photo-actions p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mypage-profile__profile-card--account {
+  padding: 24px 32px 18px;
+}
+
+.mypage-profile__account-rows {
+  display: flex;
+  flex-direction: column;
+  margin-top: 16px;
+}
+
+.mypage-profile__account-row {
+  display: grid;
+  grid-template-columns: 42px 160px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  min-height: 74px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mypage-profile__account-row:last-child {
+  border-bottom: 0;
+}
+
+.mypage-profile__account-row--expanded {
+  align-items: start;
+  padding-top: 16px;
+  padding-bottom: 18px;
+}
+
+.mypage-profile__profile-card--account .mypage-profile__row-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+.mypage-profile__row-title {
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+}
+
+.mypage-profile__row-main {
+  min-width: 0;
+}
+
+.mypage-profile__row-main strong {
+  display: block;
+  color: var(--color-text);
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 850;
+  word-break: break-all;
+}
+
+.mypage-profile__muted-value {
+  color: var(--color-text-sub) !important;
+}
+
+.mypage-profile__row-main small {
+  display: block;
+  margin-top: 6px;
+  color: var(--color-muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+  font-weight: 650;
+}
+
+.mypage-profile__row-action,
+.mypage-profile__disabled-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 92px;
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: 13px;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.mypage-profile__row-action {
+  border: 1px solid var(--color-primary-border);
+  background: #ffffff;
+  color: var(--color-primary-dark);
+  cursor: pointer;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.mypage-profile__row-action:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  transform: translateY(-1px);
+}
+
+.mypage-profile__disabled-chip {
+  border: 1px solid transparent;
+  background: var(--color-bg-cool);
+  color: var(--color-muted);
+}
+
+.mypage-profile__inline-edit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.mypage-profile__inline-edit .input,
+.mypage-profile__inline-edit input {
+  min-width: 0;
+}
+
+.mypage-profile__inline-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mypage-profile__inline-actions .btn {
+  min-height: 38px;
+  border-radius: 12px;
+}
+
+.mypage-profile__password-edit {
+  width: 100%;
+}
+
+.mypage-profile__password-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.mypage-profile__password-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--color-chip-bg);
+  color: var(--color-primary-dark);
+  font-size: 12.5px;
+  line-height: 1.45;
+  font-weight: 750;
+}
+
+.mypage-profile__password-actions {
+  margin-top: 14px;
+}
+
+.mypage-profile__bottom-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 28px;
+}
+
+.mypage-profile__safe-note--compact {
+  min-height: 78px;
+  padding: 18px 22px;
+  border-radius: 18px;
+}
+
+.mypage-profile__bottom-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.mypage-profile__bottom-actions .btn {
+  min-width: 140px;
+  min-height: 52px;
+  border-radius: 15px;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+@media (max-width: 1180px) {
+  .mypage-profile__account-row {
+    grid-template-columns: 42px 120px minmax(0, 1fr) auto;
+  }
+
+  .mypage-profile__password-edit-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mypage-profile__bottom-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .mypage-profile__bottom-actions {
+    justify-content: stretch;
+  }
+
+  .mypage-profile__bottom-actions .btn {
+    flex: 1;
+  }
+}
+
+@media (max-width: 720px) {
+  .mypage-section.mypage-profile--edit-page {
+    gap: 16px;
+  }
+
+  .mypage-profile__page-head {
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .mypage-profile__back-btn {
+    width: 46px;
+    height: 46px;
+    border-radius: 16px;
+  }
+
+  .mypage-profile__page-copy h2 {
+    font-size: 23px;
+  }
+
+  .mypage-profile__profile-card--photo,
+  .mypage-profile__profile-card--account {
+    padding: 22px;
+  }
+
+  .mypage-profile__photo-content,
+  .mypage-profile__photo-actions,
+  .mypage-profile__inline-edit,
+  .mypage-profile__account-row,
+  .mypage-profile__account-row--expanded {
+    grid-template-columns: 1fr;
+  }
+
+  .mypage-profile__photo-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .mypage-profile__row-action,
+  .mypage-profile__disabled-chip {
+    width: 100%;
+  }
+
+  .mypage-profile__inline-actions,
+  .mypage-profile__password-actions,
+  .mypage-profile__bottom-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mypage-profile__inline-actions .btn,
+  .mypage-profile__bottom-actions .btn {
+    width: 100%;
+  }
+}
+
+/* Profile edit page - no back button */
+.mypage-profile__page-head {
+  gap: 0;
+  margin-bottom: 10px;
+}
+
+/* ================================
+   Profile Edit - Account Summary Final
+   - 프로필 + 기본정보 + 이용정보 요약
+   - 요금제 상세 페이지는 별도 유지
+================================ */
+
+.mypage-section.mypage-profile--edit-page {
+  width: min(100%, 1180px);
+  max-width: 1180px;
+  margin: 0 auto;
+  gap: 18px;
+}
+
+.mypage-profile__page-head {
+  margin-bottom: 4px;
+}
+
+.mypage-profile__page-copy h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 27px;
+  line-height: 1.18;
+  font-weight: 950;
+  letter-spacing: -0.055em;
+}
+
+.mypage-profile__page-copy p {
+  margin: 10px 0 0;
+  color: var(--color-text-sub);
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 750;
+}
+
+.mypage-profile__unified-card,
+.mypage-profile__usage-card,
+.mypage-profile__safe-note--single {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  background: var(--color-surface);
+  box-shadow: 0 2px 10px rgba(34, 48, 70, 0.035);
+}
+
+.mypage-profile__unified-card {
+  min-height: 318px;
+  padding: 28px 32px;
+  display: grid;
+  grid-template-columns: 250px 1px minmax(0, 1fr);
+  gap: 28px;
+  align-items: stretch;
+}
+
+.mypage-profile__unified-photo,
+.mypage-profile__unified-account {
+  min-width: 0;
+}
+
+.mypage-profile__unified-divider {
+  width: 1px;
+  min-height: 100%;
+  background: var(--color-border);
+}
+
+.mypage-profile__card-title h3,
+.mypage-profile__usage-head h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 18px;
+  font-weight: 950;
+  letter-spacing: -0.04em;
+}
+
+/* 프로필 사진 영역 */
+
+.mypage-profile__unified-card .mypage-profile__photo-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.mypage-profile__unified-card .mypage-profile__photo-preview {
+  width: 116px;
+  height: 116px;
+  border-radius: 28px;
+}
+
+.mypage-profile__unified-card .mypage-profile__photo-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  max-width: 226px;
+}
+
+.mypage-profile__unified-card .mypage-profile__photo-actions .btn,
+.mypage-profile__unified-card .mypage-profile__danger-outline {
+  min-width: 0;
+  min-height: 38px;
+  padding: 0 13px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.mypage-profile__unified-card .mypage-profile__photo-actions p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 11.5px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+/* 기본 정보 영역 */
+
+.mypage-profile__unified-card .mypage-profile__account-rows {
+  margin-top: 18px;
+}
+
+.mypage-profile__unified-card .mypage-profile__account-row {
+  display: grid;
+  grid-template-columns: 38px 108px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  min-height: 68px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mypage-profile__unified-card .mypage-profile__account-row:last-child {
+  border-bottom: 0;
+}
+
+.mypage-profile__unified-card .mypage-profile__account-row--expanded {
+  align-items: start;
+  padding-top: 15px;
+  padding-bottom: 18px;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+.mypage-profile__unified-card .mypage-profile__row-title {
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+}
+
+.mypage-profile__row-value-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 100%;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-main strong {
+  display: inline-block;
+  color: var(--color-text);
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 850;
+  word-break: break-all;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-main small {
+  display: block;
+  margin-top: 5px;
+  color: var(--color-muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+  font-weight: 650;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-action,
+.mypage-profile__unified-card .mypage-profile__disabled-chip {
+  min-width: auto;
+  min-height: 34px;
+  padding: 0 13px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.mypage-profile__unified-card .mypage-profile__inline-edit {
+  width: min(100%, 560px);
+}
+
+.mypage-profile__unified-card .mypage-profile__password-edit {
+  width: 100%;
+}
+
+.mypage-profile__unified-card .mypage-profile__password-edit-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.mypage-profile__unified-card .mypage-profile__password-help {
+  margin-top: 13px;
+}
+
+/* 이용 정보 요약 카드 */
+
+.mypage-profile__usage-card {
+  padding: 22px 28px 24px;
+}
+
+.mypage-profile__usage-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.mypage-profile__usage-head p {
+  margin: 6px 0 0;
+  color: var(--color-muted);
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 650;
+}
+
+.mypage-profile__usage-head .btn {
+  min-height: 36px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.mypage-profile__usage-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.mypage-profile__usage-item {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 12px;
+  min-height: 104px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 17px;
+  background: #ffffff;
+}
+
+.mypage-profile__usage-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+.mypage-profile__usage-body {
+  min-width: 0;
+}
+
+.mypage-profile__usage-body > span {
+  display: block;
+  color: var(--color-muted);
+  font-size: 11.5px;
+  font-weight: 800;
+  margin-bottom: 7px;
+}
+
+.mypage-profile__usage-body strong {
+  display: inline-block;
+  color: var(--color-text);
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  word-break: break-all;
+}
+
+.mypage-profile__usage-body p {
+  margin: 7px 0 0;
+  color: var(--color-muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+  font-weight: 650;
+}
+
+.mypage-profile__usage-value-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mypage-profile__usage-value-line em {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  min-width: 48px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.mypage-profile__usage-value-line em.is-pro {
+  background: var(--color-pro-light);
+  color: var(--color-pro);
+}
+
+.mypage-profile__usage-value-line small {
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mypage-profile__mini-storage-bar {
+  width: 100%;
+  height: 7px;
+  margin-top: 13px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e5ebf0;
+}
+
+.mypage-profile__mini-storage-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primary);
+}
+
+/* 하단 안내 박스 */
+
+.mypage-profile__safe-note--single {
+  min-height: 68px;
+  padding: 16px 20px;
+  border-radius: 18px;
+}
+
+/* 전체 저장 버튼 숨김 */
+
+.mypage-profile__bottom-bar,
+.mypage-profile__bottom-actions {
+  display: none;
+}
+
+/* 반응형 */
+
+@media (max-width: 1180px) {
+  .mypage-section.mypage-profile--edit-page {
+    width: min(100%, 100%);
+  }
+
+  .mypage-profile__unified-card {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .mypage-profile__unified-divider {
+    width: 100%;
+    min-height: 1px;
+    height: 1px;
+  }
+
+  .mypage-profile__unified-card .mypage-profile__photo-content {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .mypage-profile__usage-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mypage-profile__unified-card .mypage-profile__password-edit-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .mypage-section.mypage-profile--edit-page {
+    gap: 16px;
+  }
+
+  .mypage-profile__unified-card,
+  .mypage-profile__usage-card {
+    padding: 22px;
+    border-radius: 20px;
+  }
+
+  .mypage-profile__usage-head {
+    flex-direction: column;
+  }
+
+  .mypage-profile__usage-head .btn {
+    width: 100%;
+  }
+
+  .mypage-profile__unified-card .mypage-profile__photo-content,
+  .mypage-profile__unified-card .mypage-profile__photo-actions,
+  .mypage-profile__unified-card .mypage-profile__account-row,
+  .mypage-profile__unified-card .mypage-profile__inline-edit {
+    grid-template-columns: 1fr;
+  }
+
+  .mypage-profile__unified-card .mypage-profile__photo-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .mypage-profile__unified-card .mypage-profile__row-action,
+  .mypage-profile__unified-card .mypage-profile__disabled-chip {
+    width: fit-content;
+  }
+
+  .mypage-profile__safe-note--single {
+    width: 100%;
+  }
+}
+
+/* ================================
+   MyPage Plan - Modern Minimal Final
+   - 색은 쓰되 강조 면적 최소화
+   - CTA만 강하게
+   - 민트는 선/칩/아이콘 보조로 제한
+================================ */
+
+.mypage-section.mypage-plan-page--modern {
+  width: min(100%, 1320px);
+  max-width: 1320px;
+  margin: 0 auto;
+  gap: 20px;
+}
+
+.mypage-plan-modern__page-head {
+  margin-bottom: 2px;
+}
+
+.mypage-plan-modern__page-head h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 28px;
+  line-height: 1.15;
+  font-weight: 950;
+  letter-spacing: -0.055em;
+}
+
+.mypage-plan-modern__page-head p {
+  margin: 10px 0 0;
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 700;
+}
+
+.mypage-plan-modern__overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(380px, 0.82fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.mypage-plan-modern__status-card,
+.mypage-plan-modern__payment-card,
+.mypage-plan-modern__compare,
+.mypage-plan-modern__safe-note {
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  background: var(--color-surface);
+  box-shadow: 0 2px 10px rgba(34, 48, 70, 0.035);
+}
+
+.mypage-plan-modern__status-card,
+.mypage-plan-modern__payment-card {
+  min-height: 238px;
+  padding: 24px 26px;
+}
+
+.mypage-plan-modern__card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.mypage-plan-modern__eyebrow {
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 950;
+  letter-spacing: -0.035em;
+}
+
+.mypage-plan-modern__chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--color-text-sub);
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.mypage-plan-modern__chip--pro {
+  border-color: var(--color-primary-border);
+  color: var(--color-primary-dark);
+}
+
+.mypage-plan-modern__status-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mypage-plan-modern__status-main strong {
+  display: block;
+  color: var(--color-text);
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: -0.06em;
+}
+
+.mypage-plan-modern__status-main p {
+  margin: 8px 0 0;
+  color: var(--color-muted);
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
+.mypage-plan-modern__status-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  background: #f8fafc;
+  color: var(--color-text);
+  flex-shrink: 0;
+}
+
+.mypage-plan-modern__meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 16px 0 18px;
+}
+
+.mypage-plan-modern__meta-row span {
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.mypage-plan-modern__meta-row strong {
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.mypage-plan-modern__status-card .btn--primary,
+.mypage-plan-modern__plan-option--pro .btn--primary {
+  min-height: 46px;
+  border-color: var(--color-dark);
+  background: var(--color-dark);
+  color: #ffffff;
+  box-shadow: 0 8px 16px rgba(23, 34, 56, 0.16);
+}
+
+.mypage-plan-modern__status-card .btn--primary:hover:not(:disabled),
+.mypage-plan-modern__plan-option--pro .btn--primary:hover:not(:disabled) {
+  border-color: var(--color-dark-hover);
+  background: var(--color-dark-hover);
+}
+
+.mypage-plan-modern__reserved {
+  margin: 10px 0 0;
+  color: var(--color-muted);
+  font-size: 11px;
+  font-weight: 750;
+  text-align: center;
+}
+
+.mypage-plan-modern__payment-method {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  min-height: 72px;
+  padding: 15px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.mypage-plan-modern__pay-mark {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: #f5f7fa;
+  color: var(--color-text);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.mypage-plan-modern__payment-method strong {
+  display: block;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.mypage-plan-modern__payment-method p {
+  margin: 5px 0 0;
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 650;
+  word-break: break-all;
+}
+
+.mypage-plan-modern__payment-method svg {
+  color: var(--color-text-sub);
+}
+
+.mypage-plan-modern__subtle-btn {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 13px;
+  background: #ffffff;
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.mypage-plan-modern__subtle-btn:hover {
+  border-color: var(--color-primary-border);
+  background: #fbfdfc;
+  transform: translateY(-1px);
+}
+
+.mypage-plan-modern__payment-note {
+  margin: 13px 0 0;
+  color: var(--color-muted);
+  font-size: 11.5px;
+  line-height: 1.5;
+  font-weight: 650;
+}
+
+.mypage-plan-modern__compare {
+  padding: 26px;
+}
+
+.mypage-plan-modern__section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.mypage-plan-modern__section-head h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 18px;
+  font-weight: 950;
+  letter-spacing: -0.04em;
+}
+
+.mypage-plan-modern__section-head p {
+  margin: 7px 0 0;
+  color: var(--color-muted);
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 650;
+}
+
+.mypage-plan-modern__compare-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.mypage-plan-modern__plan-option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 382px;
+  padding: 26px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: #ffffff;
+}
+
+.mypage-plan-modern__plan-option--pro {
+  border-color: var(--color-primary-border);
+  box-shadow: 0 8px 20px rgba(34, 48, 70, 0.045);
+}
+
+.mypage-plan-modern__plan-option--pro::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  border-radius: 20px 0 0 20px;
+  background: var(--color-primary);
+}
+
+.mypage-plan-modern__recommend-line {
+  width: fit-content;
+  margin-bottom: 14px;
+  color: var(--color-primary-dark);
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.mypage-plan-modern__plan-head {
+  margin-bottom: 22px;
+}
+
+.mypage-plan-modern__plan-head span {
+  display: block;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.mypage-plan-modern__plan-head strong {
+  display: block;
+  margin-top: 9px;
+  color: var(--color-text);
+  font-size: 32px;
+  line-height: 1.05;
+  font-weight: 950;
+  letter-spacing: -0.06em;
+}
+
+.mypage-plan-modern__plan-head em {
+  margin-left: 3px;
+  color: var(--color-muted);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.mypage-plan-modern__plan-head p {
+  margin: 10px 0 0;
+  color: var(--color-muted);
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 650;
+}
+
+.mypage-plan-modern__plan-option ul {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 0 26px;
+  padding: 0;
+  list-style: none;
+}
+
+.mypage-plan-modern__plan-option li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--color-text-sub);
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.mypage-plan-modern__plan-option li svg {
+  color: var(--color-primary-dark);
+  flex-shrink: 0;
+}
+
+.mypage-plan-modern__safe-note {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 16px 20px;
+}
+
+.mypage-plan-modern__safe-note > svg {
+  color: var(--color-primary-dark);
+}
+
+.mypage-plan-modern__safe-note strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: 900;
+}
+
+.mypage-plan-modern__safe-note p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--font-size-xs);
+  line-height: 1.5;
+  font-weight: 650;
+}
+
+.mypage-plan-modern__safe-note span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--color-text-sub);
+  font-size: 12px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+@media (max-width: 1180px) {
+  .mypage-section.mypage-plan-page--modern {
+    width: min(100%, 100%);
+  }
+
+  .mypage-plan-modern__overview,
+  .mypage-plan-modern__compare-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .mypage-section.mypage-plan-page--modern {
+    gap: 16px;
+  }
+
+  .mypage-plan-modern__status-card,
+  .mypage-plan-modern__payment-card,
+  .mypage-plan-modern__compare,
+  .mypage-plan-modern__safe-note {
+    padding: 22px;
+    border-radius: 20px;
+  }
+
+  .mypage-plan-modern__payment-method,
+  .mypage-plan-modern__safe-note {
+    grid-template-columns: 1fr;
+  }
+
+  .mypage-plan-modern__status-main {
+    align-items: flex-start;
+  }
+
+  .mypage-plan-modern__status-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 18px;
+  }
+
+  .mypage-plan-modern__plan-option {
+    padding: 22px;
+  }
+}
+/* ================================
+   Plan Page Polish
+   - 두꺼운 민트 라인 제거
+   - PRO 강조는 얕은 배경 + 얇은 테두리
+   - 버튼은 민트 계열로 변경
+================================ */
+
+/* PRO 카드 왼쪽 두꺼운 민트 라인 제거 */
+.mypage-plan-figma__plan-card--pro {
+  border-left: 1px solid var(--color-primary-border) !important;
+  border-color: var(--color-primary-border) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(237, 249, 247, 0.72) 0%,
+    rgba(255, 255, 255, 0.96) 42%,
+    #ffffff 100%
+  ) !important;
+  box-shadow: 0 2px 10px rgba(34, 48, 70, 0.04);
+}
+
+/* 혹시 before로 두꺼운 선 넣어둔 경우 제거 */
+.mypage-plan-figma__plan-card--pro::before,
+.mypage-plan-modern__plan-card--pro::before,
+.mypage-plan__plan-card--pro::before {
+  display: none !important;
+}
+
+/* 추천 플랜 텍스트는 작고 조용하게 */
+.mypage-plan-figma__plan-card--pro .mypage-plan-figma__recommend,
+.mypage-plan-modern__recommend,
+.mypage-plan-figma__pro-label {
+  color: var(--color-primary-dark);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+/* 검정 버튼 → 민트 버튼 */
+.mypage-plan-figma__plan-card--pro .btn--primary,
+.mypage-plan-figma__current-action .btn--primary,
+.mypage-plan-figma__upgrade-btn,
+.mypage-plan-modern__upgrade-btn {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 16px rgba(17, 185, 145, 0.18) !important;
+}
+
+.mypage-plan-figma__plan-card--pro .btn--primary:hover:not(:disabled),
+.mypage-plan-figma__current-action .btn--primary:hover:not(:disabled),
+.mypage-plan-figma__upgrade-btn:hover,
+.mypage-plan-modern__upgrade-btn:hover {
+  background: var(--color-primary-dark) !important;
+  border-color: var(--color-primary-dark) !important;
+  transform: translateY(-1px);
+}
+
+/* 결제수단 변경 같은 보조 버튼은 흰색 유지 */
+.mypage-plan-figma__payment .btn,
+.mypage-plan-modern__payment-change {
+  background: #ffffff;
+  color: var(--color-text);
+}
+
+/* 체크 아이콘은 민트 유지하되 과하지 않게 */
+.mypage-plan-figma__plan-card li svg,
+.mypage-plan-modern__feature-list li svg {
+  color: var(--color-primary-dark);
+}
+
+/* ================================
+   Plan Page Final Mood Fix
+   - 두꺼운 민트바 제거
+   - 얕은 민트 카드 강조
+   - 검정 CTA → 민트 CTA
+================================ */
+
+/* PRO 카드: 두꺼운 왼쪽 민트바 제거 */
+.mypage-plan-modern__plan-option--pro::before,
+.mypage-plan-figma__plan-card--pro::before,
+.mypage-plan__plan-card--pro::before {
+  display: none !important;
+}
+
+/* PRO 카드: 얕은 민트 선택 카드 느낌 */
+.mypage-plan-modern__plan-option--pro {
+  border: 1px solid var(--color-primary-border) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(237, 249, 247, 0.78) 0%,
+    rgba(255, 255, 255, 0.96) 45%,
+    #ffffff 100%
+  ) !important;
+  box-shadow: 0 8px 20px rgba(34, 48, 70, 0.045) !important;
+}
+
+/* 이전 figma 클래스가 남아있을 경우도 같이 정리 */
+.mypage-plan-figma__plan-card--pro {
+  border-left: 1px solid var(--color-primary-border) !important;
+  border-color: var(--color-primary-border) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(237, 249, 247, 0.78) 0%,
+    rgba(255, 255, 255, 0.96) 45%,
+    #ffffff 100%
+  ) !important;
+  box-shadow: 0 8px 20px rgba(34, 48, 70, 0.045) !important;
+}
+
+/* 추천 플랜: 작은 칩처럼만 조용히 */
+.mypage-plan-modern__recommend-line,
+.mypage-plan-figma__recommend,
+.mypage-plan-figma__pro-label {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 26px;
+  margin-bottom: 14px;
+  padding: 0 10px;
+  border: 1px solid var(--color-primary-border);
+  border-radius: 999px;
+  background: rgba(237, 249, 247, 0.9);
+  color: var(--color-primary-dark);
+  font-size: 11.5px;
+  font-weight: 950;
+}
+
+/* 검정 버튼 → 민트 버튼 */
+.mypage-plan-modern__status-card .btn--primary,
+.mypage-plan-modern__plan-option--pro .btn--primary,
+.mypage-plan-figma__current-action .btn--primary,
+.mypage-plan-figma__plan-card--pro .btn--primary {
+  border-color: var(--color-primary) !important;
+  background: var(--color-primary) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 16px rgba(17, 185, 145, 0.18) !important;
+}
+
+.mypage-plan-modern__status-card .btn--primary:hover:not(:disabled),
+.mypage-plan-modern__plan-option--pro .btn--primary:hover:not(:disabled),
+.mypage-plan-figma__current-action .btn--primary:hover:not(:disabled),
+.mypage-plan-figma__plan-card--pro .btn--primary:hover:not(:disabled) {
+  border-color: var(--color-primary-dark) !important;
+  background: var(--color-primary-dark) !important;
+  transform: translateY(-1px);
+}
+
+/* 왕관 아이콘도 검정 느낌 줄이고 민트 톤으로 */
+.mypage-plan-modern__status-icon {
+  border-color: var(--color-primary-border) !important;
+  background: var(--color-primary-light) !important;
+  color: var(--color-primary-dark) !important;
+}
+
+/* FREE/PRO 칩도 살짝 민트 톤 */
+.mypage-plan-modern__chip {
+  border-color: var(--color-primary-border) !important;
+  background: rgba(237, 249, 247, 0.65) !important;
+  color: var(--color-primary-dark) !important;
+}
+
+/* 체크 아이콘은 민트 유지 */
+.mypage-plan-modern__plan-option li svg,
+.mypage-plan-figma__plan-card li svg {
+  color: var(--color-primary-dark) !important;
+}
+
+/* 결제 수단 변경 버튼은 너무 검지 않게 흰색 유지 */
+.mypage-plan-modern__subtle-btn {
+  background: #ffffff !important;
+  color: var(--color-text) !important;
+}
+
+.mypage-plan-modern__subtle-btn:hover {
+  border-color: var(--color-primary-border) !important;
+  background: rgba(237, 249, 247, 0.5) !important;
+}
+
+/* ================================
+   Profile Edit - Photo + Security Polish
+   - 프로필 사진 영역 가로 카드화
+   - 캐비닛 PIN은 회원정보 변경의 보안 정보로 이동
+================================ */
+
+.mypage-profile__unified-card {
+  grid-template-columns: 330px 1px minmax(0, 1fr) !important;
+  min-height: auto !important;
+  padding: 30px 34px !important;
+  gap: 32px !important;
+}
+
+.mypage-profile__unified-photo {
+  display: flex;
+  align-items: stretch;
+}
+
+.mypage-profile__photo-cardlet {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(237, 249, 247, 0.52), #ffffff 64%);
+}
+
+.mypage-profile__unified-card .mypage-profile__photo-preview {
+  width: 86px !important;
+  height: 86px !important;
+  border-radius: 24px !important;
+  background: #ffffff !important;
+  border: 1px solid var(--color-primary-border);
+  box-shadow: 0 8px 18px rgba(34, 48, 70, 0.045);
+  color: var(--color-primary-dark);
+  flex-shrink: 0;
+}
+
+.mypage-profile__photo-meta {
+  min-width: 0;
+  flex: 1;
+}
+
+.mypage-profile__photo-cardlet .mypage-profile__card-title h3 {
+  font-size: 16px;
+  letter-spacing: -0.035em;
+}
+
+.mypage-profile__photo-cardlet .mypage-profile__card-title p {
+  margin: 5px 0 0;
+  color: var(--color-muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+  font-weight: 650;
+}
+
+.mypage-profile__unified-card .mypage-profile__photo-content {
+  margin-top: 0 !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__photo-actions {
+  display: flex !important;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px !important;
+  width: 100%;
+  max-width: none !important;
+  margin-top: 14px;
+}
+
+.mypage-profile__unified-card .mypage-profile__photo-actions .btn,
+.mypage-profile__unified-card .mypage-profile__danger-outline {
+  min-height: 34px !important;
+  padding: 0 12px !important;
+  border-radius: 11px !important;
+  font-size: 11.5px !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__danger-outline {
+  border-color: #f2b8b8;
+  background: #ffffff;
+}
+
+.mypage-profile__unified-card .mypage-profile__photo-actions p {
+  flex-basis: 100%;
+  margin-top: 2px !important;
+  font-size: 11px !important;
+}
+
+.mypage-profile__account-subtitle {
+  margin: 16px 0 4px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: -0.02em;
+}
+
+.mypage-profile__unified-card .mypage-profile__account-row {
+  grid-template-columns: 38px 112px minmax(0, 1fr) !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__account-row--password {
+  border-bottom: 1px solid var(--color-border) !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__account-row:last-child {
+  border-bottom: 0 !important;
+}
+
+@media (max-width: 1180px) {
+  .mypage-profile__unified-card {
+    grid-template-columns: 1fr !important;
+  }
+
+  .mypage-profile__photo-cardlet {
+    max-width: 520px;
+  }
+}
+
+@media (max-width: 720px) {
+  .mypage-profile__photo-cardlet {
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .mypage-profile__unified-card .mypage-profile__photo-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .mypage-profile__unified-card .mypage-profile__photo-actions p {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ================================
+   Profile Edit - Withdraw Move + Layout Polish
+   - 회원탈퇴를 회원정보 변경으로 이동
+   - 프로필 사진 카드의 과한 세로 여백 제거
+   - 하단 안전 안내/탈퇴 액션을 같은 톤으로 정리
+================================ */
+
+.mypage-profile__unified-card {
+  grid-template-columns: 320px 1px minmax(0, 1fr) !important;
+  align-items: start !important;
+}
+
+.mypage-profile__unified-photo {
+  display: block !important;
+  align-self: start !important;
+}
+
+.mypage-profile__photo-cardlet {
+  min-height: auto !important;
+  align-self: start !important;
+  padding: 16px !important;
+  border-radius: 18px !important;
+  background: linear-gradient(
+    135deg,
+    rgba(237, 249, 247, 0.46),
+    #ffffff 68%
+  ) !important;
+}
+
+.mypage-profile__photo-cardlet .mypage-profile__photo-preview {
+  width: 78px !important;
+  height: 78px !important;
+  border-radius: 22px !important;
+}
+
+.mypage-profile__photo-cardlet .mypage-profile__card-title h3 {
+  font-size: 15px !important;
+}
+
+.mypage-profile__photo-cardlet .mypage-profile__card-title p {
+  font-size: 11px !important;
+}
+
+.mypage-profile__photo-cardlet .mypage-profile__photo-actions {
+  margin-top: 12px !important;
+}
+
+.mypage-profile__photo-cardlet .mypage-profile__photo-actions .btn,
+.mypage-profile__photo-cardlet .mypage-profile__danger-outline {
+  min-height: 32px !important;
+  padding: 0 11px !important;
+}
+
+.mypage-profile__footer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.56fr);
+  gap: 14px;
+  width: 100%;
+  align-items: stretch;
+}
+
+.mypage-profile__footer-grid .mypage-profile__safe-note--single {
+  min-height: 78px;
+  height: 100%;
+}
+
+.mypage-profile__withdraw-card {
+  width: 100%;
+  min-height: 78px;
+  padding: 16px 18px;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  border-radius: 18px;
+  background: #fffafa;
+  color: var(--color-text);
+  font-family: inherit;
+  text-align: left;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(34, 48, 70, 0.025);
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    transform 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.mypage-profile__withdraw-card:hover {
+  border-color: rgba(239, 68, 68, 0.48);
+  background: #fff7f7;
+  box-shadow: 0 6px 16px rgba(34, 48, 70, 0.045);
+  transform: translateY(-1px);
+}
+
+.mypage-profile__withdraw-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
+  background: var(--color-danger-light);
+  color: var(--color-danger);
+  flex-shrink: 0;
+}
+
+.mypage-profile__withdraw-copy {
+  min-width: 0;
+}
+
+.mypage-profile__withdraw-copy strong {
+  display: block;
+  color: var(--color-danger);
+  font-size: 13.5px;
+  line-height: 1.35;
+  font-weight: 950;
+  letter-spacing: -0.025em;
+}
+
+.mypage-profile__withdraw-copy p {
+  margin: 5px 0 0;
+  color: var(--color-muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+  font-weight: 650;
+}
+
+.mypage-profile__withdraw-card > svg {
+  color: var(--color-text-sub);
+}
+
+/* 설정 페이지에서는 계정 위험 액션을 제거하고 설정 기능만 남김 */
+.mypage-settings-figma__danger-title,
+.mypage-settings-figma__danger-panel {
+  display: none !important;
+}
+
+@media (max-width: 1180px) {
+  .mypage-profile__footer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mypage-profile__photo-cardlet {
+    max-width: 520px;
+  }
+}
+
+@media (max-width: 720px) {
+  .mypage-profile__withdraw-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .mypage-profile__withdraw-card > svg {
+    display: none;
+  }
+}
+
+/* ================================
+   Profile Edit - Large Photo Card Final
+   - 왼쪽 프로필 사진 영역을 전용 카드처럼 정리
+   - 큰 프로필 이미지 + 중앙 버튼 배치
+================================ */
+
+.mypage-profile__unified-card {
+  grid-template-columns: 300px 1px minmax(0, 1fr) !important;
+  gap: 32px !important;
+  align-items: stretch !important;
+}
+
+.mypage-profile__unified-photo {
+  display: flex !important;
+  align-self: stretch !important;
+  min-width: 0;
+}
+
+.mypage-profile__photo-cardlet--large {
+  width: 100%;
+  min-height: 100%;
+  padding: 22px 20px !important;
+  border: 1px solid var(--color-border);
+  border-radius: 22px !important;
+  background: linear-gradient(
+    180deg,
+    rgba(237, 249, 247, 0.58) 0%,
+    rgba(255, 255, 255, 0.96) 58%,
+    #ffffff 100%
+  ) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 16px !important;
+  box-shadow: none;
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__card-title {
+  width: 100%;
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__card-title h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 17px !important;
+  line-height: 1.2;
+  font-weight: 950;
+  letter-spacing: -0.04em;
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__photo-preview {
+  width: 148px !important;
+  height: 148px !important;
+  margin-top: 2px;
+  border: 1px solid var(--color-primary-border);
+  border-radius: 36px !important;
+  background: radial-gradient(
+    circle at 50% 34%,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(255, 255, 255, 0.68) 32%,
+    rgba(237, 249, 247, 0.92) 100%
+  ) !important;
+  color: var(--color-primary-dark);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 22px rgba(34, 48, 70, 0.055);
+  overflow: hidden;
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__photo-actions {
+  width: 100%;
+  max-width: 228px !important;
+  margin-top: 2px !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px !important;
+  align-items: center;
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__photo-actions .btn,
+.mypage-profile__photo-cardlet--large .mypage-profile__danger-outline {
+  min-width: 0 !important;
+  min-height: 38px !important;
+  padding: 0 12px !important;
+  border-radius: 12px !important;
+  font-size: 12px !important;
+  font-weight: 900;
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__danger-outline {
+  border-color: #f1b3b3 !important;
+  background: #ffffff !important;
+  color: var(--color-danger);
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__photo-actions p {
+  grid-column: 1 / -1;
+  margin: 2px 0 0 !important;
+  color: var(--color-muted);
+  font-size: 11.5px !important;
+  line-height: 1.45;
+  font-weight: 700;
+  text-align: center;
+}
+
+.mypage-profile__unified-account {
+  align-self: stretch;
+}
+
+.mypage-profile__unified-card .mypage-profile__account-rows {
+  margin-top: 20px;
+}
+
+@media (max-width: 1180px) {
+  .mypage-profile__unified-card {
+    grid-template-columns: 1fr !important;
+  }
+
+  .mypage-profile__unified-divider {
+    width: 100%;
+    min-height: 1px;
+    height: 1px;
+  }
+
+  .mypage-profile__photo-cardlet--large {
+    max-width: 360px;
+    min-height: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .mypage-profile__photo-cardlet--large {
+    max-width: none;
+    padding: 20px !important;
+  }
+
+  .mypage-profile__photo-cardlet--large .mypage-profile__photo-preview {
+    width: 132px !important;
+    height: 132px !important;
+    border-radius: 32px !important;
+  }
+}
+
+/* ================================
+   Profile Page Fit View Final
+   - 설명문 제거 후 상단 여백 축소
+   - 첫 진입 시 카드들이 더 많이 보이도록 컴팩트 조정
+================================ */
+
+/* 프로필 페이지에서만 main 상단 패딩을 줄임 */
+.main-layout--top-only .main-layout__main:has(.mypage-profile--edit-page) {
+  padding-top: 34px !important;
+  padding-bottom: 28px !important;
+}
+
+.mypage-section.mypage-profile--edit-page {
+  gap: 12px !important;
+  margin-top: -4px !important;
+}
+
+.mypage-profile__page-head {
+  margin-bottom: 10px !important;
+}
+
+.mypage-profile__page-copy p {
+  display: none !important;
+}
+
+.mypage-profile__page-copy h2 {
+  font-size: 27px !important;
+  line-height: 1.1 !important;
+}
+
+/* 상단 계정 카드 컴팩트화 */
+.mypage-profile__unified-card {
+  min-height: auto !important;
+  padding: 22px 28px !important;
+  grid-template-columns: 300px 1px minmax(0, 1fr) !important;
+  gap: 28px !important;
+  align-items: stretch !important;
+}
+
+.mypage-profile__unified-divider {
+  min-height: 100% !important;
+}
+
+/* 프로필 사진 카드: 큰 이미지 유지 + 과한 높이는 줄임 */
+.mypage-profile__photo-cardlet--large {
+  min-height: 330px !important;
+  padding: 20px 22px !important;
+  border-color: var(--color-primary-border) !important;
+  background: #f3fbf9 !important;
+  justify-content: center !important;
+  gap: 13px !important;
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__card-title {
+  width: 100% !important;
+  text-align: center !important;
+  margin: 0 0 6px !important;
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__card-title h3 {
+  font-size: 18px !important;
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__photo-preview {
+  width: 176px !important;
+  height: 176px !important;
+  border-radius: 40px !important;
+  background: #ffffff !important;
+  box-shadow: 0 8px 18px rgba(34, 48, 70, 0.055) !important;
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__photo-preview svg {
+  width: 104px !important;
+  height: 104px !important;
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__photo-actions {
+  max-width: 242px !important;
+  margin-top: 4px !important;
+  gap: 9px !important;
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__photo-actions .btn,
+.mypage-profile__photo-cardlet--large .mypage-profile__danger-outline {
+  min-height: 36px !important;
+  border-radius: 12px !important;
+  font-size: 12px !important;
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__photo-actions p {
+  margin-top: 2px !important;
+  font-size: 11.5px !important;
+}
+
+/* 오른쪽 정보 영역도 살짝 압축 */
+.mypage-profile__unified-card .mypage-profile__account-rows {
+  margin-top: 14px !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__account-row {
+  min-height: 62px !important;
+  padding: 8px 0 !important;
+  gap: 14px !important;
+  grid-template-columns: 38px 112px minmax(0, 1fr) !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__account-row--expanded {
+  min-height: auto !important;
+  padding-top: 12px !important;
+  padding-bottom: 14px !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-main small {
+  margin-top: 4px !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-action,
+.mypage-profile__unified-card .mypage-profile__disabled-chip {
+  min-height: 32px !important;
+}
+
+/* 이용 정보 카드 높이 축소 */
+.mypage-profile__usage-card {
+  padding: 18px 24px 18px !important;
+}
+
+.mypage-profile__usage-head {
+  margin-bottom: 12px !important;
+}
+
+.mypage-profile__usage-head p {
+  margin-top: 4px !important;
+}
+
+.mypage-profile__usage-item {
+  min-height: 88px !important;
+  padding: 14px !important;
+  gap: 11px !important;
+}
+
+.mypage-profile__usage-icon {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 12px !important;
+}
+
+.mypage-profile__usage-body > span {
+  margin-bottom: 5px !important;
+}
+
+.mypage-profile__usage-body p {
+  margin-top: 5px !important;
+}
+
+.mypage-profile__mini-storage-bar {
+  margin-top: 10px !important;
+}
+
+/* 하단 안내/회원탈퇴도 한 화면에 들어오도록 압축 */
+.mypage-profile__footer-grid {
+  gap: 12px !important;
+}
+
+.mypage-profile__footer-grid .mypage-profile__safe-note--single,
+.mypage-profile__withdraw-card {
+  min-height: 64px !important;
+  padding: 13px 16px !important;
+  border-radius: 16px !important;
+}
+
+.mypage-profile__withdraw-icon,
+.mypage-profile__safe-note--single > svg {
+  width: 34px !important;
+  height: 34px !important;
+}
+
+.mypage-profile__safe-note--single p,
+.mypage-profile__withdraw-copy p {
+  margin-top: 3px !important;
+  font-size: 11px !important;
+}
+
+@media (max-width: 1180px) {
+  .main-layout--top-only .main-layout__main:has(.mypage-profile--edit-page) {
+    padding-top: 28px !important;
+  }
+
+  .mypage-profile__unified-card {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ================================
+   Profile Page Restore Space
+   - 설명문은 TSX에서 삭제 유지
+   - 카드/행/간격은 답답하지 않게 이전 톤으로 복구
+================================ */
+
+.main-layout--top-only .main-layout__main:has(.mypage-profile--edit-page) {
+  padding: 62px clamp(36px, 3vw, 52px) 52px !important;
+}
+
+.mypage-section.mypage-profile--edit-page {
+  width: min(100%, 1500px) !important;
+  max-width: 1500px !important;
+  gap: 22px !important;
+  margin-top: 0 !important;
+}
+
+.mypage-profile__page-head {
+  margin-bottom: 10px !important;
+}
+
+.mypage-profile__page-copy p {
+  display: none !important;
+}
+
+.mypage-profile__page-copy h2 {
+  font-size: 28px !important;
+  line-height: 1.15 !important;
+}
+
+.mypage-profile__unified-card {
+  min-height: auto !important;
+  padding: 30px 34px !important;
+  grid-template-columns: 330px 1px minmax(0, 1fr) !important;
+  gap: 32px !important;
+  align-items: stretch !important;
+}
+
+.mypage-profile__unified-divider {
+  min-height: 100% !important;
+}
+
+.mypage-profile__photo-cardlet--large {
+  min-height: 400px !important;
+  padding: 28px 24px !important;
+  border-color: var(--color-primary-border) !important;
+  background: #f3fbf9 !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 18px !important;
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__card-title {
+  width: 100% !important;
+  margin: 0 0 4px !important;
+  text-align: center !important;
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__card-title h3 {
+  font-size: 18px !important;
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__photo-preview {
+  width: 180px !important;
+  height: 180px !important;
+  border-radius: 40px !important;
+  background: #ffffff !important;
+  border: 1px solid var(--color-primary-border) !important;
+  box-shadow: 0 8px 18px rgba(34, 48, 70, 0.055) !important;
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__photo-preview svg {
+  width: 104px !important;
+  height: 104px !important;
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__photo-actions {
+  width: 100% !important;
+  max-width: 242px !important;
+  margin-top: 2px !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__photo-actions .btn,
+.mypage-profile__photo-cardlet--large .mypage-profile__danger-outline {
+  min-height: 38px !important;
+  border-radius: 12px !important;
+  font-size: 12px !important;
+}
+
+.mypage-profile__photo-cardlet--large .mypage-profile__photo-actions p {
+  grid-column: 1 / -1 !important;
+  margin-top: 4px !important;
+  font-size: 11.5px !important;
+  text-align: center !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__account-rows {
+  margin-top: 20px !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__account-row {
+  min-height: 74px !important;
+  padding: 12px 0 !important;
+  gap: 20px !important;
+  grid-template-columns: 42px 160px minmax(0, 1fr) !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__account-row--expanded {
+  min-height: auto !important;
+  padding-top: 16px !important;
+  padding-bottom: 18px !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-icon {
+  width: 38px !important;
+  height: 38px !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-main small {
+  margin-top: 6px !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-action,
+.mypage-profile__unified-card .mypage-profile__disabled-chip {
+  min-height: 38px !important;
+}
+
+.mypage-profile__usage-card {
+  padding: 24px 32px !important;
+}
+
+.mypage-profile__usage-head {
+  margin-bottom: 18px !important;
+}
+
+.mypage-profile__usage-head p {
+  margin-top: 6px !important;
+}
+
+.mypage-profile__usage-item {
+  min-height: 104px !important;
+  padding: 18px !important;
+  gap: 14px !important;
+}
+
+.mypage-profile__usage-icon {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 14px !important;
+}
+
+.mypage-profile__usage-body > span {
+  margin-bottom: 6px !important;
+}
+
+.mypage-profile__usage-body p {
+  margin-top: 7px !important;
+}
+
+.mypage-profile__mini-storage-bar {
+  margin-top: 12px !important;
+}
+
+.mypage-profile__footer-grid {
+  gap: 14px !important;
+}
+
+.mypage-profile__footer-grid .mypage-profile__safe-note--single,
+.mypage-profile__withdraw-card {
+  min-height: 78px !important;
+  padding: 16px 18px !important;
+  border-radius: 18px !important;
+}
+
+.mypage-profile__withdraw-icon,
+.mypage-profile__safe-note--single > svg {
+  width: 38px !important;
+  height: 38px !important;
+}
+
+.mypage-profile__safe-note--single p,
+.mypage-profile__withdraw-copy p {
+  margin-top: 5px !important;
+  font-size: 11.5px !important;
+}
+
+@media (max-width: 1180px) {
+  .main-layout--top-only .main-layout__main:has(.mypage-profile--edit-page) {
+    padding-top: 36px !important;
+  }
+
+  .mypage-profile__unified-card {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ================================
+   Profile Info Option 1 Polish
+   - 현재 구조 유지
+   - 기본/보안 정보 영역을 더 정돈된 카드형 라인 UI로 개선
+================================ */
+
+.mypage-profile__unified-card {
+  padding: 34px 38px !important;
+  grid-template-columns: 350px 1px minmax(0, 1fr) !important;
+  gap: 36px !important;
+}
+
+.mypage-profile__unified-account {
+  min-width: 0;
+  padding: 2px 0 0 !important;
+}
+
+.mypage-profile__unified-account .mypage-profile__card-title h3 {
+  font-size: 20px !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.045em !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__account-rows {
+  margin-top: 24px !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__account-row {
+  grid-template-columns: 46px 126px minmax(0, 1fr) !important;
+  min-height: 76px !important;
+  padding: 13px 0 !important;
+  gap: 20px !important;
+  border-bottom: 1px solid #dbe5ea !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__account-row:last-child {
+  border-bottom: 0 !important;
+}
+
+.mypage-profile__account-subtitle {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin: 18px 0 4px !important;
+  padding-top: 18px !important;
+  border-top: 1px solid #dbe5ea !important;
+  color: var(--color-text-sub) !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.025em !important;
+}
+
+.mypage-profile__account-subtitle::after {
+  content: "";
+  display: block;
+  flex: 1;
+  height: 1px;
+  background: #e7eef2;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-icon {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 15px !important;
+  background: #edf9f7 !important;
+  color: var(--color-primary-dark) !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-icon svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-title {
+  color: var(--color-text) !important;
+  font-size: 14px !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.03em !important;
+}
+
+.mypage-profile__row-value-line {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  flex-wrap: wrap !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-main strong {
+  color: var(--color-text) !important;
+  font-size: 15px !important;
+  line-height: 1.35 !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-main small {
+  margin-top: 6px !important;
+  color: var(--color-muted) !important;
+  font-size: 11.5px !important;
+  line-height: 1.45 !important;
+  font-weight: 650 !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-action,
+.mypage-profile__unified-card .mypage-profile__disabled-chip {
+  min-width: auto !important;
+  min-height: 34px !important;
+  padding: 0 13px !important;
+  border-radius: 12px !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-action {
+  border-color: var(--color-primary-border) !important;
+  background: #ffffff !important;
+  color: var(--color-primary-dark) !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-action:hover {
+  border-color: var(--color-primary) !important;
+  background: #edf9f7 !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__disabled-chip {
+  background: #f5f8fa !important;
+  color: var(--color-text-sub) !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__muted-value {
+  color: var(--color-text) !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__account-row--expanded {
+  min-height: auto !important;
+  padding-top: 16px !important;
+  padding-bottom: 20px !important;
+  align-items: start !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__password-edit-grid {
+  gap: 14px !important;
+}
+
+@media (max-width: 1180px) {
+  .mypage-profile__unified-card {
+    grid-template-columns: 1fr !important;
+  }
+
+  .mypage-profile__unified-card .mypage-profile__account-row {
+    grid-template-columns: 46px 120px minmax(0, 1fr) !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .mypage-profile__unified-card .mypage-profile__account-row {
+    grid-template-columns: 42px minmax(0, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .mypage-profile__unified-card .mypage-profile__row-title {
+    grid-column: 2;
+  }
+
+  .mypage-profile__unified-card .mypage-profile__row-main {
+    grid-column: 1 / -1;
+  }
+}
+/* ================================
+   Profile Page Lift
+   - 회원정보 변경 카드 묶음만 살짝 위로
+================================ */
+
+.mypage-section.mypage-profile--edit-page {
+  margin-top: -24px !important;
+}
+
+/* ================================
+   Profile Info Card Rows Final
+   - 참고 이미지 1번 느낌: 얇은 라인 대신 행 카드형 정리
+   - 기본/보안 정보 구분 강화
+   - 버튼/값 정렬 개선
+================================ */
+
+.mypage-profile__unified-card {
+  grid-template-columns: 350px 1px minmax(0, 1fr) !important;
+  gap: 36px !important;
+  padding: 34px 38px !important;
+  align-items: stretch !important;
+}
+
+.mypage-profile__unified-account {
+  min-width: 0 !important;
+  padding: 2px 0 0 !important;
+}
+
+.mypage-profile__unified-account .mypage-profile__card-title h3 {
+  margin: 0 !important;
+  font-size: 21px !important;
+  line-height: 1.2 !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.055em !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__account-rows {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  margin-top: 20px !important;
+  width: 100% !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__account-row {
+  display: grid !important;
+  grid-template-columns: 44px 112px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 16px !important;
+  min-height: 70px !important;
+  padding: 13px 16px !important;
+  border: 1px solid #dfe9ee !important;
+  border-radius: 18px !important;
+  background: #fbfdfd !important;
+  box-shadow: 0 2px 8px rgba(34, 48, 70, 0.024) !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__account-row:last-child {
+  border-bottom: 1px solid #dfe9ee !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__account-row:hover {
+  border-color: var(--color-primary-border) !important;
+  background: #ffffff !important;
+}
+
+.mypage-profile__account-subtitle {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin: 8px 0 0 !important;
+  padding: 8px 2px 0 !important;
+  border-top: 0 !important;
+  color: var(--color-text-sub) !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.03em !important;
+}
+
+.mypage-profile__account-subtitle::after {
+  content: "" !important;
+  display: block !important;
+  flex: 1 !important;
+  height: 1px !important;
+  background: #e5edf1 !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-icon {
+  display: grid !important;
+  place-items: center !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 16px !important;
+  background: #edf9f7 !important;
+  color: var(--color-primary-dark) !important;
+  box-shadow: inset 0 0 0 1px rgba(98, 163, 153, 0.08) !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-icon svg {
+  width: 18px !important;
+  height: 18px !important;
+  stroke-width: 2.2 !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-title {
+  color: var(--color-text) !important;
+  font-size: 14px !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.035em !important;
+  white-space: nowrap !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-main {
+  min-width: 0 !important;
+}
+
+.mypage-profile__row-value-line {
+  display: inline-grid !important;
+  grid-auto-flow: column !important;
+  grid-auto-columns: max-content !important;
+  align-items: center !important;
+  gap: 12px !important;
+  max-width: 100% !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-main strong {
+  color: var(--color-text) !important;
+  font-size: 15px !important;
+  line-height: 1.35 !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.025em !important;
+  word-break: break-all !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-main small {
+  display: block !important;
+  margin-top: 6px !important;
+  color: var(--color-muted) !important;
+  font-size: 11.5px !important;
+  line-height: 1.45 !important;
+  font-weight: 650 !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-action,
+.mypage-profile__unified-card .mypage-profile__disabled-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  width: fit-content !important;
+  min-width: auto !important;
+  min-height: 34px !important;
+  padding: 0 13px !important;
+  border-radius: 12px !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  white-space: nowrap !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-action {
+  border: 1px solid var(--color-primary-border) !important;
+  background: #ffffff !important;
+  color: var(--color-primary-dark) !important;
+  box-shadow: 0 1px 4px rgba(34, 48, 70, 0.025) !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__row-action:hover {
+  border-color: var(--color-primary) !important;
+  background: #edf9f7 !important;
+  transform: translateY(-1px) !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__disabled-chip {
+  border: 1px solid transparent !important;
+  background: #f3f7f9 !important;
+  color: var(--color-text-sub) !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__muted-value {
+  color: var(--color-text) !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__account-row--expanded {
+  align-items: start !important;
+  min-height: auto !important;
+  padding-top: 16px !important;
+  padding-bottom: 18px !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__inline-edit {
+  width: min(100%, 620px) !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__password-edit {
+  width: 100% !important;
+}
+
+.mypage-profile__unified-card .mypage-profile__password-edit-grid {
+  gap: 14px !important;
+}
+
+@media (max-width: 1180px) {
+  .mypage-profile__unified-card {
+    grid-template-columns: 1fr !important;
+  }
+
+  .mypage-profile__unified-card .mypage-profile__account-row {
+    grid-template-columns: 44px 104px minmax(0, 1fr) !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .mypage-profile__unified-card .mypage-profile__account-row {
+    grid-template-columns: 44px minmax(0, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .mypage-profile__unified-card .mypage-profile__row-title {
+    grid-column: 2 !important;
+  }
+
+  .mypage-profile__unified-card .mypage-profile__row-main {
+    grid-column: 1 / -1 !important;
+  }
+
+  .mypage-profile__row-value-line {
+    grid-auto-flow: row !important;
+    grid-auto-columns: initial !important;
+    justify-items: start !important;
+  }
+}
+
