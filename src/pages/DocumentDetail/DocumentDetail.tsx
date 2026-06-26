@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   Calendar,
   Download,
+  LockKeyhole,
   Edit3,
   Maximize2,
   Plus,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 import Button from "../../components/common/Button";
 import AlertSettingModal from "../../components/modal/AlertSettingModal";
+import PinVerifyModal from "../../components/modal/PinVerifyModal";
 import { documentService } from "../../services/documentService";
 import type { DocumentAlert } from "../../types/document";
 import { useCategories } from "../../hooks/useCategories";
@@ -32,6 +34,29 @@ type EditableDocumentState = {
   expiryDate: string;
   renewalDate: string;
   extractedData: Record<string, string>;
+};
+
+
+type LockableDocument = Document & {
+  is_locked?: boolean | "Y" | "N";
+  locked?: boolean;
+  cabinet_locked?: boolean | "Y" | "N";
+  lock_status?: "LOCKED" | "UNLOCKED" | string;
+};
+
+const getDocumentLocked = (document: Document | null) => {
+  if (!document) return false;
+
+  const lockable = document as LockableDocument;
+
+  return (
+    lockable.is_locked === true ||
+    lockable.is_locked === "Y" ||
+    lockable.locked === true ||
+    lockable.cabinet_locked === true ||
+    lockable.cabinet_locked === "Y" ||
+    lockable.lock_status === "LOCKED"
+  );
 };
 
 const EMPTY_FORM: EditableDocumentState = {
@@ -116,6 +141,8 @@ const DocumentDetail: React.FC = () => {
   const [zoom, setZoom] = useState(100);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedPage, setSelectedPage] = useState(0);
+  const [pinUnlockOpen, setPinUnlockOpen] = useState(false);
+  const [pinUnlocked, setPinUnlocked] = useState(false);
   const [form, setForm] = useState<EditableDocumentState>(EMPTY_FORM);
 
   useEffect(() => {
@@ -180,6 +207,11 @@ const DocumentDetail: React.FC = () => {
   useEffect(() => {
     setForm(initialForm);
   }, [initialForm]);
+
+  useEffect(() => {
+    setPinUnlocked(false);
+    setPinUnlockOpen(false);
+  }, [document_id]);
 
   if (loading) {
     return (
@@ -332,6 +364,13 @@ const DocumentDetail: React.FC = () => {
     : (doc.file_url ?? "").trim();
   const hasPreviewFile = previewUrl.length > 0;
   const previewPageCount = docFiles.length > 0 ? docFiles.length : hasPreviewFile ? Math.max(1, doc.page_count ?? 1) : 0;
+  const isDocumentLocked = getDocumentLocked(doc);
+  const shouldLockPreview = isDocumentLocked && !pinUnlocked;
+
+  const handlePinVerified = () => {
+    setPinUnlocked(true);
+    showToast("문서 잠금이 해제되었습니다.", "success");
+  };
 
   return (
     <section className="doc-detail">
@@ -354,6 +393,17 @@ const DocumentDetail: React.FC = () => {
           </div>
 
           <div className="doc-detail__mini-actions">
+            {isDocumentLocked && (
+              <button
+                type="button"
+                className="doc-detail__mini-lock"
+                onClick={() => setPinUnlockOpen(true)}
+                title={pinUnlocked ? "잠금 해제됨" : "PIN으로 잠금 해제"}
+              >
+                <LockKeyhole size={16} />
+              </button>
+            )}
+
             <button
               type="button"
               className={isFavorite ? "is-active" : ""}
@@ -397,7 +447,7 @@ const DocumentDetail: React.FC = () => {
       </div>
 
       <div className="doc-detail__editor-layout">
-        <article className="doc-detail__viewer-card">
+        <article className={`doc-detail__viewer-card${shouldLockPreview ? " doc-detail__viewer-card--locked" : ""}`}>
           <header className="doc-detail__viewer-header">
             <div>
               <h2>{getPreviewTitle(activeCategory?.name)}</h2>
@@ -414,7 +464,7 @@ const DocumentDetail: React.FC = () => {
                 type="button"
                 onClick={() => setZoom((prev) => Math.max(prev - 10, 70))}
                 aria-label="축소"
-                disabled={!hasPreviewFile}
+                disabled={!hasPreviewFile || shouldLockPreview}
               >
                 <ZoomOut size={15} />
               </button>
@@ -423,7 +473,7 @@ const DocumentDetail: React.FC = () => {
                 type="button"
                 onClick={() => setZoom((prev) => Math.min(prev + 10, 150))}
                 aria-label="확대"
-                disabled={!hasPreviewFile}
+                disabled={!hasPreviewFile || shouldLockPreview}
               >
                 <ZoomIn size={15} />
               </button>
@@ -432,7 +482,7 @@ const DocumentDetail: React.FC = () => {
                 type="button"
                 className="doc-detail__viewer-download-btn"
                 onClick={handleDownload}
-                disabled={!hasPreviewFile}
+                disabled={!hasPreviewFile || shouldLockPreview}
                 aria-label="다운로드"
               >
                 <Download size={14} /> 다운로드
@@ -440,7 +490,7 @@ const DocumentDetail: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsFullscreen(true)}
-                disabled={!hasPreviewFile}
+                disabled={!hasPreviewFile || shouldLockPreview}
                 aria-label="전체화면"
               >
                 <Maximize2 size={15} />
@@ -474,7 +524,22 @@ const DocumentDetail: React.FC = () => {
             )}
 
             <div className="doc-detail__document-canvas">
-              {hasPreviewFile ? (
+              {shouldLockPreview ? (
+                <div className="doc-detail__locked-view">
+                  <span className="doc-detail__locked-icon">
+                    <LockKeyhole size={28} />
+                  </span>
+                  <strong>잠긴 문서입니다</strong>
+                  <p>문서 내용을 보려면 캐비닛 PIN을 입력해주세요.</p>
+                  <button
+                    type="button"
+                    className="doc-detail__unlock-button"
+                    onClick={() => setPinUnlockOpen(true)}
+                  >
+                    PIN 입력하고 열기
+                  </button>
+                </div>
+              ) : hasPreviewFile ? (
                 <img
                   className="doc-detail__preview-image"
                   src={previewUrl}
@@ -501,6 +566,26 @@ const DocumentDetail: React.FC = () => {
             <h2>문서 정보</h2>
           </header>
 
+          {shouldLockPreview ? (
+            <div className="doc-detail__locked-side">
+              <span className="doc-detail__locked-side-icon">
+                <LockKeyhole size={22} />
+              </span>
+              <strong>보안 정보 보호 중</strong>
+              <p>
+                잠긴 문서의 상세 정보는 PIN 확인 후 표시됩니다. 현재는 프론트
+                단계이므로 6자리 입력 시 해제 처리됩니다.
+              </p>
+              <button
+                type="button"
+                className="doc-detail__unlock-button doc-detail__unlock-button--side"
+                onClick={() => setPinUnlockOpen(true)}
+              >
+                PIN 입력
+              </button>
+            </div>
+          ) : (
+            <>
           <section className="doc-detail__form-section">
             <div className="doc-detail__section-title">기본 정보</div>
 
@@ -725,10 +810,12 @@ const DocumentDetail: React.FC = () => {
               </button>
             </footer>
           )}
+            </>
+          )}
         </aside>
       </div>
 
-      {isFullscreen && (
+      {isFullscreen && !shouldLockPreview && (
         <div
           className="doc-detail__fullscreen-overlay"
           onClick={() => setIsFullscreen(false)}
@@ -749,6 +836,14 @@ const DocumentDetail: React.FC = () => {
           />
         </div>
       )}
+
+      <PinVerifyModal
+        isOpen={pinUnlockOpen}
+        onClose={() => setPinUnlockOpen(false)}
+        onVerified={handlePinVerified}
+        title="문서 잠금 해제"
+        description="이 문서는 캐비닛 PIN으로 보호되고 있습니다."
+      />
 
       <AlertSettingModal
         isOpen={alertOpen}
