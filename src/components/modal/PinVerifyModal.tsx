@@ -12,6 +12,7 @@ interface PinVerifyModalProps {
   onVerified: (pin: string) => void;
   title?: string;
   description?: string;
+  submitLabel?: string;
 }
 
 const PinVerifyModal: React.FC<PinVerifyModalProps> = ({
@@ -20,6 +21,7 @@ const PinVerifyModal: React.FC<PinVerifyModalProps> = ({
   onVerified,
   title = "캐비닛 PIN 입력",
   description = "잠긴 문서를 열려면 캐비닛 PIN 6자리를 입력해주세요.",
+  submitLabel = "확인",
 }) => {
   const { showToast } = useToast();
   const [pin, setPin] = useState("");
@@ -46,8 +48,8 @@ const PinVerifyModal: React.FC<PinVerifyModalProps> = ({
         <div className="pin-verify__notice">
           <LockKeyhole size={18} />
           <div>
-            <strong>보안 문서 확인</strong>
-            <p>현재 단계에서는 프론트 UI만 구현되어 있어 6자리 입력 시 해제 처리됩니다.</p>
+            <strong>디지털 캐비닛 PIN 확인</strong>
+            <p>PIN은 화면에 표시되지 않으며 입력 자리만 표시됩니다.</p>
           </div>
         </div>
 
@@ -57,8 +59,8 @@ const PinVerifyModal: React.FC<PinVerifyModalProps> = ({
           onSubmit={handleSubmit}
           title="PIN 입력"
           description={description}
-          submitLabel="해제"
-          helperText="API 연결 후에는 서버 검증 결과에 따라 문서가 열립니다."
+          submitLabel={submitLabel}
+          helperText="현재는 프론트 구현 단계라 6자리 입력 시 성공 처리됩니다."
         />
 
         <div className="pin-verify__actions">

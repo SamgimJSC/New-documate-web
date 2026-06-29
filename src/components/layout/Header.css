@@ -239,3 +239,33 @@
   font-weight: 900;
   letter-spacing: -0.035em;
 }
+
+/* ================================
+   Header Breadcrumb Cleanup
+   - 디지털 캐비닛 / 문서명 형태 통일
+================================ */
+
+.header__breadcrumb {
+  max-width: min(68vw, 760px);
+  overflow: hidden;
+}
+
+.header__breadcrumb button {
+  flex-shrink: 0;
+}
+
+.header__breadcrumb b,
+.header__mypage-path b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header__breadcrumb b {
+  max-width: min(46vw, 520px);
+}
+
+.header__mypage-path b {
+  max-width: min(44vw, 500px);
+}

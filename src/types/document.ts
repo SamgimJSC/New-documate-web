@@ -45,6 +45,10 @@ export interface Document {
   expiry_date?: string;
   renewal_date?: string;
   is_masked: boolean;
+  is_locked?: boolean | "Y" | "N";
+  locked?: boolean;
+  cabinet_locked?: boolean | "Y" | "N";
+  lock_status?: "LOCKED" | "UNLOCKED" | string;
   is_favorite: boolean;
   ai_status: AiStatus;
   is_confirmed: boolean;
