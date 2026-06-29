@@ -39,7 +39,7 @@ const getSummaryFields = (item: UploadProcessItem) => {
   return [
     ...fields,
     { label: "문서명", value: item.displayName },
-    { label: "AI 분류", value: item.category },
+    ...(item.status === "completed" ? [{ label: "AI 분류", value: item.category }] : []),
     { label: "업로드일", value: formatUploadedAt(item.uploadedAt) },
   ].slice(0, 4);
 };
@@ -93,7 +93,7 @@ export function ProcessingCenterPage() {
       (item) => item.status === "analyzing" && item.savedRecordId,
     );
 
-    if (analyzingItems.length === 0) return;
+    if (analyzingItems.length === 0 || categories.length === 0) return;
 
     const timer = window.setInterval(() => {
       uploadService
@@ -112,9 +112,11 @@ export function ProcessingCenterPage() {
                   const sorted = [...docs].sort((a, b) =>
                     b.created_at.localeCompare(a.created_at),
                   );
-                  const matchedDoc = sorted.find(
-                    (d) => d.file_name === item.fileName,
-                  );
+                  const matchedDoc =
+                    sorted.find((d) => d.file_name === item.fileName) ??
+                    sorted.find(
+                      (d) => new Date(d.created_at) >= new Date(item.uploadedAt),
+                    );
 
                   if (matchedDoc) {
                     const cat = categories.find(
@@ -123,10 +125,13 @@ export function ProcessingCenterPage() {
                     const category: UploadDocumentCategory = cat
                       ? (cat.name as UploadDocumentCategory)
                       : "기타";
+                    const detail = await documentService.getDocument(matchedDoc.document_id);
                     updateItem(item.id, {
                       status: "completed",
                       progress: 100,
                       savedTarget: "documents",
+                      finalDocumentId: matchedDoc.document_id,
+                      pageFileUrls: detail.document_files?.map((f) => f.file_url) ?? [],
                       category,
                       memo: "AI 분석이 완료되어 디지털 캐비닛에 저장되었습니다.",
                     });
@@ -144,6 +149,7 @@ export function ProcessingCenterPage() {
                         status: "completed",
                         progress: 100,
                         savedTarget: "receipts",
+                        finalDocumentId: matchedReceipt.receiptId,
                         category: "영수증",
                         memo: "AI 분석이 완료되어 영수증 보드에 저장되었습니다.",
                       });
@@ -283,7 +289,7 @@ export function ProcessingCenterPage() {
           <div>
             <h2>{selectedItem.displayName}</h2>
             <p>
-              페이지 수: {pageCount}장 · AI 결과: {selectedItem.category} ·
+              페이지 수: {pageCount}장 · AI 결과: {selectedItem.status === "completed" ? selectedItem.category : "분석중"} ·
               업로드: {formatUploadedAt(selectedItem.uploadedAt)}
             </p>
           </div>
@@ -301,16 +307,25 @@ export function ProcessingCenterPage() {
             className="process-preview-strip"
             aria-label="문서 페이지 미리보기"
           >
-            {Array.from({ length: Math.min(pageCount, 4) }).map((_, index) => (
-              <figure key={index}>
-                <div className="process-page-thumbnail">
-                  <i />
-                  <i />
-                  <i />
-                </div>
-                <figcaption>{index + 1}</figcaption>
-              </figure>
-            ))}
+            {Array.from({ length: Math.min(pageCount, 4) }).map((_, index) => {
+              const url = selectedItem.pageFileUrls?.[index];
+              return (
+                <figure key={index}>
+                  <div className="process-page-thumbnail">
+                    {url ? (
+                      <img src={url} alt={`${index + 1}페이지`} />
+                    ) : (
+                      <>
+                        <i />
+                        <i />
+                        <i />
+                      </>
+                    )}
+                  </div>
+                  <figcaption>{index + 1}</figcaption>
+                </figure>
+              );
+            })}
             {pageCount > 4 && (
               <figure className="process-page-more">
                 <div>+{pageCount - 4}</div>
@@ -334,12 +349,14 @@ export function ProcessingCenterPage() {
 
           <div className="process-detail-section-title">
             <h3>분석 요약</h3>
-            <span>{selectedItem.category}</span>
+            {selectedItem.status === "completed" && <span>{selectedItem.category}</span>}
           </div>
           <p className="process-analysis-description">
             {selectedItem.status === "failed"
               ? "분석에 실패했습니다. 재시도하거나 수기로 등록해 주세요."
-              : `${selectedItem.category} 문서의 주요 정보가 추출되었습니다.`}
+              : selectedItem.status === "completed"
+              ? `${selectedItem.category} 문서의 주요 정보가 추출되었습니다.`
+              : "AI가 문서를 분석하고 있습니다."}
           </p>
 
           <dl className="process-summary-grid">
@@ -369,42 +386,53 @@ export function ProcessingCenterPage() {
               >
                 재시도
               </button>
+              <button
+                type="button"
+                className="process-text-button"
+                onClick={() => deleteProcessItem(selectedItem.id)}
+              >
+                업로드 목록에서 삭제
+              </button>
             </>
-          ) : (
+          ) : selectedItem.status === "completed" ? (
             <>
               <button
                 type="button"
                 className="process-ghost-button"
-                onClick={() => setSelectedItemId(selectedItem.id)}
+                onClick={() => {
+                  if (selectedItem.finalDocumentId) {
+                    const path =
+                      selectedItem.savedTarget === "receipts"
+                        ? `/receipts/${selectedItem.finalDocumentId}`
+                        : `/documents/${selectedItem.finalDocumentId}`;
+                    navigate(path);
+                  }
+                }}
               >
                 문서 상세 보기
               </button>
-
-              {selectedItem.status === "completed" && (
-                <button
-                  type="button"
-                  className="process-primary-button"
-                  onClick={() =>
-                    navigate(
-                      selectedItem.savedTarget === "receipts"
-                        ? "/receipts"
-                        : "/documents",
-                    )
-                  }
-                >
-                  {getMoveButtonLabel(selectedItem.category)}
-                </button>
-              )}
+              <button
+                type="button"
+                className="process-primary-button"
+                onClick={() =>
+                  navigate(
+                    selectedItem.savedTarget === "receipts"
+                      ? "/receipts"
+                      : "/documents",
+                  )
+                }
+              >
+                {getMoveButtonLabel(selectedItem.category)}
+              </button>
+              <button
+                type="button"
+                className="process-text-button"
+                onClick={() => deleteProcessItem(selectedItem.id)}
+              >
+                업로드 목록에서 삭제
+              </button>
             </>
-          )}
-
-          <button
-            type="button"
-            className="process-text-button"
-            onClick={() => deleteProcessItem(selectedItem.id)}
-          >
-            업로드 목록에서 삭제
-          </button>
+          ) : null}
         </div>
       </aside>
     );

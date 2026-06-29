@@ -30,13 +30,21 @@ export const uploadService = {
     return res.data.data.tempDocumentId;
   },
 
-  async uploadPage(tempDocumentId: string, file: File, pageNo: number): Promise<UploadPageData> {
+  async uploadPage(
+    tempDocumentId: string,
+    file: File,
+    pageNo: number,
+  ): Promise<UploadPageData> {
     const form = new FormData();
     form.append("file", file);
     form.append("pageNo", String(pageNo));
-    const res = await api.post<ApiResponse<UploadPageData>>(`/upload/${tempDocumentId}`, form, {
-      headers: { "Content-Type": undefined },
-    });
+    const res = await api.post<ApiResponse<UploadPageData>>(
+      `/upload/${tempDocumentId}`,
+      form,
+      {
+        headers: { "Content-Type": undefined },
+      },
+    );
     return res.data.data;
   },
 
@@ -51,12 +59,22 @@ export const uploadService = {
     tempDocumentId: string,
     files: Array<{ id: string; pageNo: number }>,
   ): Promise<{ tempDocumentId: string }> {
-    const res = await api.post<ApiResponse<{ tempDocumentId: string }>>(`/upload/${tempDocumentId}/ai`, { files });
+    const res = await api.post<ApiResponse<{ tempDocumentId: string }>>(
+      `/upload/${tempDocumentId}/ai`,
+      { files },
+    );
     return res.data.data;
   },
 
-  async getTempList(): Promise<Array<{ tempDocumentId: string; aiStatus: AiStatus | "PROCESSING" }>> {
-    const res = await api.get<ApiResponse<Array<{ tempDocumentId: string; aiStatus: AiStatus | "PROCESSING" }>>>("/upload/temp-list");
+  async getTempList(): Promise<
+    Array<{ tempDocumentId: string; aiStatus: AiStatus | "PROCESSING" }>
+  > {
+    const res =
+      await api.get<
+        ApiResponse<
+          Array<{ tempDocumentId: string; aiStatus: AiStatus | "PROCESSING" }>
+        >
+      >("/upload/temp-list");
     return res.data.data;
   },
 
@@ -70,12 +88,17 @@ export const uploadService = {
     extractedData?: Record<string, string>;
     files?: Array<{ fileUrl: string; pageNo: number }>;
   }): Promise<string> {
-    const res = await api.post<ApiResponse<CreateDocumentData>>("/documents", body);
+    const res = await api.post<ApiResponse<CreateDocumentData>>(
+      "/documents",
+      body,
+    );
     return res.data.data.documentId;
   },
 
   async getAiStatus(documentId: string): Promise<AiStatus> {
-    const res = await api.get<ApiResponse<AiStatusData>>(`/documents/${documentId}/ai-status`);
+    const res = await api.get<ApiResponse<AiStatusData>>(
+      `/documents/${documentId}/ai-status`,
+    );
     return res.data.data.aiStatus;
   },
 };

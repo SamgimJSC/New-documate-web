@@ -33,7 +33,9 @@ export type UploadProcessItem = {
   errorMessage?: string;
   savedTarget?: UploadSaveTarget;
   savedRecordId?: string;
+  finalDocumentId?: string;
   uploadedFileIds?: Array<{ id: string; pageNo: number }>;
+  pageFileUrls?: string[];
 };
 
 export type ManualRegistrationInput = {

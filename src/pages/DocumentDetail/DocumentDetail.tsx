@@ -83,10 +83,10 @@ const EXTRACTED_FIELD_CONFIG: Record<string, ExtractedFieldConfig[]> = {
     { key: "품목", label: "품목", aliases: ["품목", "상품명", "items", "item_name", "product_name"], wide: true },
   ],
   medical: [
-    { key: "병원명", label: "병원명", aliases: ["병원명", "약국명", "기관명", "hospital_name", "pharmacy_name", "medical_institution"] },
-    { key: "진료일", label: "진료일", aliases: ["진료일", "처방일", "date", "visit_date", "treatment_date"] },
-    { key: "금액", label: "금액", aliases: ["금액", "진료비", "결제금액", "amount", "total_amount", "payment_amount"] },
-    { key: "약품명", label: "약품명", aliases: ["약품명", "약명", "처방약", "medicine_name", "drug_name", "medication"], wide: true },
+    { key: "병원명", label: "병원명", aliases: ["병원명", "약국명", "기관명", "hospital_name", "pharmacy_name", "medical_institution", "hospital", "clinic_name"] },
+    { key: "진료일", label: "진료일", aliases: ["진료일", "처방일", "date", "visit_date", "treatment_date", "issue_date", "prescription_date"] },
+    { key: "금액", label: "금액", aliases: ["금액", "진료비", "결제금액", "amount", "total_amount", "payment_amount", "total_price"] },
+    { key: "약품명", label: "약품명", aliases: ["약품명", "약명", "처방약", "medicine_name", "drug_name", "medication", "drug_code", "prescription_number"], wide: true },
   ],
   warranty: [
     { key: "제품명", label: "제품명", aliases: ["제품명", "품목", "상품명", "product_name", "item_name", "model_name"], wide: true },
