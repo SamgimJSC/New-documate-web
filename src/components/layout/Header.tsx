@@ -18,7 +18,7 @@ const PAGE_NAMES: Record<string, string> = {
 };
 
 const getPageName = (pathname: string): string => {
-  if (pathname.startsWith("/documents/")) return "문서 상세";
+  if (pathname.startsWith("/documents/")) return "디지털 캐비닛";
   if (pathname.startsWith("/receipts/")) return "영수증 상세";
   if (pathname.startsWith("/mypage")) return "마이페이지";
   return PAGE_NAMES[pathname] || "";
@@ -30,10 +30,21 @@ type HeaderBreadcrumb = {
   currentLabel: string;
 };
 
-const getHeaderBreadcrumb = (pathname: string): HeaderBreadcrumb | null => {
+const getHeaderBreadcrumb = (
+  pathname: string,
+  documentTitle = "",
+): HeaderBreadcrumb | null => {
+  if (pathname.startsWith("/documents/")) {
+    return {
+      parentLabel: "디지털 캐비닛",
+      parentPath: "/documents",
+      currentLabel: documentTitle || "문서 상세",
+    };
+  }
+
   if (pathname === "/upload") {
     return {
-      parentLabel: "문서 관리",
+      parentLabel: "디지털 캐비닛",
       parentPath: "/documents",
       currentLabel: "업로드 스튜디오",
     };
@@ -41,7 +52,7 @@ const getHeaderBreadcrumb = (pathname: string): HeaderBreadcrumb | null => {
 
   if (pathname === "/upload/manual") {
     return {
-      parentLabel: "문서 관리",
+      parentLabel: "디지털 캐비닛",
       parentPath: "/documents",
       currentLabel: "수기 등록",
     };
@@ -49,7 +60,7 @@ const getHeaderBreadcrumb = (pathname: string): HeaderBreadcrumb | null => {
 
   if (pathname === "/processing-center") {
     return {
-      parentLabel: "문서 관리",
+      parentLabel: "디지털 캐비닛",
       parentPath: "/documents",
       currentLabel: "처리 센터",
     };
@@ -99,9 +110,11 @@ const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
   const location = useLocation();
 
   const pageName = getPageName(location.pathname);
-  const breadcrumb = getHeaderBreadcrumb(location.pathname);
+  const isDocumentDetail = location.pathname.startsWith("/documents/");
   const isMyPage = location.pathname.startsWith("/mypage");
 
+  const [documentTitle, setDocumentTitle] = useState("");
+  const breadcrumb = getHeaderBreadcrumb(location.pathname, documentTitle);
   const [panelOpen, setPanelOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -115,6 +128,38 @@ const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
   useEffect(() => {
     fetchUnreadCount();
   }, [fetchUnreadCount]);
+
+  useEffect(() => {
+    if (!isDocumentDetail) {
+      setDocumentTitle("");
+      return;
+    }
+
+    const savedTitle = sessionStorage.getItem("documate:header:documentTitle");
+    setDocumentTitle(savedTitle || "문서 상세");
+
+    const handleDocumentTitleChange = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        pathname?: string;
+        title?: string;
+      }>;
+
+      if (customEvent.detail?.pathname !== location.pathname) return;
+      setDocumentTitle(customEvent.detail.title || "문서 상세");
+    };
+
+    window.addEventListener(
+      "documate:document-title-change",
+      handleDocumentTitleChange,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "documate:document-title-change",
+        handleDocumentTitleChange,
+      );
+    };
+  }, [isDocumentDetail, location.pathname]);
 
   const handleLogoClick = () => {
     if (location.pathname === "/mypage") {

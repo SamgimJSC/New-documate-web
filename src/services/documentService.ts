@@ -28,6 +28,10 @@ interface DocumentApiItem {
   expiryDate?: string | null;
   renewalDate?: string | null;
   isMasked: boolean;
+  isLocked?: boolean | "Y" | "N";
+  locked?: boolean;
+  cabinetLocked?: boolean | "Y" | "N";
+  lockStatus?: "LOCKED" | "UNLOCKED" | string;
   isFavorite: boolean;
   aiStatus: "PENDING" | "PROCESSING" | "DONE" | "FAILED";
   isConfirmed: boolean;
@@ -78,6 +82,32 @@ interface DocumentListData {
   hasNext: boolean;
 }
 
+
+const LOCAL_PROTECTED_DOCUMENTS_KEY = "documate:protected-documents";
+
+const readLocalProtectedDocumentIds = (): string[] => {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const raw = window.localStorage.getItem(LOCAL_PROTECTED_DOCUMENTS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === "string")
+      : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeLocalProtectedDocumentIds = (ids: string[]) => {
+  if (typeof window === "undefined") return;
+
+  window.localStorage.setItem(
+    LOCAL_PROTECTED_DOCUMENTS_KEY,
+    JSON.stringify(Array.from(new Set(ids))),
+  );
+};
+
 const mapDocument = (raw: DocumentApiItem): Document => ({
   document_id: raw.documentId,
   user_id: raw.userId,
@@ -104,6 +134,10 @@ const mapDocument = (raw: DocumentApiItem): Document => ({
   expiry_date: raw.expiryDate ?? undefined,
   renewal_date: raw.renewalDate ?? undefined,
   is_masked: raw.isMasked,
+  is_locked: raw.isLocked ?? raw.locked ?? raw.cabinetLocked ?? (raw.lockStatus === "LOCKED"),
+  locked: raw.locked,
+  cabinet_locked: raw.cabinetLocked,
+  lock_status: raw.lockStatus,
   is_favorite: raw.isFavorite,
   ai_status: raw.aiStatus,
   is_confirmed: raw.isConfirmed,
@@ -116,6 +150,21 @@ const mapDocument = (raw: DocumentApiItem): Document => ({
 });
 
 export const documentService = {
+  isDocumentLocallyProtected(documentId: string): boolean {
+    return readLocalProtectedDocumentIds().includes(documentId);
+  },
+
+  setDocumentLocallyProtected(documentId: string, isProtected: boolean): void {
+    const ids = readLocalProtectedDocumentIds();
+
+    if (isProtected) {
+      writeLocalProtectedDocumentIds([...ids, documentId]);
+      return;
+    }
+
+    writeLocalProtectedDocumentIds(ids.filter((id) => id !== documentId));
+  },
+
   async getCategories(): Promise<DocumentCategory[]> {
     const res = await api.get<
       ApiResponse<

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Star, Grid, List } from "lucide-react";
+import { Star, Grid, List, LockKeyhole } from "lucide-react";
 import FilterChip from "../../components/common/FilterChip";
 import Select from "../../components/common/Select";
 import Badge from "../../components/common/Badge";
@@ -29,6 +29,15 @@ const AI_STATUS_VARIANT: Record<
   DONE: "success",
   FAILED: "danger",
 };
+
+const getDocumentProtected = (doc: Document) =>
+  doc.is_locked === true ||
+  doc.locked === true ||
+  doc.cabinet_locked === true ||
+  doc.is_locked === "Y" ||
+  doc.cabinet_locked === "Y" ||
+  doc.lock_status === "LOCKED" ||
+  documentService.isDocumentLocallyProtected(doc.document_id);
 
 const Documents: React.FC = () => {
   const navigate = useNavigate();
@@ -152,25 +161,40 @@ const Documents: React.FC = () => {
               (c) => c.category_id === doc.category_id,
             );
             const aiStatus = doc.ai_status as AiStatus;
+            const isProtected = getDocumentProtected(doc);
+
             return (
               <div
                 key={doc.document_id}
-                className="document-card"
+                className={`document-card${isProtected ? " document-card--protected" : ""}`}
                 onClick={() => navigate(`/documents/${doc.document_id}`)}
               >
                 <div className="document-card__top">
                   <div className="document-card__file-type">
                     {doc.file_type}
                   </div>
-                  {doc.is_favorite && (
-                    <Star
-                      size={14}
-                      className="document-card__star"
-                      fill="currentColor"
-                    />
-                  )}
+                  <div className="document-card__icons">
+                    {isProtected && (
+                      <span
+                        className="document-card__lock"
+                        title="PIN 보호 문서"
+                      >
+                        <LockKeyhole size={13} />
+                      </span>
+                    )}
+                    {doc.is_favorite && (
+                      <Star
+                        size={14}
+                        className="document-card__star"
+                        fill="currentColor"
+                      />
+                    )}
+                  </div>
                 </div>
-                <p className="document-card__title">{doc.title}</p>
+                <p className="document-card__title">
+                  {doc.title}
+                  {isProtected && <span>보호됨</span>}
+                </p>
                 <p className="document-card__category">{category?.name}</p>
                 <div className="document-card__footer">
                   {doc.expiry_date && (
@@ -209,10 +233,12 @@ const Documents: React.FC = () => {
               (c) => c.category_id === doc.category_id,
             );
             const aiStatus = doc.ai_status as AiStatus;
+            const isProtected = getDocumentProtected(doc);
+
             return (
               <div
                 key={doc.document_id}
-                className="documents__list-row"
+                className={`documents__list-row${isProtected ? " documents__list-row--protected" : ""}`}
                 onClick={() => navigate(`/documents/${doc.document_id}`)}
               >
                 <span className="documents__list-title">
@@ -221,6 +247,12 @@ const Documents: React.FC = () => {
                       size={12}
                       fill="currentColor"
                       style={{ color: "#f59e0b", marginRight: 4 }}
+                    />
+                  )}
+                  {isProtected && (
+                    <LockKeyhole
+                      size={12}
+                      style={{ color: "var(--color-primary-dark)", marginRight: 5 }}
                     />
                   )}
                   {doc.title}
@@ -235,6 +267,9 @@ const Documents: React.FC = () => {
                   <Badge variant={AI_STATUS_VARIANT[aiStatus]}>
                     {AI_STATUS_LABEL[aiStatus]}
                   </Badge>
+                  {isProtected && (
+                    <span className="documents__protected-chip">보호</span>
+                  )}
                 </span>
                 <span>{formatDate(doc.created_at)}</span>
               </div>
