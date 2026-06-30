@@ -59,7 +59,7 @@ const Receipts: React.FC = () => {
         setTopCategoryName(found?.categoryName ?? "-");
       }
     }).catch(() => {});
-  }, []);
+  }, [refreshKey]);
 
   useEffect(() => {
     setLoading(true);
@@ -207,7 +207,7 @@ const Receipts: React.FC = () => {
       <ReceiptBranchModal
         isOpen={branchOpen}
         onClose={handleBranchClose}
-        onSaved={() => setRefreshKey((k) => k + 1)}
+        onSaved={() => { setPage(1); setRefreshKey((k) => k + 1); }}
       />
     </div>
   );
