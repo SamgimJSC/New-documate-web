@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Bell,
   FileCheck2,
@@ -8,9 +8,10 @@ import {
   Smartphone,
 } from "lucide-react";
 import Badge from "../../components/common/Badge";
-import { mockUserSettings, mockUserConsents } from "../../data/mockUsers";
+import { mockUserConsents } from "../../data/mockUsers";
+import { userService } from "../../services/userService";
 import { useToast } from "../../components/common/Toast";
-import type { ConsentType } from "../../types/user";
+import type { ConsentType, UserSettings } from "../../types/user";
 import "./MyPage.css";
 
 const CONSENT_LABELS: Record<ConsentType, string> = {
@@ -30,14 +31,23 @@ const CONSENT_DESCS: Record<ConsentType, string> = {
 const MyPageSettings: React.FC = () => {
   const { showToast } = useToast();
 
-  const [settings, setSettings] = useState(mockUserSettings);
+  const [settings, setSettings] = useState<UserSettings | null>(null);
   const [consents, setConsents] = useState(mockUserConsents);
   const [showSavedNote, setShowSavedNote] = useState(false);
+
+  useEffect(() => {
+    userService
+      .getSettings()
+      .then(setSettings)
+      .catch(() => showToast("설정을 불러오지 못했습니다.", "error"));
+  }, []);
 
   const marketingConsent =
     consents.find((c) => c.consent_type === "MARKETING")?.is_agreed ?? false;
 
-  const toggleSetting = (key: keyof typeof settings) => {
+  const toggleSetting = async (key: "push_enabled" | "email_noti_enabled") => {
+    if (!settings) return;
+
     if (key === "push_enabled" && !marketingConsent) {
       showToast(
         "마케팅 정보 수신 동의 후 FCM 푸시 알림을 켤 수 있습니다.",
@@ -46,14 +56,21 @@ const MyPageSettings: React.FC = () => {
       return;
     }
 
-    setSettings((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-      updated_at: new Date().toISOString(),
-    }));
+    const nextValue = !settings[key];
 
-    setShowSavedNote(true);
-    showToast("설정이 변경되었습니다.", "success");
+    // 낙관적 업데이트
+    setSettings((prev) => prev && { ...prev, [key]: nextValue });
+
+    try {
+      const updated = await userService.updateSettings({ [key]: nextValue });
+      setSettings(updated);
+      setShowSavedNote(true);
+      showToast("설정이 변경되었습니다.", "success");
+    } catch {
+      // 실패 시 원래 값으로 롤백
+      setSettings((prev) => prev && { ...prev, [key]: !nextValue });
+      showToast("설정 변경에 실패했습니다.", "error");
+    }
   };
 
   const toggleConsent = (consentId: string) => {
@@ -83,6 +100,14 @@ const MyPageSettings: React.FC = () => {
     setShowSavedNote(true);
     showToast("동의 설정이 변경되었습니다.", "success");
   };
+
+  if (!settings) {
+    return (
+      <div className="mypage-section mypage-settings-figma">
+        설정을 불러오는 중...
+      </div>
+    );
+  }
 
   return (
     <div className="mypage-section mypage-settings-figma">
@@ -122,7 +147,7 @@ const MyPageSettings: React.FC = () => {
             </span>
 
             <div className="mypage-settings-figma__copy">
-              <strong>FCM 푸시 알림</strong>
+              <strong>푸시 알림</strong>
               <p>
                 웹/앱 공통 푸시 알림을 받습니다. 마케팅 동의가 꺼져 있으면
                 사용할 수 없어요.
@@ -183,7 +208,9 @@ const MyPageSettings: React.FC = () => {
 
               <label
                 className={`mypage-settings__switch${
-                  consent.is_required ? " mypage-settings__switch--disabled" : ""
+                  consent.is_required
+                    ? " mypage-settings__switch--disabled"
+                    : ""
                 }`}
               >
                 <input
@@ -208,7 +235,6 @@ const MyPageSettings: React.FC = () => {
           </div>
         </section>
       )}
-
     </div>
   );
 };
