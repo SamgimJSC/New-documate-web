@@ -5,7 +5,7 @@ import Card from "../../components/common/Card";
 import Badge from "../../components/common/Badge";
 import { useUserStore } from "../../store/userStore";
 import { documentService } from "../../services/documentService";
-import { mockReceipts } from "../../data/mockReceipts";
+import { reportsService, type ThisMonthSummary } from "../../services/reportsService";
 import { mockMonthlyReports } from "../../data/mockReports";
 import type { Document } from "../../types/document";
 import { formatDate, getDday } from "../../utils/formatDate";
@@ -16,6 +16,7 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<"recent" | "favorite">("recent");
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [thisMonth, setThisMonth] = useState<ThisMonthSummary | null>(null);
 
   const user = useUserStore((s) => s.user);
 
@@ -23,6 +24,10 @@ const Dashboard: React.FC = () => {
     documentService.getDocuments()
       .then((list) => setDocuments(list.filter((d) => d.is_deleted === "N")))
       .catch(() => setDocuments([]));
+
+    reportsService.getThisMonthSummary()
+      .then(setThisMonth)
+      .catch(() => setThisMonth({ year: 0, month: 0, totalSpend: 0, receiptCount: 0 }));
   }, []);
 
   if (!user) return null;
@@ -35,13 +40,8 @@ const Dashboard: React.FC = () => {
     const diffDays = Math.round((exp.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     return diffDays >= 0 && diffDays <= 90;
   });
-  const thisMonthReceipts = mockReceipts.filter((r) => {
-    const now = new Date();
-    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    console.log(month)
-    return r.purchaseDate.startsWith(month);
-  });
-  const thisMonthSpend = thisMonthReceipts.reduce((s, r) => s + r.totalAmount, 0);
+  const thisMonthSpend = thisMonth?.totalSpend ?? 0;
+  const thisMonthReceiptCount = thisMonth?.receiptCount ?? 0;
   const latestReport = mockMonthlyReports[mockMonthlyReports.length - 1];
   const storagePercent = user.storage_quota_bytes > 0
     ? Math.round((user.storage_used_bytes / user.storage_quota_bytes) * 100)
@@ -161,7 +161,7 @@ const Dashboard: React.FC = () => {
               <p className="dashboard__section-subtitle">영수증 기반 소비 요약</p>
             </div>
             <p className="dashboard__spend-amount">{formatKRW(thisMonthSpend)}</p>
-            <p className="dashboard__spend-count">영수증 {thisMonthReceipts.length}건</p>
+            <p className="dashboard__spend-count">영수증 {thisMonthReceiptCount}건</p>
             <button className="dashboard__view-all dashboard__view-all--center" onClick={() => navigate("/finance")}>가계부 보기</button>
           </Card>
 
