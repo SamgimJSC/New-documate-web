@@ -1,5 +1,5 @@
 import { api } from "./api";
-import type { User } from "../types/user";
+import type { User, UserSettings } from "../types/user";
 
 interface ApiResponse<T = null> {
   message: string;
@@ -25,6 +25,17 @@ interface UserApiResponse {
   updatedAt: string;
 }
 
+interface UserSettingsApiResponse {
+  settingId: string;
+  userId: string;
+  pushEnabled: boolean;
+  emailNotiEnabled: boolean;
+  cameraAutoOcr: boolean;
+  darkMode: boolean;
+  appLockEnabled: boolean;
+  updatedAt: string;
+}
+
 const mapUser = (raw: UserApiResponse): User => ({
   user_id: raw.userId,
   email: raw.email,
@@ -43,10 +54,35 @@ const mapUser = (raw: UserApiResponse): User => ({
   is_deleted: "N",
 });
 
+const mapSettings = (raw: UserSettingsApiResponse): UserSettings => ({
+  setting_id: raw.settingId,
+  user_id: raw.userId,
+  push_enabled: raw.pushEnabled,
+  email_noti_enabled: raw.emailNotiEnabled,
+  camera_auto_ocr: raw.cameraAutoOcr,
+  dark_mode: raw.darkMode,
+  app_lock_enabled: raw.appLockEnabled,
+  updated_at: raw.updatedAt,
+});
+
 export const userService = {
   async getMe(): Promise<User> {
     const res = await api.get<ApiResponse<UserApiResponse>>("/users/me");
     return mapUser(res.data.data);
+  },
+
+  async getSettings(): Promise<UserSettings> {
+    const res = await api.get<ApiResponse<UserSettingsApiResponse>>("/users/me/settings");
+    return mapSettings(res.data.data);
+  },
+
+  async updateSettings(patch: Partial<Pick<UserSettings, "push_enabled" | "email_noti_enabled">>): Promise<UserSettings> {
+    const body: Record<string, boolean> = {};
+    if (patch.push_enabled !== undefined) body.pushEnabled = patch.push_enabled;
+    if (patch.email_noti_enabled !== undefined) body.emailNotiEnabled = patch.email_noti_enabled;
+
+    const res = await api.patch<ApiResponse<UserSettingsApiResponse>>("/users/me/settings", body);
+    return mapSettings(res.data.data);
   },
 
   async verifyPin(pinNumber: string): Promise<void> {
