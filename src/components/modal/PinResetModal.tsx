@@ -3,6 +3,7 @@ import Modal from "../common/Modal";
 import Button from "../common/Button";
 import PinKeypad from "../common/PinKeypad";
 import { useToast } from "../common/Toast";
+import { userService } from "../../services/userService";
 import "./PinResetModal.css";
 
 type PinStep = "current" | "new" | "confirm";
@@ -36,6 +37,7 @@ const PinResetModal: React.FC<Props> = ({ isOpen, onClose }) => {
   const [currentPin, setCurrentPin] = useState("");
   const [newPin, setNewPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
@@ -66,15 +68,30 @@ const PinResetModal: React.FC<Props> = ({ isOpen, onClose }) => {
     setConfirmPin(value);
   };
 
-  const handleNext = (pinValue: string) => {
+  const handleNext = async (pinValue: string) => {
     if (pinValue.length !== 6) {
       showToast("PIN 6자리를 입력해주세요.", "error");
       return;
     }
 
     if (step === "current") {
-      // TODO: API 연결 시 현재 PIN 검증 후 다음 단계로 이동
-      setStep("new");
+      setIsLoading(true);
+      try {
+        await userService.verifyPin(pinValue);
+        setStep("new");
+      } catch (err: any) {
+        const errorCode = err?.response?.data?.errorCode;
+        if (errorCode === "INVALID_PIN") {
+          showToast("현재 PIN이 일치하지 않습니다.", "error");
+        } else if (errorCode === "PIN_NOT_SET") {
+          showToast("등록된 PIN이 없습니다.", "error");
+        } else {
+          showToast("PIN 확인에 실패했습니다. 다시 시도해주세요.", "error");
+        }
+        setCurrentPin("");
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
 
@@ -89,9 +106,16 @@ const PinResetModal: React.FC<Props> = ({ isOpen, onClose }) => {
       return;
     }
 
-    // TODO: API 연결 시 새 PIN 저장 요청
-    showToast("PIN이 변경되었습니다.", "success");
-    onClose();
+    setIsLoading(true);
+    try {
+      await userService.resetPin(currentPin, newPin);
+      showToast("PIN이 변경되었습니다.", "success");
+      onClose();
+    } catch (err: any) {
+      showToast("PIN 변경에 실패했습니다. 다시 시도해주세요.", "error");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleBack = () => {
@@ -127,7 +151,7 @@ const PinResetModal: React.FC<Props> = ({ isOpen, onClose }) => {
           onSubmit={handleNext}
           title={STEP_TEXT[step].title}
           description={STEP_TEXT[step].desc}
-          submitLabel={step === "confirm" ? "변경" : "다음"}
+          submitLabel={isLoading ? "처리 중..." : step === "confirm" ? "변경" : "다음"}
           helperText="숫자는 화면에 표시되지 않고 입력 자리만 표시됩니다."
         />
 

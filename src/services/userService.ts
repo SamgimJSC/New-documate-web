@@ -48,4 +48,12 @@ export const userService = {
     const res = await api.get<ApiResponse<UserApiResponse>>("/users/me");
     return mapUser(res.data.data);
   },
+
+  async verifyPin(pinNumber: string): Promise<void> {
+    await api.post<ApiResponse>("/users/me/pin/verify", { pinNumber });
+  },
+
+  async resetPin(currentPin: string, newPin: string): Promise<void> {
+    await api.patch<ApiResponse>("/users/me/pin", { currentPin, newPin });
+  },
 };
