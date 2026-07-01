@@ -44,6 +44,8 @@ const MyPageHome: React.FC = () => {
     try {
       await authService.logout();
     } finally {
+      localStorage.removeItem('stayLoggedIn');
+      sessionStorage.removeItem('sessionActive');
       navigate("/login", { replace: true });
     }
   };

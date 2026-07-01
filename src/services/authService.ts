@@ -38,8 +38,8 @@ export const authService = {
     return res.data;
   },
 
-  async login(email: string, password: string, _rememberMe = false) {
-    const res = await api.post<ApiResponse>("/auth/login", { email, password });
+  async login(email: string, password: string, stayLoggedIn = false) {
+    const res = await api.post<ApiResponse>("/auth/login", { email, password, stayLoggedIn });
     return res.data;
   },
 
