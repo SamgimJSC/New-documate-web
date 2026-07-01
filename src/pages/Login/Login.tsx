@@ -26,6 +26,12 @@ const Login: React.FC = () => {
       await authService.login(email, password, remember);
       const user = await userService.getMe();
       setUser(user);
+      sessionStorage.setItem('sessionActive', 'true');
+      if (remember) {
+        localStorage.setItem('stayLoggedIn', 'true');
+      } else {
+        localStorage.removeItem('stayLoggedIn');
+      }
       const redirect = new URLSearchParams(location.search).get("redirect");
       navigate(redirect || "/dashboard");
     } catch {

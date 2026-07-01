@@ -9,9 +9,20 @@ function App() {
   const setUser = useUserStore((s) => s.setUser);
 
   useEffect(() => {
+    const stayLoggedIn = localStorage.getItem('stayLoggedIn') === 'true';
+    const sessionActive = sessionStorage.getItem('sessionActive') === 'true';
+
+    if (!stayLoggedIn && !sessionActive) {
+      setAuthReady(true);
+      return;
+    }
+
     userService.getMe()
       .then(setUser)
-      .catch(() => { /* 미로그인 상태 — 로그인 페이지로 라우터가 처리 */ })
+      .catch(() => {
+        localStorage.removeItem('stayLoggedIn');
+        sessionStorage.removeItem('sessionActive');
+      })
       .finally(() => setAuthReady(true));
   }, []);
 

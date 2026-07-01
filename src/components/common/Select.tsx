@@ -13,12 +13,13 @@ interface SelectProps {
   onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   disabled?: boolean;
   placeholder?: string;
+  required?: boolean;
 }
 
-const Select: React.FC<SelectProps> = ({ label, value, options, onChange, disabled = false, placeholder }) => {
+const Select: React.FC<SelectProps> = ({ label, value, options, onChange, disabled = false, placeholder, required }) => {
   return (
     <div className="select-wrapper">
-      {label && <label className="select-label">{label}</label>}
+      {label && <label className="select-label">{label}{required && <span className="input-required"> *</span>}</label>}
       <div className={`select-field${disabled ? " select-field--disabled" : ""}`}>
         <select className="select-element" value={value} onChange={onChange} disabled={disabled}>
           {placeholder && <option value="">{placeholder}</option>}

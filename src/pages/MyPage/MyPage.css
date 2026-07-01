@@ -4967,7 +4967,7 @@
 .mypage-profile__unified-card .mypage-profile__account-row--expanded {
   align-items: start !important;
   min-height: auto !important;
-  padding-top: 16px !important;
+  padding-top: 15px !important;
   padding-bottom: 18px !important;
 }
 
@@ -5013,4 +5013,3 @@
     justify-items: start !important;
   }
 }
-

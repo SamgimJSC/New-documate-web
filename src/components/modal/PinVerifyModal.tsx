@@ -4,6 +4,7 @@ import Modal from "../common/Modal";
 import Button from "../common/Button";
 import PinKeypad from "../common/PinKeypad";
 import { useToast } from "../common/Toast";
+import { userService } from "../../services/userService";
 import "./PinResetModal.css";
 
 interface PinVerifyModalProps {
@@ -25,21 +26,37 @@ const PinVerifyModal: React.FC<PinVerifyModalProps> = ({
 }) => {
   const { showToast } = useToast();
   const [pin, setPin] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!isOpen) setPin("");
   }, [isOpen]);
 
-  const handleSubmit = (value: string) => {
+  const handleSubmit = async (value: string) => {
     if (value.length !== 6) {
       showToast("PIN 6자리를 입력해주세요.", "error");
       return;
     }
 
-    // TODO: API 연결 시 /auth/pin/verify 결과로 성공 여부 처리
-    onVerified(value);
-    setPin("");
-    onClose();
+    setIsLoading(true);
+    try {
+      await userService.verifyPin(value);
+      onVerified(value);
+      setPin("");
+      onClose();
+    } catch (err: any) {
+      const errorCode = err?.response?.data?.errorCode;
+      if (errorCode === "INVALID_PIN") {
+        showToast("PIN이 일치하지 않습니다.", "error");
+      } else if (errorCode === "PIN_NOT_SET") {
+        showToast("등록된 PIN이 없습니다.", "error");
+      } else {
+        showToast("PIN 확인에 실패했습니다. 다시 시도해주세요.", "error");
+      }
+      setPin("");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -59,8 +76,8 @@ const PinVerifyModal: React.FC<PinVerifyModalProps> = ({
           onSubmit={handleSubmit}
           title="PIN 입력"
           description={description}
-          submitLabel={submitLabel}
-          helperText="현재는 프론트 구현 단계라 6자리 입력 시 성공 처리됩니다."
+          submitLabel={isLoading ? "확인 중..." : submitLabel}
+          helperText="숫자는 화면에 표시되지 않고 입력 자리만 표시됩니다."
         />
 
         <div className="pin-verify__actions">

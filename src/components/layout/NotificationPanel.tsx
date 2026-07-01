@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { X, BellOff } from "lucide-react";
 import {
   notificationService,
@@ -27,6 +28,7 @@ function timeAgo(dateStr: string): string {
 }
 
 const NotificationPanel: React.FC<Props> = ({ onClose, onUnreadCountChange }) => {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,19 +50,24 @@ const NotificationPanel: React.FC<Props> = ({ onClose, onUnreadCountChange }) =>
     load();
   }, [load]);
 
-  const handleMarkAsRead = async (n: Notification) => {
-    if (n.isRead) return;
-    try {
-      await notificationService.markAsRead(n.notificationId);
-      setNotifications((prev) =>
-        prev.map((item) =>
-          item.notificationId === n.notificationId
-            ? { ...item, isRead: true }
-            : item,
-        ),
-      );
-      onUnreadCountChange(unreadCount - 1);
-    } catch {}
+  const handleNotificationClick = async (n: Notification) => {
+    if (!n.isRead) {
+      try {
+        await notificationService.markAsRead(n.notificationId);
+        setNotifications((prev) =>
+          prev.map((item) =>
+            item.notificationId === n.notificationId
+              ? { ...item, isRead: true }
+              : item,
+          ),
+        );
+        onUnreadCountChange(unreadCount - 1);
+      } catch {}
+    }
+    if (n.documentId) {
+      onClose();
+      navigate(`/documents/${n.documentId}`);
+    }
   };
 
   const handleMarkAllAsRead = async () => {
@@ -115,7 +122,7 @@ const NotificationPanel: React.FC<Props> = ({ onClose, onUnreadCountChange }) =>
               <div
                 key={n.notificationId}
                 className={`notif-item${n.isRead ? "" : " notif-item--unread"}`}
-                onClick={() => handleMarkAsRead(n)}
+                onClick={() => handleNotificationClick(n)}
               >
                 <span
                   className={`notif-item__dot${n.isRead ? " notif-item__dot--read" : ""}`}
