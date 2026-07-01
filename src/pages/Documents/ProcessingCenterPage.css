@@ -684,6 +684,30 @@ body:has(.processing-center-page) button[class*="fab"] {
   width: 60%;
 }
 
+.process-page-thumbnail.is-deleted {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 66px;
+  color: #94a3b8;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.process-page-thumbnail.is-deleted::after {
+  content: "삭제된 파일";
+  font-size: 9px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.process-page-thumbnail.is-deleted .deleted-icon {
+  display: flex;
+  color: #cbd5e1;
+}
+
 .process-preview-strip figcaption {
   margin-top: 5px;
   color: #64748b;

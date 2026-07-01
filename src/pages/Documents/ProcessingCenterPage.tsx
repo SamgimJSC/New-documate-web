@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type SyntheticEvent } from "react";
+import { Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   uploadLocalService,
@@ -309,11 +310,26 @@ export function ProcessingCenterPage() {
           >
             {Array.from({ length: Math.min(pageCount, 4) }).map((_, index) => {
               const url = selectedItem.pageFileUrls?.[index];
+              const handleImgError = (e: SyntheticEvent<HTMLImageElement>) => {
+                const target = e.currentTarget;
+                target.style.display = "none";
+                const wrapper = target.closest(".process-page-thumbnail");
+                if (wrapper) {
+                  wrapper.classList.add("is-deleted");
+                  if (!wrapper.querySelector(".deleted-icon")) {
+                    const icon = document.createElement("span");
+                    icon.className = "deleted-icon";
+                    icon.innerHTML =
+                      '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
+                    wrapper.insertBefore(icon, wrapper.firstChild);
+                  }
+                }
+              };
               return (
                 <figure key={index}>
                   <div className="process-page-thumbnail">
                     {url ? (
-                      <img src={url} alt={`${index + 1}페이지`} />
+                      <img src={url} alt={`${index + 1}페이지`} onError={handleImgError} />
                     ) : (
                       <>
                         <i />

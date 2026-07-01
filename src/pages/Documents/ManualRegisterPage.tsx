@@ -278,27 +278,8 @@ const readManualDraft = (): ManualFormState => {
   }
 };
 
-const formatExtraMemo = (form: ManualFormState, config: CategoryConfig) => {
-  const extraLines = config.fields
-    .filter(
-      (field) =>
-        !["title", "issuer", "documentDate", "amount"].includes(
-          String(field.key),
-        ),
-    )
-    .map((field) => {
-      const value = String(form[field.key] ?? "").trim();
-      return value ? `${field.label}: ${value}` : "";
-    })
-    .filter(Boolean);
-
-  const memo = form.memo.trim();
-
-  if (extraLines.length === 0) return memo;
-
-  return [memo, "[수기 등록 추가 정보]", ...extraLines]
-    .filter(Boolean)
-    .join("\n");
+const formatExtraMemo = (form: ManualFormState) => {
+  return form.memo.trim();
 };
 
 export function ManualRegisterPage() {
@@ -392,32 +373,51 @@ export function ManualRegisterPage() {
         manualForm.productName ||
         "";
 
-      const memoForSave = formatExtraMemo(manualForm, selectedConfig);
+      const memoForSave = formatExtraMemo(manualForm);
 
       const extractedData: Record<string, string> = {};
 
       if (normalizedIssuer) extractedData["발행처"] = normalizedIssuer;
       if (manualForm.amount) extractedData["금액"] = manualForm.amount;
-      if (manualForm.contractor)
-        extractedData["계약자"] = manualForm.contractor;
-      if (manualForm.items) extractedData["품목"] = manualForm.items;
-      if (manualForm.medicineName) {
-        extractedData["약품명 / 진료 내용"] = manualForm.medicineName;
-      }
-      if (manualForm.productName)
-        extractedData["제품명"] = manualForm.productName;
-      if (manualForm.warrantyPeriod) {
-        extractedData["보증기간"] = manualForm.warrantyPeriod;
-      }
-      if (manualForm.repairDate)
-        extractedData["수리일"] = manualForm.repairDate;
       if (memoForSave) extractedData["메모"] = memoForSave;
 
+      if (manualForm.category === "계약서") {
+        if (manualForm.contractor) extractedData["계약자"] = manualForm.contractor;
+        if (manualForm.contractDate) extractedData["계약일"] = manualForm.contractDate;
+        if (manualForm.expiryDate) extractedData["만료일"] = manualForm.expiryDate;
+        if (manualForm.renewalDate) extractedData["갱신일"] = manualForm.renewalDate;
+      }
+
+      if (manualForm.category === "영수증") {
+        if (manualForm.documentDate) extractedData["날짜"] = manualForm.documentDate;
+        if (manualForm.items) extractedData["품목"] = manualForm.items;
+      }
+
+      if (manualForm.category === "병원/약국") {
+        if (manualForm.documentDate) extractedData["진료일"] = manualForm.documentDate;
+        if (manualForm.medicineName) extractedData["약품명 / 진료 내용"] = manualForm.medicineName;
+      }
+
+      if (manualForm.category === "보증서/A·S") {
+        if (manualForm.productName) extractedData["제품명"] = manualForm.productName;
+        if (manualForm.documentDate) extractedData["구매일"] = manualForm.documentDate;
+        if (manualForm.warrantyPeriod) extractedData["보증기간"] = manualForm.warrantyPeriod;
+        if (manualForm.repairDate) extractedData["수리일"] = manualForm.repairDate;
+      }
+
+      if (manualForm.category === "기타") {
+        if (manualForm.documentDate) extractedData["업로드일"] = manualForm.documentDate;
+      }
+
       let files: Array<{ fileUrl: string; pageNo: number }> | undefined;
+      let fileSizeBytes: string | undefined;
       if (attachmentFile) {
         const tempDocumentId = await uploadService.startSession();
         const uploaded = await uploadService.uploadPage(tempDocumentId, attachmentFile, 1);
         files = uploaded.files.map((f) => ({ fileUrl: f.fileUrl, pageNo: f.pageNo }));
+        fileSizeBytes = uploaded.files
+          .reduce((sum, f) => sum + Number(f.fileSizeBytes ?? 0), 0)
+          .toString();
       }
 
       await uploadService.createDocument({
@@ -427,6 +427,7 @@ export function ManualRegisterPage() {
         issueDate: normalizedDate || undefined,
         extractedData,
         files,
+        fileSizeBytes,
       });
 
       window.localStorage.removeItem(MANUAL_UPLOAD_DRAFT_KEY);
