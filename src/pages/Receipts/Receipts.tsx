@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, ShoppingCart, Calendar, TrendingDown, AlertCircle } from "lucide-react";
+import { Search, ShoppingCart, Calendar, TrendingDown, AlertCircle, ChevronDown } from "lucide-react";
 import Card from "../../components/common/Card";
 import FilterChip from "../../components/common/FilterChip";
 import Select from "../../components/common/Select";
@@ -15,6 +15,59 @@ import type { Receipt } from "../../types/receipt";
 import "./Receipts.css";
 
 const PAGE_SIZE = 10;
+
+type SummaryPeriod = "day" | "week" | "month" | "year";
+
+const SUMMARY_PERIOD_OPTIONS: {
+  value: SummaryPeriod;
+  label: string;
+  spendLabel: string;
+  receiptLabel: string;
+}[] = [
+  { value: "day", label: "일별", spendLabel: "오늘 총지출", receiptLabel: "오늘 영수증" },
+  { value: "week", label: "주별", spendLabel: "이번 주 총지출", receiptLabel: "이번 주 영수증" },
+  { value: "month", label: "월별", spendLabel: "이번 달 총지출", receiptLabel: "이번 달 영수증" },
+  { value: "year", label: "연별", spendLabel: "올해 총지출", receiptLabel: "올해 영수증" },
+];
+
+const toDateValue = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+const getSummaryParams = (period: SummaryPeriod) => {
+  const now = new Date();
+
+  if (period === "day") {
+    const today = toDateValue(now);
+    return { fromDate: today, toDate: today };
+  }
+
+  if (period === "week") {
+    const start = new Date(now);
+    const day = start.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+
+    start.setDate(start.getDate() + diff);
+
+    return {
+      fromDate: toDateValue(start),
+      toDate: toDateValue(now),
+    };
+  }
+
+  if (period === "year") {
+    return { year: now.getFullYear() };
+  }
+
+  return {
+    year: now.getFullYear(),
+    month: now.getMonth() + 1,
+  };
+};
 
 const isNullVal = (v: string | null | undefined) =>
   v == null || v === "" || v === "null" || v === "undefined";
@@ -40,26 +93,49 @@ const Receipts: React.FC = () => {
   const [thisMonthSpend, setThisMonthSpend] = useState(0);
   const [thisMonthCount, setThisMonthCount] = useState(0);
   const [topCategoryName, setTopCategoryName] = useState<string>("-");
+  const [summaryPeriod, setSummaryPeriod] = useState<SummaryPeriod>("month");
+  const [summaryOpen, setSummaryOpen] = useState(false);
+
+  const currentSummaryOption =
+    SUMMARY_PERIOD_OPTIONS.find((option) => option.value === summaryPeriod) ??
+    SUMMARY_PERIOD_OPTIONS[2];
 
   useEffect(() => {
-    const now = new Date();
-    getReceipts({ year: now.getFullYear(), month: now.getMonth() + 1, size: 100 }).then((res) => {
-      const list = res.receipts;
-      setThisMonthSpend(list.reduce((s, r) => s + Number(r.totalAmount), 0));
-      setThisMonthCount(list.length);
-      const catTotals: Record<number, number> = {};
-      list.forEach((r) => {
-        if (r.spendCategoryId) {
-          catTotals[r.spendCategoryId] = (catTotals[r.spendCategoryId] || 0) + Number(r.totalAmount);
+    getReceipts({
+      ...getSummaryParams(summaryPeriod),
+      size: 100,
+    })
+      .then((res) => {
+        const list = res.receipts;
+
+        setThisMonthSpend(
+          list.reduce((sum, receipt) => sum + Number(receipt.totalAmount ?? 0), 0),
+        );
+        setThisMonthCount(list.length);
+
+        const catTotals: Record<number, number> = {};
+
+        list.forEach((receipt) => {
+          if (receipt.spendCategoryId) {
+            catTotals[receipt.spendCategoryId] =
+              (catTotals[receipt.spendCategoryId] || 0) +
+              Number(receipt.totalAmount ?? 0);
+          }
+        });
+
+        const topEntry = Object.entries(catTotals).sort((a, b) => b[1] - a[1])[0];
+
+        if (topEntry) {
+          const found = list.find(
+            (receipt) => receipt.spendCategoryId === Number(topEntry[0]),
+          );
+          setTopCategoryName(found?.categoryName ?? "-");
+        } else {
+          setTopCategoryName("-");
         }
-      });
-      const topEntry = Object.entries(catTotals).sort((a, b) => b[1] - a[1])[0];
-      if (topEntry) {
-        const found = list.find((r) => r.spendCategoryId === Number(topEntry[0]));
-        setTopCategoryName(found?.categoryName ?? "-");
-      }
-    }).catch(() => {});
-  }, [refreshKey]);
+      })
+      .catch(() => {});
+  }, [refreshKey, summaryPeriod]);
 
   useEffect(() => {
     setLoading(true);
@@ -87,15 +163,52 @@ const Receipts: React.FC = () => {
   return (
     <div className="receipts">
       <div className="receipts__summary-grid">
-        <Card className="receipts__summary-card">
-          <div className="receipts__summary-icon receipts__summary-icon--blue"><ShoppingCart size={20} /></div>
+        <Card className="receipts__summary-card receipts__summary-card--spend">
+          <div className="receipts__summary-icon receipts__summary-icon--blue">
+            <ShoppingCart size={20} />
+          </div>
+
+          <div className="receipts__summary-period">
+            <button
+              type="button"
+              className="receipts__summary-period-button"
+              onClick={() => setSummaryOpen((open) => !open)}
+            >
+              {currentSummaryOption.label}
+              <ChevronDown size={14} />
+            </button>
+
+            {summaryOpen && (
+              <div className="receipts__summary-period-menu">
+                {SUMMARY_PERIOD_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={
+                      option.value === summaryPeriod
+                        ? "receipts__summary-period-item is-active"
+                        : "receipts__summary-period-item"
+                    }
+                    onClick={() => {
+                      setSummaryPeriod(option.value);
+                      setSummaryOpen(false);
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <p className="receipts__summary-value">{formatKRW(thisMonthSpend)}</p>
-          <p className="receipts__summary-label">이번달 총지출</p>
+          <p className="receipts__summary-label">{currentSummaryOption.spendLabel}</p>
+          <span className="receipts__summary-change">선택 기간 기준 {thisMonthCount}건</span>
         </Card>
         <Card className="receipts__summary-card">
           <div className="receipts__summary-icon receipts__summary-icon--purple"><Calendar size={20} /></div>
           <p className="receipts__summary-value">{thisMonthCount}건</p>
-          <p className="receipts__summary-label">이번달 영수증</p>
+          <p className="receipts__summary-label">{currentSummaryOption.receiptLabel}</p>
         </Card>
         <Card className="receipts__summary-card">
           <div className="receipts__summary-icon receipts__summary-icon--orange"><TrendingDown size={20} /></div>
