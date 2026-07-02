@@ -61,6 +61,7 @@ const FinanceReport: React.FC = () => {
 
   const [selectedMonth, setSelectedMonth] = useState(getMonthKey(new Date()));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const [monthlyData, setMonthlyData] = useState<MonthlySpendResponse | null>(
     null,
@@ -73,16 +74,25 @@ const FinanceReport: React.FC = () => {
   const [year, monthNum] = selectedMonth.split("-").map(Number);
 
   useEffect(() => {
+    const handleReceiptSaved = () => {
+      setRefreshKey((key) => key + 1);
+    };
+
+    window.addEventListener("documate:receipt-saved", handleReceiptSaved);
+    return () => window.removeEventListener("documate:receipt-saved", handleReceiptSaved);
+  }, []);
+
+  useEffect(() => {
     getMonthlySpend(year)
       .then(setMonthlyData)
       .catch(() => {});
-  }, [year]);
+  }, [year, refreshKey]);
 
   useEffect(() => {
     getDailySpend(year, monthNum)
       .then(setDailyData)
       .catch(() => {});
-  }, [year, monthNum]);
+  }, [year, monthNum, refreshKey]);
 
   useEffect(() => {
     if (selectedDate) {
@@ -94,13 +104,13 @@ const FinanceReport: React.FC = () => {
         .then(setCategorySummary)
         .catch(() => {});
     }
-  }, [year, monthNum, selectedDate]);
+  }, [year, monthNum, selectedDate, refreshKey]);
 
   useEffect(() => {
     getReceipts({ year, month: monthNum, size: 100 })
       .then((res) => setMonthReceipts(res.receipts))
       .catch(() => {});
-  }, [year, monthNum]);
+  }, [year, monthNum, refreshKey]);
 
   const monthTotalSpend = dailyData?.totalSpend ?? 0;
   const totalSpend = categorySummary?.totalSpend ?? 0;

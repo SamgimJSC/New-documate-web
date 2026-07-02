@@ -1,0 +1,104 @@
+/* ================================
+   Receipt Branch Modal
+   - 사진으로 추가 / 수기로 추가 카드 선택형
+================================ */
+
+.receipt-branch-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.receipt-branch-modal__desc {
+  margin: -2px 0 0;
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  text-align: center;
+  font-weight: 650;
+}
+
+.receipt-branch-modal__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.receipt-branch-modal__option {
+  display: flex;
+  min-height: 176px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 22px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: #fff;
+  color: var(--color-text);
+  font-family: inherit;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(34, 48, 70, 0.035);
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+}
+
+.receipt-branch-modal__option:hover {
+  border-color: var(--color-primary-border);
+  background: var(--color-chip-bg);
+  box-shadow: 0 10px 24px rgba(34, 48, 70, 0.07);
+  transform: translateY(-2px);
+}
+
+.receipt-branch-modal__icon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
+}
+
+.receipt-branch-modal__icon--camera {
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+.receipt-branch-modal__icon--manual {
+  background: var(--color-bg-cool);
+  color: var(--color-primary-dark);
+}
+
+.receipt-branch-modal__option strong {
+  color: var(--color-text);
+  font-size: var(--font-size-base);
+  font-weight: 900;
+  letter-spacing: -0.025em;
+}
+
+.receipt-branch-modal__option span:last-child {
+  max-width: 150px;
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
+  font-weight: 650;
+}
+
+.receipt-branch-modal__actions {
+  display: flex;
+  justify-content: center;
+  padding-top: 2px;
+}
+
+@media (max-width: 520px) {
+  .receipt-branch-modal__options {
+    grid-template-columns: 1fr;
+  }
+
+  .receipt-branch-modal__option {
+    min-height: 150px;
+  }
+}
