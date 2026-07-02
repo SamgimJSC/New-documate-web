@@ -126,7 +126,7 @@ body:has(.upload-page) button[class*="fab"] {
   color: var(--upload-text);
   font-size: 30px;
   line-height: 1.16;
-  letter-spacing: -0.05em;
+  letter-spacing: -0.01em;
   font-weight: 950;
 }
 
@@ -165,7 +165,10 @@ body:has(.upload-page) button[class*="fab"] {
   min-width: 0;
 }
 
-.upload-studio-card--studio .upload-studio-card__main,
+.upload-studio-card--studio .upload-studio-card__main {
+  min-height: 438px;
+}
+
 .upload-studio-card--studio .upload-studio-side {
   height: 438px;
 }
@@ -540,7 +543,15 @@ body:has(.upload-page) button[class*="fab"] {
 }
 
 .upload-file-row__name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
+}
+
+.upload-file-row__name-text {
+  min-width: 0;
+  flex: 1;
 }
 
 .upload-file-row b {
@@ -574,6 +585,11 @@ body:has(.upload-page) button[class*="fab"] {
   font-weight: 900;
 }
 
+.upload-file-row em.upload-file-row__status--failed {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
 .upload-file-row__actions {
   display: flex;
   justify-content: flex-end;
@@ -596,6 +612,21 @@ body:has(.upload-page) button[class*="fab"] {
 .upload-file-row__actions button:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+
+.upload-file-row__retry {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #eef6ff;
+  color: #2563eb;
+  cursor: pointer;
 }
 
 .upload-ready-panel__actions {
@@ -645,6 +676,11 @@ body:has(.upload-page) button[class*="fab"] {
   border: 1px solid #dbe7eb;
   background: #ffffff;
   color: #64748b;
+}
+
+.upload-ready-panel__clear:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .upload-ready-panel__start {
