@@ -79,8 +79,70 @@
 
 .documents__filters {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--space-sm);
   flex-wrap: wrap;
+}
+
+.documents__filters-group {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.documents__favorite-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 15px;
+  border: 1px solid var(--color-primary-border);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  color: var(--color-primary-dark);
+  font-size: var(--font-size-sm);
+  font-weight: 850;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: var(--shadow-card-soft);
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+}
+
+.documents__favorite-toggle svg {
+  flex-shrink: 0;
+  transition: fill 0.16s ease, transform 0.16s ease;
+}
+
+.documents__favorite-toggle:hover {
+  border-color: var(--color-primary);
+  background-color: var(--color-chip-bg);
+  color: var(--color-primary-dark);
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-1px);
+}
+
+.documents__favorite-toggle--active {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(91, 157, 153, 0.2);
+}
+
+.documents__favorite-toggle--active:hover {
+  border-color: var(--color-primary-dark);
+  background-color: var(--color-primary-dark);
+  color: #ffffff;
+}
+
+.documents__favorite-toggle--active svg {
+  transform: scale(1.06);
 }
 
 .documents__toolbar {
@@ -156,7 +218,15 @@
 }
 
 .document-card__star {
-  color: #f59e0b;
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 5px;
+  border: 1px solid #f4c56a;
+  border-radius: 9px;
+  background: #fff8e7;
+  color: #d99000;
 }
 
 .document-card__title {
@@ -233,6 +303,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.documents__list-star {
+  flex-shrink: 0;
+  margin-right: 5px;
+  color: var(--color-primary-dark);
 }
 
 

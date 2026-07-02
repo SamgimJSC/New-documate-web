@@ -45,6 +45,7 @@ const Documents: React.FC = () => {
   const [keyword, setKeyword] = useState("");
   const [searchField, setSearchField] = useState<"title" | "tag" | "ocr" | undefined>();
   const [categoryId, setCategoryId] = useState<number | undefined>();
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [sort, setSort] = useState("latest");
   const [viewMode, setViewMode] = useState<"card" | "list">("card");
   const [docs, setDocs] = useState<Document[]>([]);
@@ -76,7 +77,9 @@ const Documents: React.FC = () => {
     setSearchField(field);
   };
 
-  const sorted = [...docs].sort((a, b) => {
+  const filtered = favoritesOnly ? docs.filter((doc) => doc.is_favorite) : docs;
+
+  const sorted = [...filtered].sort((a, b) => {
     if (sort === "latest") return b.created_at.localeCompare(a.created_at);
     return a.title.localeCompare(b.title, "ko");
   });
@@ -86,7 +89,7 @@ const Documents: React.FC = () => {
       <div className="documents__header">
         <div className="documents__header-left">
           <h2 className="documents__count">
-            전체 문서 <span>{docs.length}</span>건
+            {favoritesOnly ? "즐겨찾기 문서" : "전체 문서"} <span>{sorted.length}</span>건
           </h2>
           <SearchBar onSearch={handleSearch} />
         </div>
@@ -98,23 +101,33 @@ const Documents: React.FC = () => {
       </p>
 
       <div className="documents__filters">
-        <FilterChip
-          label="전체"
-          selected={!categoryId}
-          onClick={() => setCategoryId(undefined)}
-        />
-        {categories.filter((c) => c.name !== "영수증").map((c) => (
+        <div className="documents__filters-group">
           <FilterChip
-            key={c.category_id}
-            label={c.name}
-            selected={categoryId === c.category_id}
-            onClick={() =>
-              setCategoryId(
-                categoryId === c.category_id ? undefined : c.category_id,
-              )
-            }
+            label="전체"
+            selected={!categoryId}
+            onClick={() => setCategoryId(undefined)}
           />
-        ))}
+          {categories.filter((c) => c.name !== "영수증").map((c) => (
+            <FilterChip
+              key={c.category_id}
+              label={c.name}
+              selected={categoryId === c.category_id}
+              onClick={() =>
+                setCategoryId(
+                  categoryId === c.category_id ? undefined : c.category_id,
+                )
+              }
+            />
+          ))}
+        </div>
+        <button
+          type="button"
+          className={`documents__favorite-toggle${favoritesOnly ? " documents__favorite-toggle--active" : ""}`}
+          onClick={() => setFavoritesOnly((prev) => !prev)}
+        >
+          <Star size={14} fill={favoritesOnly ? "currentColor" : "none"} />
+          즐겨찾기
+        </button>
       </div>
 
       <div className="documents__toolbar">
@@ -184,7 +197,7 @@ const Documents: React.FC = () => {
                     )}
                     {doc.is_favorite && (
                       <Star
-                        size={14}
+                        size={13}
                         className="document-card__star"
                         fill="currentColor"
                       />
@@ -246,7 +259,7 @@ const Documents: React.FC = () => {
                     <Star
                       size={12}
                       fill="currentColor"
-                      style={{ color: "#f59e0b", marginRight: 4 }}
+                      className="documents__list-star"
                     />
                   )}
                   {isProtected && (

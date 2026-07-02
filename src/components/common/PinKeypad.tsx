@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import "./PinKeypad.css";
 
@@ -76,6 +76,32 @@ const PinKeypad: React.FC<PinKeypadProps> = ({
     if (!canSubmit) return;
     onSubmit?.(safeValue);
   };
+
+  useEffect(() => {
+    if (disabled || shuffleNumbers) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key >= "0" && event.key <= "9") {
+        event.preventDefault();
+        handlePress(event.key);
+        return;
+      }
+
+      if (event.key === "Backspace") {
+        event.preventDefault();
+        handlePress("backspace");
+        return;
+      }
+
+      if (event.key === "Enter") {
+        event.preventDefault();
+        handleSubmit();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  });
 
   return (
     <div className="pin-keypad">

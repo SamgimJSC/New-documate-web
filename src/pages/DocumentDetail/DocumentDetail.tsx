@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  Calendar,
+  BellRing,
   Download,
   Edit3,
   LockKeyhole,
@@ -62,90 +62,84 @@ const getPreviewTitle = (categoryName?: string) => {
   return "문서 미리보기";
 };
 
-type ExtractedFieldConfig = {
-  key: string;
-  label: string;
-  aliases: string[];
-  wide?: boolean;
+const EXCLUDED_EXTRACTED_KEYS = new Set(["_meta"]);
+
+const EXTRACTED_LABEL_DICTIONARY: Record<string, string> = {
+  drug_code: "약품 코드",
+  issue_date: "발급일",
+  patient_age: "환자 나이",
+  patient_height: "환자 키",
+  patient_weight: "환자 체중",
+  prescription_number: "처방전 번호",
+  contract_date: "계약일",
+  contractDate: "계약일",
+  expiry_date: "만료일",
+  expiryDate: "만료일",
+  renewal_date: "갱신일",
+  renewalDate: "갱신일",
+  contractor: "계약자",
+  contractor_name: "계약자",
+  issuer: "발행처",
+  amount: "금액",
+  total_amount: "총액",
+  price: "금액",
+  memo: "메모",
+  note: "메모",
+  payment_date: "결제일",
+  purchase_date: "구매일",
+  store_name: "가게명",
+  merchant_name: "가게명",
+  item_name: "품목",
+  product_name: "제품명",
+  hospital_name: "병원명",
+  pharmacy_name: "약국명",
+  medical_institution: "기관명",
+  visit_date: "진료일",
+  treatment_date: "진료일",
+  drug_name: "약품명",
+  medication: "약품명",
+  warranty_period: "보증기간",
+  repair_date: "수리일",
+  service_date: "수리일",
+  model_name: "모델명",
+  title: "제목",
+  upload_date: "업로드일",
+  created_at: "생성일",
+  color: "색상",
+  email: "이메일",
+  website: "웹사이트",
+  customer_name: "고객명",
+  serial_number: "제품번호(시리얼번호)",
+  warranty_type: "보증유형",
+  customer_phone: "연락처",
+  company_address: "제조사 주소",
+  installation_date: "설치일자",
+  manufacturing_date: "제조일자",
+  service_center_number: "서비스센터 번호",
 };
 
-const EXTRACTED_FIELD_CONFIG: Record<string, ExtractedFieldConfig[]> = {
-  contract: [
-    { key: "계약일", label: "계약일", aliases: ["계약일", "contract_date", "contractDate", "date"] },
-    { key: "만료일", label: "만료일", aliases: ["만료일", "expiry_date", "expiryDate", "expiration_date"] },
-    { key: "갱신일", label: "갱신일", aliases: ["갱신일", "renewal_date", "renewalDate", "renew_date"] },
-    { key: "계약자", label: "계약자", aliases: ["계약자", "contractor", "contractor_name", "party_name"] },
-    { key: "발행처", label: "발행처 / 거래처", aliases: ["발행처", "거래처", "issuer"] },
-    { key: "금액", label: "계약 금액", aliases: ["금액", "계약금액", "amount", "total_amount", "price"] },
-    { key: "메모", label: "메모", aliases: ["메모", "memo", "note"], wide: true },
-  ],
-  receipt: [
-    { key: "날짜", label: "날짜", aliases: ["날짜", "결제일", "date", "payment_date", "purchase_date"] },
-    { key: "가게명", label: "가게명", aliases: ["가게명", "가맹점", "상호명", "발행처", "store_name", "merchant_name"] },
-    { key: "금액", label: "금액", aliases: ["금액", "총액", "합계", "amount", "total_amount", "price"] },
-    { key: "품목", label: "품목", aliases: ["품목", "상품명", "items", "item_name", "product_name"], wide: true },
-    { key: "메모", label: "메모", aliases: ["메모", "memo", "note"], wide: true },
-  ],
-  medical: [
-    { key: "병원명", label: "병원명", aliases: ["병원명", "약국명", "기관명", "발행처", "hospital_name", "pharmacy_name", "medical_institution", "hospital", "clinic_name"] },
-    { key: "진료일", label: "진료일", aliases: ["진료일", "처방일", "date", "visit_date", "treatment_date", "issue_date", "prescription_date"] },
-    { key: "금액", label: "금액", aliases: ["금액", "진료비", "결제금액", "amount", "total_amount", "payment_amount", "total_price"] },
-    { key: "약품명", label: "약품명 / 진료 내용", aliases: ["약품명", "약명", "처방약", "약품명 / 진료 내용", "medicine_name", "drug_name", "medication", "drug_code", "prescription_number"], wide: true },
-    { key: "메모", label: "메모", aliases: ["메모", "memo", "note"], wide: true },
-  ],
-  warranty: [
-    { key: "제품명", label: "제품명", aliases: ["제품명", "품목", "상품명", "product_name", "item_name", "model_name"], wide: true },
-    { key: "구매일", label: "구매일", aliases: ["구매일", "구입일", "purchase_date", "buy_date", "date"] },
-    { key: "보증기간", label: "보증기간", aliases: ["보증기간", "보증 기간", "warranty_period", "guarantee_period"], wide: true },
-    { key: "수리일", label: "수리일", aliases: ["수리일", "A/S일", "AS일", "repair_date", "service_date"] },
-    { key: "발행처", label: "구매처 / 서비스센터", aliases: ["발행처", "구매처", "서비스센터", "issuer"] },
-    { key: "메모", label: "메모", aliases: ["메모", "memo", "note"], wide: true },
-  ],
-  etc: [
-    { key: "제목", label: "제목", aliases: ["제목", "title", "name"], wide: true },
-    { key: "발행처", label: "발행처", aliases: ["발행처", "issuer"] },
-    { key: "업로드일", label: "업로드일", aliases: ["업로드일", "upload_date", "created_at", "createdAt"] },
-    { key: "메모", label: "메모", aliases: ["메모", "memo", "note"], wide: true },
-  ],
+const hasHangul = (text: string) => /[가-힣]/.test(text);
+
+const formatExtractedLabel = (key: string) => {
+  if (EXTRACTED_LABEL_DICTIONARY[key]) return EXTRACTED_LABEL_DICTIONARY[key];
+  if (hasHangul(key)) return key;
+
+  return key
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 };
 
-const getCategoryExtractKey = (categoryName?: string) => {
-  if (categoryName === "계약서") return "contract";
-  if (categoryName === "영수증") return "receipt";
-  if (categoryName === "병원/약국") return "medical";
-  if (categoryName === "보증서/A·S" || categoryName === "보증서/A/S") return "warranty";
-  return "etc";
+const formatExtractedValue = (value: string) => {
+  if (!value) return "-";
+  if (value === "true") return "예";
+  if (value === "false") return "아니오";
+  if (/^-?\d+(\.\d+)?$/.test(value)) {
+    return Number(value).toLocaleString("ko-KR");
+  }
+  return value;
 };
-
-const getExtractedFields = (categoryName?: string) =>
-  EXTRACTED_FIELD_CONFIG[getCategoryExtractKey(categoryName)];
-
-const getExtractedValue = (
-  data: Record<string, string>,
-  field: ExtractedFieldConfig,
-) => {
-  const matchedKey = field.aliases.find((alias) => data[alias]?.trim());
-
-  return matchedKey ? data[matchedKey] : "";
-};
-
-const getEmptyExtractedData = (
-  categoryName?: string,
-): Record<string, string> =>
-  Object.fromEntries(
-    getExtractedFields(categoryName).map((field) => [field.key, ""]),
-  );
-
-const rebuildExtractedDataByCategory = (
-  categoryName: string | undefined,
-  data: Record<string, string>,
-): Record<string, string> =>
-  Object.fromEntries(
-    getExtractedFields(categoryName).map((field) => [
-      field.key,
-      getExtractedValue(data, field),
-    ]),
-  );
 
 const getDocumentLockedFromServer = (document: Document | null) => {
   if (!document) return false;
@@ -240,12 +234,11 @@ const DocumentDetail: React.FC = () => {
 
     const extracted = doc.extracted_data
       ? Object.fromEntries(
-          Object.entries(doc.extracted_data).map(([key, value]) => [
-            key,
-            String(value ?? ""),
-          ]),
+          Object.entries(doc.extracted_data)
+            .filter(([key]) => !EXCLUDED_EXTRACTED_KEYS.has(key))
+            .map(([key, value]) => [key, String(value ?? "")]),
         )
-      : getEmptyExtractedData(initialCategory?.name);
+      : {};
 
     return {
       title: doc.title,
@@ -255,7 +248,7 @@ const DocumentDetail: React.FC = () => {
       renewalDate: doc.renewal_date ?? "",
       extractedData: extracted,
     };
-  }, [doc, initialCategory?.name]);
+  }, [doc]);
 
   useEffect(() => {
     setForm(initialForm);
@@ -478,17 +471,9 @@ const DocumentDetail: React.FC = () => {
   };
 
   const handleCategoryChange = (categoryId: number) => {
-    const nextCategory = categories.find(
-      (category) => category.category_id === categoryId,
-    );
-
     setForm((prev) => ({
       ...prev,
       categoryId,
-      extractedData: rebuildExtractedDataByCategory(
-        nextCategory?.name,
-        prev.extractedData,
-      ),
     }));
   };
 
@@ -602,8 +587,8 @@ const DocumentDetail: React.FC = () => {
                   </select>
                 </div>
                 <p className="doc-detail__field-note">
-                  문서 유형을 변경하면 AI 추출 정보 항목이 해당 유형 기준으로
-                  재구성됩니다.
+                  문서 유형은 분류 정보로만 사용되며, 아래 AI 추출 정보 항목에는
+                  영향을 주지 않습니다.
                 </p>
               </>
             ) : (
@@ -719,7 +704,8 @@ const DocumentDetail: React.FC = () => {
               )}
             </h1>
             <p className="doc-detail__hero-meta">
-              업로드일 {formatDate(doc.created_at)} · AI 상태 {doc.ai_status}
+              업로드일 {formatDate(doc.created_at)}
+              {!doc.is_confirmed && ` · AI 상태 ${doc.ai_status}`}
             </p>
           </div>
 
@@ -919,39 +905,31 @@ const DocumentDetail: React.FC = () => {
                 </div>
                 {isEditing && (
                   <p className="doc-detail__ai-note">
-                    {activeCategory?.name ?? "선택한 문서 유형"} 기준으로 입력
-                    항목을 정리합니다.
+                    AI가 문서에서 추출한 항목을 그대로 표시합니다.
                   </p>
                 )}
 
                 <div className="doc-detail__field-grid doc-detail__field-grid--ai">
-                  {getExtractedFields(activeCategory?.name).map((field) => {
-                    const value = getExtractedValue(form.extractedData, field);
-
-                    return (
-                      <label
-                        key={field.key}
-                        className={`doc-detail__field${
-                          field.wide ? " doc-detail__field--wide" : ""
-                        }`}
-                      >
-                        <span>{field.label}</span>
-                        {isEditing ? (
-                          <input
-                            value={value}
-                            onChange={(event) =>
-                              handleExtractedChange(
-                                field.key,
-                                event.target.value,
-                              )
-                            }
-                          />
-                        ) : (
-                          <b>{value || "-"}</b>
-                        )}
-                      </label>
-                    );
-                  })}
+                  {Object.keys(form.extractedData).length === 0 && (
+                    <p className="doc-detail__empty-text">
+                      추출된 정보가 없습니다.
+                    </p>
+                  )}
+                  {Object.entries(form.extractedData).map(([key, value]) => (
+                    <label key={key} className="doc-detail__field">
+                      <span>{formatExtractedLabel(key)}</span>
+                      {isEditing ? (
+                        <input
+                          value={value}
+                          onChange={(event) =>
+                            handleExtractedChange(key, event.target.value)
+                          }
+                        />
+                      ) : (
+                        <b>{formatExtractedValue(value)}</b>
+                      )}
+                    </label>
+                  ))}
                 </div>
               </section>
 
@@ -983,34 +961,25 @@ const DocumentDetail: React.FC = () => {
                           key={alert.alert_id}
                           className="doc-detail__alert-item"
                         >
-                          <Calendar size={15} />
-                          <div style={{ flex: 1 }}>
+                          <span className="doc-detail__alert-item-icon">
+                            <BellRing size={15} />
+                          </span>
+                          <div className="doc-detail__alert-item-info">
                             <b>{alert.notify_date.slice(0, 10)}</b>
                             {alert.reason && <span>{alert.reason}</span>}
                           </div>
-                          <div
-                            style={{
-                              display: "flex",
-                              gap: 4,
-                              flexShrink: 0,
-                            }}
-                          >
+                          <div className="doc-detail__alert-item-actions">
                             <button
                               type="button"
                               className="doc-detail__text-button"
                               onClick={() => setAlertOpen(true)}
-                              style={{ fontSize: "var(--font-size-xs)" }}
                             >
                               수정
                             </button>
                             <button
                               type="button"
-                              className="doc-detail__text-button"
+                              className="doc-detail__text-button doc-detail__text-button--danger"
                               onClick={() => handleAlertDelete(alert.alert_id)}
-                              style={{
-                                fontSize: "var(--font-size-xs)",
-                                color: "var(--color-danger, #ef4444)",
-                              }}
                             >
                               삭제
                             </button>
