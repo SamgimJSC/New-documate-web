@@ -111,9 +111,15 @@ const getHeaderBreadcrumb = (
 
 interface HeaderProps {
   onFabClick?: () => void;
+  fabVariant?: "default" | "receipt";
+  fabAriaLabel?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
+const Header: React.FC<HeaderProps> = ({
+  onFabClick,
+  fabVariant = "default",
+  fabAriaLabel = "업로드",
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -254,7 +260,13 @@ const Header: React.FC<HeaderProps> = ({ onFabClick }) => {
       </header>
 
       {onFabClick && (
-        <button className="fab" onClick={onFabClick} aria-label="업로드">
+        <button
+          type="button"
+          className={`fab${fabVariant === "receipt" ? " fab--receipt" : ""}`}
+          onClick={onFabClick}
+          aria-label={fabAriaLabel}
+          title={fabAriaLabel}
+        >
           +
         </button>
       )}

@@ -1,0 +1,171 @@
+/* ================================
+   Receipt Manual Modal
+================================ */
+
+.receipt-manual-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.receipt-manual-modal__notice {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border: 1px solid var(--color-primary-border);
+  border-radius: 16px;
+  background: var(--color-chip-bg);
+  color: var(--color-primary-dark);
+}
+
+.receipt-manual-modal__notice strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: 900;
+}
+
+.receipt-manual-modal__notice p {
+  margin: 0;
+  color: var(--color-text-sub);
+  font-size: var(--font-size-xs);
+  line-height: 1.5;
+  font-weight: 650;
+}
+
+.receipt-manual-modal__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 12px;
+}
+
+.receipt-manual-modal__field {
+  position: relative;
+  min-width: 0;
+}
+
+.receipt-manual-modal__field--wide {
+  grid-column: 1 / -1;
+}
+
+.receipt-manual-modal__field-icon {
+  position: absolute;
+  top: 28px;
+  right: 12px;
+  z-index: 1;
+  color: var(--color-muted);
+  pointer-events: none;
+}
+
+.receipt-manual-modal__field input,
+.receipt-manual-modal__field select {
+  padding-right: 36px;
+}
+
+.receipt-manual-modal__photo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.receipt-manual-modal__photo-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.receipt-manual-modal__photo-label strong {
+  color: var(--color-text-sub);
+  font-size: var(--font-size-sm);
+  font-weight: 850;
+}
+
+.receipt-manual-modal__photo-label span {
+  color: var(--color-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+.receipt-manual-modal__file-input {
+  display: none;
+}
+
+.receipt-manual-modal__photo-drop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 76px;
+  width: 100%;
+  border: 1.5px dashed var(--color-border);
+  border-radius: 16px;
+  background: var(--color-bg-cool);
+  color: var(--color-muted);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 750;
+  cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    color 0.16s ease;
+}
+
+.receipt-manual-modal__photo-drop:hover {
+  border-color: var(--color-primary-border);
+  background: var(--color-chip-bg);
+  color: var(--color-primary-dark);
+}
+
+.receipt-manual-modal__preview-wrap {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-bg-cool);
+}
+
+.receipt-manual-modal__preview {
+  display: block;
+  width: 100%;
+  max-height: 210px;
+  object-fit: cover;
+}
+
+.receipt-manual-modal__remove-image {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(23, 34, 56, 0.72);
+  color: #fff;
+  cursor: pointer;
+}
+
+.receipt-manual-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+@media (max-width: 640px) {
+  .receipt-manual-modal__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .receipt-manual-modal__actions {
+    flex-direction: column-reverse;
+  }
+
+  .receipt-manual-modal__actions .btn {
+    width: 100%;
+  }
+}

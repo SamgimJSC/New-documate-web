@@ -6,7 +6,6 @@ import FilterChip from "../../components/common/FilterChip";
 import Select from "../../components/common/Select";
 import Pagination from "../../components/common/Pagination";
 import EmptyState from "../../components/common/EmptyState";
-import ReceiptBranchModal from "../../components/modal/ReceiptBranchModal";
 import { mockSpendCategories } from "../../data/mockReceipts";
 import { getReceipts } from "../../api/receipt";
 import { formatDate } from "../../utils/formatDate";
@@ -83,7 +82,6 @@ const Receipts: React.FC = () => {
   const [toDate, setToDate] = useState("");
   const [sort, setSort] = useState<"latest" | "purchaseDate" | "amountDesc" | "amountAsc">("latest");
   const [page, setPage] = useState(1);
-  const [branchOpen, setBranchOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const [receipts, setReceipts] = useState<Receipt[]>([]);
@@ -99,6 +97,16 @@ const Receipts: React.FC = () => {
   const currentSummaryOption =
     SUMMARY_PERIOD_OPTIONS.find((option) => option.value === summaryPeriod) ??
     SUMMARY_PERIOD_OPTIONS[2];
+
+  useEffect(() => {
+    const handleReceiptSaved = () => {
+      setPage(1);
+      setRefreshKey((key) => key + 1);
+    };
+
+    window.addEventListener("documate:receipt-saved", handleReceiptSaved);
+    return () => window.removeEventListener("documate:receipt-saved", handleReceiptSaved);
+  }, []);
 
   useEffect(() => {
     getReceipts({
@@ -155,10 +163,6 @@ const Receipts: React.FC = () => {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [query, categoryId, fromDate, toDate, sort, page, refreshKey]);
-
-  const handleBranchClose = () => {
-    setBranchOpen(false);
-  };
 
   return (
     <div className="receipts">
@@ -243,22 +247,16 @@ const Receipts: React.FC = () => {
         </div>
       </div>
 
-      <div className="receipts__filter-action-row">
-        <div className="receipts__filters">
-          <FilterChip label="전체" selected={!categoryId} onClick={() => { setCategoryId(undefined); setPage(1); }} />
-          {mockSpendCategories.map((c) => (
-            <FilterChip
-              key={c.spendCategoryId}
-              label={c.name}
-              selected={categoryId === c.spendCategoryId}
-              onClick={() => { setCategoryId(categoryId === c.spendCategoryId ? undefined : c.spendCategoryId); setPage(1); }}
-            />
-          ))}
-        </div>
-
-        <button type="button" className="receipts__upload-btn" onClick={() => setBranchOpen(true)}>
-          + 영수증 추가
-        </button>
+      <div className="receipts__filters">
+        <FilterChip label="전체" selected={!categoryId} onClick={() => { setCategoryId(undefined); setPage(1); }} />
+        {mockSpendCategories.map((c) => (
+          <FilterChip
+            key={c.spendCategoryId}
+            label={c.name}
+            selected={categoryId === c.spendCategoryId}
+            onClick={() => { setCategoryId(categoryId === c.spendCategoryId ? undefined : c.spendCategoryId); setPage(1); }}
+          />
+        ))}
       </div>
 
       <div className="receipts__sort-row">
@@ -293,8 +291,7 @@ const Receipts: React.FC = () => {
       ) : receipts.length === 0 ? (
         <EmptyState
           title="영수증이 없습니다"
-          description="영수증을 추가하여 지출을 관리해보세요."
-          action={{ label: "영수증 추가", onClick: () => setBranchOpen(true) }}
+          description="오른쪽 아래 + 버튼으로 영수증을 추가해보세요."
         />
       ) : (
         <div className="receipts__list">
@@ -330,12 +327,6 @@ const Receipts: React.FC = () => {
       )}
 
       <Pagination total={totalCount} page={page} pageSize={PAGE_SIZE} onPageChange={setPage} />
-
-      <ReceiptBranchModal
-        isOpen={branchOpen}
-        onClose={handleBranchClose}
-        onSaved={() => { setPage(1); setRefreshKey((k) => k + 1); }}
-      />
     </div>
   );
 };

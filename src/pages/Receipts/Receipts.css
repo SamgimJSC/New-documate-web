@@ -222,50 +222,12 @@
   box-shadow: 0 0 0 4px rgba(91, 157, 153, 0.1);
 }
 
-.receipts__filter-action-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
 .receipts__filters {
   display: flex;
   flex: 1;
   flex-wrap: wrap;
   gap: 8px;
   min-width: 0;
-}
-
-.receipts__upload-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  min-height: 38px;
-  padding: 0 16px;
-  border: 1px solid var(--color-primary-border);
-  border-radius: 14px;
-  background-color: #fff;
-  color: var(--color-primary-dark);
-  font-size: var(--font-size-sm);
-  font-weight: 850;
-  cursor: pointer;
-  white-space: nowrap;
-  box-shadow: 0 2px 7px rgba(34, 48, 70, 0.035);
-  transition:
-    border-color 0.16s ease,
-    background-color 0.16s ease,
-    box-shadow 0.16s ease,
-    transform 0.16s ease;
-}
-
-.receipts__upload-btn:hover {
-  border-color: var(--color-primary);
-  background-color: var(--color-primary-light);
-  color: var(--color-primary-dark);
-  box-shadow: 0 5px 12px rgba(34, 48, 70, 0.06);
-  transform: translateY(-1px);
 }
 
 .receipts__sort-row {
@@ -416,15 +378,6 @@
   .receipts__date-filter {
     justify-content: flex-start;
     flex-wrap: wrap;
-  }
-
-  .receipts__filter-action-row {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .receipts__upload-btn {
-    width: 100%;
   }
 }
 
@@ -692,4 +645,13 @@
   background-color: var(--color-primary-light);
   color: var(--color-primary-dark);
   font-weight: 900;
+}
+
+/* =========================================
+   Receipt page old add button safety hide
+   - 페이지 본문 UI는 유지하고, 내부 + 영수증 추가 버튼만 숨김
+========================================= */
+.receipts .receipts__toolbar > .receipts__upload-btn,
+.receipts .receipts__filter-action-row .receipts__upload-btn {
+  display: none !important;
 }
