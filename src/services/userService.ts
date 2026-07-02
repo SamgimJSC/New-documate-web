@@ -92,4 +92,12 @@ export const userService = {
   async resetPin(currentPin: string, newPin: string): Promise<void> {
     await api.patch<ApiResponse>("/users/me/pin", { currentPin, newPin });
   },
+
+  async updateNickname(nickname: string): Promise<string> {
+    const res = await api.patch<ApiResponse<{ success: boolean; nickname: string }>>(
+      "/users/me/nickname",
+      { nickname },
+    );
+    return res.data.data.nickname;
+  },
 };
