@@ -195,6 +195,10 @@ const DocumentDetail: React.FC = () => {
         setIsFavorite(d.is_favorite);
         setTags(d.tags);
         setAlerts(a);
+        setIsProtected(
+          getDocumentLockedFromServer(d) ||
+            documentService.isDocumentLocallyProtected(d.document_id),
+        );
       })
       .catch(() => {
         setDoc(null);
@@ -207,12 +211,6 @@ const DocumentDetail: React.FC = () => {
   useEffect(() => {
     if (!doc) return;
 
-    const protectedByServer = getDocumentLockedFromServer(doc);
-    const protectedLocally = documentService.isDocumentLocallyProtected(
-      doc.document_id,
-    );
-
-    setIsProtected(protectedByServer || protectedLocally);
     setPinUnlocked(false);
     setPinOpen(false);
     setPinAction("view");

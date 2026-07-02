@@ -206,7 +206,6 @@ const Documents: React.FC = () => {
                 </div>
                 <p className="document-card__title">
                   {doc.title}
-                  {isProtected && <span>보호됨</span>}
                 </p>
                 <p className="document-card__category">{category?.name}</p>
                 <div className="document-card__footer">
