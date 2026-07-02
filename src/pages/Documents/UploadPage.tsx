@@ -242,6 +242,12 @@ export function UploadPage() {
   };
 
   const removeFile = (fileId: string) => {
+    if (tempDocumentId) {
+      const uploadedFileId = studioFiles.find((f) => f.id === fileId)?.uploadedFileId;
+      if (uploadedFileId) {
+        uploadService.deleteFile(tempDocumentId, uploadedFileId).catch(() => {});
+      }
+    }
     setStudioFiles((current) => {
       const next = current.filter((file) => file.id !== fileId);
       if (next.length === 0) setView("studio");

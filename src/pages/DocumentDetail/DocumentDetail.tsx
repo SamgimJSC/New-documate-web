@@ -75,28 +75,37 @@ const EXTRACTED_FIELD_CONFIG: Record<string, ExtractedFieldConfig[]> = {
     { key: "만료일", label: "만료일", aliases: ["만료일", "expiry_date", "expiryDate", "expiration_date"] },
     { key: "갱신일", label: "갱신일", aliases: ["갱신일", "renewal_date", "renewalDate", "renew_date"] },
     { key: "계약자", label: "계약자", aliases: ["계약자", "contractor", "contractor_name", "party_name"] },
+    { key: "발행처", label: "발행처 / 거래처", aliases: ["발행처", "거래처", "issuer"] },
+    { key: "금액", label: "계약 금액", aliases: ["금액", "계약금액", "amount", "total_amount", "price"] },
+    { key: "메모", label: "메모", aliases: ["메모", "memo", "note"], wide: true },
   ],
   receipt: [
     { key: "날짜", label: "날짜", aliases: ["날짜", "결제일", "date", "payment_date", "purchase_date"] },
-    { key: "가게명", label: "가게명", aliases: ["가게명", "가맹점", "상호명", "store_name", "merchant_name"] },
+    { key: "가게명", label: "가게명", aliases: ["가게명", "가맹점", "상호명", "발행처", "store_name", "merchant_name"] },
     { key: "금액", label: "금액", aliases: ["금액", "총액", "합계", "amount", "total_amount", "price"] },
     { key: "품목", label: "품목", aliases: ["품목", "상품명", "items", "item_name", "product_name"], wide: true },
+    { key: "메모", label: "메모", aliases: ["메모", "memo", "note"], wide: true },
   ],
   medical: [
-    { key: "병원명", label: "병원명", aliases: ["병원명", "약국명", "기관명", "hospital_name", "pharmacy_name", "medical_institution", "hospital", "clinic_name"] },
+    { key: "병원명", label: "병원명", aliases: ["병원명", "약국명", "기관명", "발행처", "hospital_name", "pharmacy_name", "medical_institution", "hospital", "clinic_name"] },
     { key: "진료일", label: "진료일", aliases: ["진료일", "처방일", "date", "visit_date", "treatment_date", "issue_date", "prescription_date"] },
     { key: "금액", label: "금액", aliases: ["금액", "진료비", "결제금액", "amount", "total_amount", "payment_amount", "total_price"] },
-    { key: "약품명", label: "약품명", aliases: ["약품명", "약명", "처방약", "medicine_name", "drug_name", "medication", "drug_code", "prescription_number"], wide: true },
+    { key: "약품명", label: "약품명 / 진료 내용", aliases: ["약품명", "약명", "처방약", "약품명 / 진료 내용", "medicine_name", "drug_name", "medication", "drug_code", "prescription_number"], wide: true },
+    { key: "메모", label: "메모", aliases: ["메모", "memo", "note"], wide: true },
   ],
   warranty: [
     { key: "제품명", label: "제품명", aliases: ["제품명", "품목", "상품명", "product_name", "item_name", "model_name"], wide: true },
     { key: "구매일", label: "구매일", aliases: ["구매일", "구입일", "purchase_date", "buy_date", "date"] },
     { key: "보증기간", label: "보증기간", aliases: ["보증기간", "보증 기간", "warranty_period", "guarantee_period"], wide: true },
     { key: "수리일", label: "수리일", aliases: ["수리일", "A/S일", "AS일", "repair_date", "service_date"] },
+    { key: "발행처", label: "구매처 / 서비스센터", aliases: ["발행처", "구매처", "서비스센터", "issuer"] },
+    { key: "메모", label: "메모", aliases: ["메모", "memo", "note"], wide: true },
   ],
   etc: [
     { key: "제목", label: "제목", aliases: ["제목", "title", "name"], wide: true },
+    { key: "발행처", label: "발행처", aliases: ["발행처", "issuer"] },
     { key: "업로드일", label: "업로드일", aliases: ["업로드일", "upload_date", "created_at", "createdAt"] },
+    { key: "메모", label: "메모", aliases: ["메모", "memo", "note"], wide: true },
   ],
 };
 
@@ -104,7 +113,7 @@ const getCategoryExtractKey = (categoryName?: string) => {
   if (categoryName === "계약서") return "contract";
   if (categoryName === "영수증") return "receipt";
   if (categoryName === "병원/약국") return "medical";
-  if (categoryName === "보증서/A·S") return "warranty";
+  if (categoryName === "보증서/A·S" || categoryName === "보증서/A/S") return "warranty";
   return "etc";
 };
 
@@ -611,7 +620,7 @@ const DocumentDetail: React.FC = () => {
           </b>
         </label>
 
-        {!lockedMode && (
+        {!lockedMode && !doc?.is_confirmed && (
           <>
             <label className="doc-detail__field">
               <span>발급일</span>
@@ -905,7 +914,9 @@ const DocumentDetail: React.FC = () => {
               {renderBasicInfo(false)}
 
               <section className="doc-detail__form-section">
-                <div className="doc-detail__section-title">AI 추출 정보</div>
+                <div className="doc-detail__section-title">
+                  {doc?.is_confirmed ? "수기 입력 정보" : "AI 추출 정보"}
+                </div>
                 {isEditing && (
                   <p className="doc-detail__ai-note">
                     {activeCategory?.name ?? "선택한 문서 유형"} 기준으로 입력
