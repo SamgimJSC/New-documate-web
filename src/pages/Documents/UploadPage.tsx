@@ -16,7 +16,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical } from "lucide-react";
+import { GripVertical, RefreshCw } from "lucide-react";
 import { uploadCategoryGuide } from "../../data/uploadCategories";
 import { AnalysisStartModal } from "../../components/upload/AnalysisStartModal";
 import { uploadLocalService } from "../../services/uploadLocalService";
@@ -53,10 +53,11 @@ type SortableFileRowProps = {
   file: StudioFile;
   index: number;
   onRemove: (id: string) => void;
+  onRetry: (id: string) => void;
   disabled?: boolean;
 };
 
-function SortableFileRow({ file, index, onRemove, disabled = false }: SortableFileRowProps) {
+function SortableFileRow({ file, index, onRemove, onRetry, disabled = false }: SortableFileRowProps) {
   const {
     attributes,
     listeners,
@@ -85,18 +86,35 @@ function SortableFileRow({ file, index, onRemove, disabled = false }: SortableFi
         <GripVertical size={16} />
       </div>
       <div className="upload-file-row__name">
-        <b>{file.fileName}</b>
-        <small>#{index + 1}</small>
+        <div className="upload-file-row__name-text">
+          <b>{file.fileName}</b>
+          <small>#{index + 1}</small>
+        </div>
+        {file.uploadStatus === "failed" && (
+          <button
+            type="button"
+            className="upload-file-row__retry"
+            onClick={() => onRetry(file.id)}
+            aria-label="업로드 재시도"
+            title="업로드 재시도"
+          >
+            <RefreshCw size={15} />
+          </button>
+        )}
       </div>
       <span>{file.sizeMb} MB</span>
       <span>{formatUploadedAt(file.uploadedAt)}</span>
       {file.uploadStatus === "uploading" && <em>업로드 중...</em>}
       {file.uploadStatus === "uploaded" && <em>업로드 완료</em>}
-      {file.uploadStatus === "failed" && <em>업로드 실패</em>}
+      {file.uploadStatus === "failed" && (
+        <em className="upload-file-row__status--failed">업로드 실패</em>
+      )}
       <div className="upload-file-row__actions">
-        <button type="button" onClick={() => onRemove(file.id)}>
-          삭제
-        </button>
+        {file.uploadStatus !== "uploading" && (
+          <button type="button" onClick={() => onRemove(file.id)}>
+            삭제
+          </button>
+        )}
       </div>
     </article>
   );
@@ -196,7 +214,12 @@ export function UploadPage() {
         currentTempId = await uploadService.startSession();
         setTempDocumentId(currentTempId);
       } catch {
-        setUploadError("업로드 세션을 시작하지 못했어요. 다시 시도해 주세요.");
+        setStudioFiles((current) => [
+          ...current,
+          ...toAdd.map((f) => ({ ...f, uploadStatus: "failed" as const })),
+        ]);
+        setView("uploaded");
+        setUploadError("업로드에 실패했어요. 파일 목록에서 다시 시도해 주세요.");
         return;
       }
     }
@@ -227,6 +250,51 @@ export function UploadPage() {
     }
   };
 
+  const handleRetryUpload = async (fileId: string) => {
+    const target = studioFiles.find((f) => f.id === fileId);
+    if (!target) return;
+
+    const pageNo = studioFiles.findIndex((f) => f.id === fileId) + 1;
+
+    setStudioFiles((current) =>
+      current.map((f) =>
+        f.id === fileId ? { ...f, uploadStatus: "uploading" } : f,
+      ),
+    );
+
+    let currentTempId = tempDocumentId;
+    if (!currentTempId) {
+      try {
+        currentTempId = await uploadService.startSession();
+        setTempDocumentId(currentTempId);
+        setUploadError("");
+      } catch {
+        setStudioFiles((current) =>
+          current.map((f) =>
+            f.id === fileId ? { ...f, uploadStatus: "failed" } : f,
+          ),
+        );
+        return;
+      }
+    }
+
+    try {
+      const res = await uploadService.uploadPage(currentTempId, target.file, pageNo);
+      const uploadedFileId = res.files.find((f) => f.pageNo === pageNo)?.id;
+      setStudioFiles((current) =>
+        current.map((f) =>
+          f.id === fileId ? { ...f, uploadStatus: "uploaded", uploadedFileId } : f,
+        ),
+      );
+    } catch {
+      setStudioFiles((current) =>
+        current.map((f) =>
+          f.id === fileId ? { ...f, uploadStatus: "failed" } : f,
+        ),
+      );
+    }
+  };
+
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
       addFiles(event.target.files);
@@ -242,6 +310,12 @@ export function UploadPage() {
   };
 
   const removeFile = (fileId: string) => {
+    if (tempDocumentId) {
+      const uploadedFileId = studioFiles.find((f) => f.id === fileId)?.uploadedFileId;
+      if (uploadedFileId) {
+        uploadService.deleteFile(tempDocumentId, uploadedFileId).catch(() => {});
+      }
+    }
     setStudioFiles((current) => {
       const next = current.filter((file) => file.id !== fileId);
       if (next.length === 0) setView("studio");
@@ -249,7 +323,16 @@ export function UploadPage() {
     });
   };
 
-  const clearFiles = () => {
+  const clearFiles = async () => {
+    if (tempDocumentId) {
+      try {
+        await uploadService.deleteAllFiles(tempDocumentId);
+      } catch {
+        setUploadError("파일 삭제에 실패했어요. 다시 시도해 주세요.");
+        return;
+      }
+    }
+
     setStudioFiles([]);
     setTempDocumentId(null);
     setUploadError("");
@@ -419,6 +502,7 @@ export function UploadPage() {
                           file={file}
                           index={index}
                           onRemove={removeFile}
+                          onRetry={handleRetryUpload}
                           disabled={isUploading}
                         />
                       ))}
@@ -440,6 +524,9 @@ export function UploadPage() {
                       type="button"
                       className="upload-ready-panel__clear"
                       onClick={clearFiles}
+                      disabled={studioFiles.some(
+                        (f) => f.uploadStatus === "uploading",
+                      )}
                     >
                       전체 삭제
                     </button>

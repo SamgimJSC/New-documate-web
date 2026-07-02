@@ -115,9 +115,10 @@ export const makeExtractedFields = (
 
 export const categoryToId = (category: UploadDocumentCategory): number => {
   if (category === "계약서") return 1;
-  if (category === "병원/약국") return 2;
-  if (category === "보증서/A·S") return 3;
-  return 4; // 영수증, 기타
+  if (category === "영수증") return 2;
+  if (category === "병원/약국") return 3;
+  if (category === "보증서/A·S") return 4;
+  return 5; // 기타
 };
 
 export const getSaveTarget = (category: UploadDocumentCategory) =>

@@ -673,6 +673,10 @@
   text-underline-offset: 3px;
 }
 
+.doc-detail__text-button--danger {
+  color: var(--color-danger, #ef4444);
+}
+
 .doc-detail__manage-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -734,33 +738,75 @@
 .doc-detail__alert-item {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 7px;
+  gap: 10px;
   align-items: center;
-  padding: 7px 8px;
+  padding: 10px 12px;
   border: 1px solid var(--color-border, #e2e8f0);
-  border-radius: 10px;
+  border-radius: 12px;
   background: #ffffff;
 }
 
-.doc-detail__alert-item svg {
-  color: var(--color-primary, #5b9d99);
+.doc-detail__alert-item-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ffb648, #ff8a4c);
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(255, 138, 76, 0.35);
+  flex-shrink: 0;
+}
+
+.doc-detail__alert-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .doc-detail__alert-item b {
   display: block;
   color: var(--color-text, #223046);
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 900;
 }
 
-.doc-detail__alert-item small {
+.doc-detail__alert-item-info span {
   display: block;
   overflow: hidden;
-  margin-top: 1px;
   color: var(--color-muted, #657084);
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.doc-detail__alert-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.doc-detail__alert-item-actions .doc-detail__text-button {
+  font-size: var(--font-size-xs);
+}
+
+.doc-detail__alert-item-actions .doc-detail__text-button:first-child {
+  position: relative;
+  padding-right: 8px;
+}
+
+.doc-detail__alert-item-actions .doc-detail__text-button:first-child::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 1px;
+  height: 11px;
+  transform: translateY(-50%);
+  background: var(--color-border, #e2e8f0);
 }
 
 .doc-detail__empty-text {
@@ -1385,6 +1431,9 @@ body:has(.doc-detail) button[class*="fab"] {
   color: var(--color-muted, #657084);
   font-size: 11px;
   font-weight: 850;
+  min-width: 0;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .doc-detail__field-grid--ai .doc-detail__field b {

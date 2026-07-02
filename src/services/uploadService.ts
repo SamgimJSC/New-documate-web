@@ -10,8 +10,9 @@ interface StartSessionData {
 
 interface UploadPageData {
   tempDocumentId: string;
-  files: Array<{ id: string; fileUrl: string; pageNo: number }>;
+  files: Array<{ id: string; fileUrl: string; pageNo: number; fileSizeBytes?: string }>;
 }
+
 
 interface CreateDocumentData {
   documentId: string;
@@ -87,12 +88,27 @@ export const uploadService = {
     renewalDate?: string;
     extractedData?: Record<string, string>;
     files?: Array<{ fileUrl: string; pageNo: number }>;
+    fileSizeBytes?: string;
   }): Promise<string> {
     const res = await api.post<ApiResponse<CreateDocumentData>>(
       "/documents",
       body,
     );
     return res.data.data.documentId;
+  },
+
+  async deleteFile(
+    tempDocumentId: string,
+    fileId: string,
+  ): Promise<UploadPageData> {
+    const res = await api.delete<ApiResponse<UploadPageData>>(
+      `/upload/${tempDocumentId}/files/${fileId}`,
+    );
+    return res.data.data;
+  },
+
+  async deleteAllFiles(tempDocumentId: string): Promise<void> {
+    await api.delete(`/upload/${tempDocumentId}/files`);
   },
 
   async getAiStatus(documentId: string): Promise<AiStatus> {
