@@ -104,8 +104,8 @@
 
 .finance-report__summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .finance-report .card {
@@ -117,12 +117,20 @@
 
 .finance-report__summary-card.card {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
+  grid-template-columns: 44px minmax(0, 1fr);
+  grid-template-areas:
+    "icon value"
+    "icon label"
+    "icon sub";
   column-gap: 14px;
-  row-gap: 2px;
-  min-height: 104px;
-  padding: 17px 20px;
+  row-gap: 3px;
+  align-content: center;
+  align-items: center;
+  min-height: 0;
+  height: 112px;
+  padding: 18px 20px;
+  border-radius: 20px;
+  overflow: visible;
 }
 
 .finance-report__summary-card > div:not(.finance-report__summary-icon) {
@@ -130,15 +138,17 @@
 }
 
 .finance-report__summary-icon {
+  grid-area: icon;
   display: flex;
   align-items: center;
   justify-content: center;
-  grid-row: span 3;
-  width: 38px;
-  height: 38px;
-  flex: 0 0 38px;
+  align-self: start;
+  justify-self: start;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
   border-radius: 14px;
-  margin-bottom: 0;
+  margin: 0;
 }
 
 .finance-report__summary-icon--primary {
@@ -157,25 +167,31 @@
 }
 
 .finance-report__summary-value {
+  grid-area: value;
   margin: 0;
+  align-self: end;
   color: var(--color-text);
-  font-size: 22px;
-  line-height: 1.12;
+  font-size: 20px;
+  line-height: 1.08;
   letter-spacing: -0.04em;
-  font-weight: 950;
+  font-weight: 900;
 }
 
 .finance-report__summary-label {
+  grid-area: label;
   margin: 0;
   color: var(--color-text-sub);
-  font-size: var(--font-size-sm);
-  font-weight: 800;
+  font-size: 12.5px;
+  line-height: 1.25;
+  font-weight: 750;
 }
 
 .finance-report__summary-sub {
+  grid-area: sub;
   margin: 0;
   color: var(--color-muted);
-  font-size: var(--font-size-xs);
+  font-size: 11.5px;
+  line-height: 1.25;
   font-weight: 700;
 }
 
@@ -450,6 +466,12 @@
   .finance-report__summary-grid,
   .finance-report__grid {
     grid-template-columns: 1fr;
+  }
+
+
+  .finance-report__summary-card.card {
+    height: auto;
+    min-height: 112px;
   }
 
   .finance-report__receipt-row,

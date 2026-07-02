@@ -6,7 +6,28 @@
   flex-direction: column;
   gap: 14px;
 }
+.receipts__page-intro {
+  display: block;
+  padding: 2px 2px 0;
+}
 
+.receipts__page-intro-title {
+  margin: 0 0 8px;
+  color: var(--color-primary-dark);
+  font-size: var(--font-size-sm);
+  font-weight: 900;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+}
+
+.receipts__page-intro-description {
+  margin: 0;
+  color: var(--color-text-sub);
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
 .receipts__summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -94,7 +115,9 @@
   background-color: transparent;
   color: var(--color-text-sub);
   cursor: pointer;
-  transition: background-color 0.16s ease, color 0.16s ease;
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease;
 }
 
 .receipts__summary-dropdown-button:hover {
@@ -161,12 +184,14 @@
   color: var(--color-text);
   font-size: var(--font-size-md);
   outline: none;
-  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
 .receipts__search-input:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 4px rgba(91, 157, 153, 0.10);
+  box-shadow: 0 0 0 4px rgba(91, 157, 153, 0.1);
 }
 
 .receipts__date-filter {
@@ -187,37 +212,60 @@
   color: var(--color-text);
   font-size: var(--font-size-sm);
   outline: none;
-  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
 .receipts__date-input:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 4px rgba(91, 157, 153, 0.10);
+  box-shadow: 0 0 0 4px rgba(91, 157, 153, 0.1);
 }
 
-.receipts__upload-btn {
-  min-height: 40px;
-  padding: 0 16px;
-  border-radius: var(--radius-control);
-  background-color: var(--color-dark);
-  color: #fff;
-  font-size: var(--font-size-sm);
-  font-weight: 850;
-  cursor: pointer;
-  white-space: nowrap;
-  box-shadow: 0 6px 14px rgba(23, 34, 56, 0.12);
-  transition: background-color 0.16s ease, transform 0.16s ease;
-}
-
-.receipts__upload-btn:hover {
-  background-color: var(--color-dark-hover);
-  transform: translateY(-1px);
+.receipts__filter-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .receipts__filters {
   display: flex;
+  flex: 1;
   flex-wrap: wrap;
   gap: 8px;
+  min-width: 0;
+}
+
+.receipts__upload-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-height: 38px;
+  padding: 0 16px;
+  border: 1px solid var(--color-primary-border);
+  border-radius: 14px;
+  background-color: #fff;
+  color: var(--color-primary-dark);
+  font-size: var(--font-size-sm);
+  font-weight: 850;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 7px rgba(34, 48, 70, 0.035);
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+}
+
+.receipts__upload-btn:hover {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  box-shadow: 0 5px 12px rgba(34, 48, 70, 0.06);
+  transform: translateY(-1px);
 }
 
 .receipts__sort-row {
@@ -250,7 +298,10 @@
   background-color: var(--color-surface);
   box-shadow: 0 1px 6px rgba(34, 48, 70, 0.028);
   cursor: pointer;
-  transition: border-color 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    background-color 0.16s ease;
 }
 
 .receipt-card:hover {
@@ -366,6 +417,15 @@
     justify-content: flex-start;
     flex-wrap: wrap;
   }
+
+  .receipts__filter-action-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .receipts__upload-btn {
+    width: 100%;
+  }
 }
 
 /* =========================================
@@ -424,7 +484,6 @@
   transform: none !important;
   box-shadow: 0 4px 12px rgba(34, 48, 70, 0.045) !important;
 }
-
 
 /* =========================================
    Receipts horizontal KPI final

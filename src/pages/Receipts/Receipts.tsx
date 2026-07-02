@@ -162,6 +162,15 @@ const Receipts: React.FC = () => {
 
   return (
     <div className="receipts">
+      <section className="receipts__page-intro" aria-labelledby="receipts-page-intro-title">
+        <p className="receipts__page-intro-title" id="receipts-page-intro-title">
+          영수증 관리 현황
+        </p>
+        <p className="receipts__page-intro-description">
+          등록한 영수증과 결제 정보를 한눈에 확인하세요.
+        </p>
+      </section>
+
       <div className="receipts__summary-grid">
         <Card className="receipts__summary-card receipts__summary-card--spend">
           <div className="receipts__summary-icon receipts__summary-icon--blue">
@@ -232,19 +241,24 @@ const Receipts: React.FC = () => {
           <span>~</span>
           <input type="date" className="receipts__date-input" value={toDate} onChange={(e) => { setToDate(e.target.value); setPage(1); }} />
         </div>
-        <button className="receipts__upload-btn" onClick={() => setBranchOpen(true)}>+ 영수증 추가</button>
       </div>
 
-      <div className="receipts__filters">
-        <FilterChip label="전체" selected={!categoryId} onClick={() => { setCategoryId(undefined); setPage(1); }} />
-        {mockSpendCategories.map((c) => (
-          <FilterChip
-            key={c.spendCategoryId}
-            label={c.name}
-            selected={categoryId === c.spendCategoryId}
-            onClick={() => { setCategoryId(categoryId === c.spendCategoryId ? undefined : c.spendCategoryId); setPage(1); }}
-          />
-        ))}
+      <div className="receipts__filter-action-row">
+        <div className="receipts__filters">
+          <FilterChip label="전체" selected={!categoryId} onClick={() => { setCategoryId(undefined); setPage(1); }} />
+          {mockSpendCategories.map((c) => (
+            <FilterChip
+              key={c.spendCategoryId}
+              label={c.name}
+              selected={categoryId === c.spendCategoryId}
+              onClick={() => { setCategoryId(categoryId === c.spendCategoryId ? undefined : c.spendCategoryId); setPage(1); }}
+            />
+          ))}
+        </div>
+
+        <button type="button" className="receipts__upload-btn" onClick={() => setBranchOpen(true)}>
+          + 영수증 추가
+        </button>
       </div>
 
       <div className="receipts__sort-row">

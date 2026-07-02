@@ -42,6 +42,14 @@ const getHeaderBreadcrumb = (
     };
   }
 
+  if (pathname.startsWith("/receipts/")) {
+    return {
+      parentLabel: "영수증 관리",
+      parentPath: "/receipts",
+      currentLabel: "영수증 상세",
+    };
+  }
+
   if (pathname === "/upload") {
     return {
       parentLabel: "디지털 캐비닛",
