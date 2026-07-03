@@ -15,8 +15,8 @@ import Modal from "../common/Modal";
 import Button from "../common/Button";
 import Input from "../common/Input";
 import Select from "../common/Select";
-import { mockSpendCategories } from "../../data/mockReceipts";
 import { useToast } from "../common/Toast";
+import { useSpendCategories } from "../../hooks/useSpendCategories";
 import { createReceipt, updateReceipt } from "../../api/receipt";
 import type { ModalMode } from "../../types/common";
 import type { Receipt } from "../../types/receipt";
@@ -84,7 +84,8 @@ const ReceiptManualModal: React.FC<Props> = ({
     };
   }, [imagePreview]);
 
-  const categoryOptions = mockSpendCategories.map((c) => ({
+  const spendCategories = useSpendCategories();
+  const categoryOptions = spendCategories.map((c) => ({
     value: String(c.spendCategoryId),
     label: c.name,
   }));

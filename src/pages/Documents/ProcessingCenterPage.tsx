@@ -145,6 +145,24 @@ export function ProcessingCenterPage() {
                       (r) => new Date(r.createdAt) >= new Date(item.uploadedAt),
                     );
                     if (matchedReceipt) {
+                      const extractedFields = [
+                        { label: "가게명", value: matchedReceipt.storeName || "" },
+                        {
+                          label: "금액",
+                          value: matchedReceipt.totalAmount != null
+                            ? `${matchedReceipt.totalAmount.toLocaleString("ko-KR")}원`
+                            : "",
+                        },
+                        { label: "결제일", value: matchedReceipt.purchaseDate || "" },
+                        {
+                          label: "품목",
+                          value: typeof matchedReceipt.paymentItem === "string" &&
+                            !/^\s*\[/.test(matchedReceipt.paymentItem)
+                            ? matchedReceipt.paymentItem
+                            : "",
+                        },
+                      ].filter((f) => f.value.trim() !== "");
+
                       updateItem(item.id, {
                         status: "completed",
                         progress: 100,
@@ -152,6 +170,7 @@ export function ProcessingCenterPage() {
                         finalDocumentId: matchedReceipt.receiptId,
                         category: "영수증",
                         memo: "AI 분석이 완료되어 영수증 보드에 저장되었습니다.",
+                        extractedFields,
                       });
                       return;
                     }
