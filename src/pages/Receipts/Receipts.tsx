@@ -6,8 +6,8 @@ import FilterChip from "../../components/common/FilterChip";
 import Select from "../../components/common/Select";
 import Pagination from "../../components/common/Pagination";
 import EmptyState from "../../components/common/EmptyState";
-import { mockSpendCategories } from "../../data/mockReceipts";
 import { getReceipts } from "../../api/receipt";
+import { useSpendCategories } from "../../hooks/useSpendCategories";
 import { formatDate } from "../../utils/formatDate";
 import { formatKRW } from "../../utils/formatCurrency";
 import type { Receipt } from "../../types/receipt";
@@ -76,6 +76,7 @@ const hasMissingFields = (r: Receipt) =>
 
 const Receipts: React.FC = () => {
   const navigate = useNavigate();
+  const spendCategories = useSpendCategories();
   const [query, setQuery] = useState("");
   const [categoryId, setCategoryId] = useState<number | undefined>();
   const [fromDate, setFromDate] = useState("");
@@ -249,7 +250,7 @@ const Receipts: React.FC = () => {
 
       <div className="receipts__filters">
         <FilterChip label="전체" selected={!categoryId} onClick={() => { setCategoryId(undefined); setPage(1); }} />
-        {mockSpendCategories.map((c) => (
+        {spendCategories.map((c) => (
           <FilterChip
             key={c.spendCategoryId}
             label={c.name}
