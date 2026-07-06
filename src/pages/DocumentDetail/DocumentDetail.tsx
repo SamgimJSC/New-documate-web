@@ -173,6 +173,8 @@ const DocumentDetail: React.FC = () => {
   const [selectedPage, setSelectedPage] = useState(0);
   const [isProtected, setIsProtected] = useState(false);
   const [pinUnlocked, setPinUnlocked] = useState(false);
+  // 잠긴 문서 열람용 단기 토큰. 새로고침/문서 이동 시 사라지도록 메모리에만 보관 (저장소에 두지 않음)
+  const [unlockToken, setUnlockToken] = useState<string | null>(null);
   const [pinOpen, setPinOpen] = useState(false);
   const [pinAction, setPinAction] = useState<PinAction>("view");
   const [form, setForm] = useState<EditableDocumentState>(EMPTY_FORM);
@@ -195,10 +197,7 @@ const DocumentDetail: React.FC = () => {
         setIsFavorite(d.is_favorite);
         setTags(d.tags);
         setAlerts(a);
-        setIsProtected(
-          getDocumentLockedFromServer(d) ||
-            documentService.isDocumentLocallyProtected(d.document_id),
-        );
+        setIsProtected(getDocumentLockedFromServer(d));
       })
       .catch(() => {
         setDoc(null);
@@ -212,6 +211,7 @@ const DocumentDetail: React.FC = () => {
     if (!doc) return;
 
     setPinUnlocked(false);
+    setUnlockToken(null);
     setPinOpen(false);
     setPinAction("view");
     setIsEditing(false);
@@ -320,6 +320,32 @@ const DocumentDetail: React.FC = () => {
     setPinOpen(true);
   };
 
+  // PIN 검증과 잠금 상태 변경을 백엔드에서 한 번에 처리 (검증 성공 없이는 잠금 상태가 바뀌지 않음)
+  const verifyForAction = async (pin: string) => {
+    if (pinAction === "view") {
+      // 문서 전용 단기 토큰을 발급받아 그 토큰으로만 실제 내용(ocr, 첨부파일 등)을 다시 받아옴.
+      // 이 토큰 없이는 서버가 잠긴 문서의 민감한 필드를 내려주지 않음.
+      const { unlockToken: token } = await documentService.unlockDocument(
+        doc.document_id,
+        pin,
+      );
+      const unlockedDoc = await documentService.getDocument(
+        doc.document_id,
+        token,
+      );
+      setUnlockToken(token);
+      setDoc(unlockedDoc);
+      return;
+    }
+
+    const updated = await documentService.updateLock(
+      doc.document_id,
+      pinAction === "enable",
+      pin,
+    );
+    setDoc(updated);
+  };
+
   const handlePinVerified = () => {
     if (pinAction === "view") {
       setPinUnlocked(true);
@@ -327,20 +353,16 @@ const DocumentDetail: React.FC = () => {
       return;
     }
 
-    if (pinAction === "enable") {
-      documentService.setDocumentLocallyProtected(doc.document_id, true);
-      setIsProtected(true);
-      setPinUnlocked(false);
-      setIsEditing(false);
-      showToast("문서가 캐비닛 PIN으로 보호됩니다.", "success");
-      return;
-    }
-
-    documentService.setDocumentLocallyProtected(doc.document_id, false);
-    setIsProtected(false);
+    const nowLocked = pinAction === "enable";
+    setIsProtected(nowLocked);
     setPinUnlocked(false);
     setIsEditing(false);
-    showToast("문서 PIN 보호가 해제되었습니다.", "success");
+    showToast(
+      nowLocked
+        ? "문서가 캐비닛 PIN으로 보호됩니다."
+        : "문서 PIN 보호가 해제되었습니다.",
+      "success",
+    );
   };
 
   const handleProtectionToggle = () => {
@@ -418,7 +440,11 @@ const DocumentDetail: React.FC = () => {
   const handleDownload = async () => {
     if (isContentLocked) return;
     try {
-      await documentService.downloadAsPdf(doc.document_id, doc.title);
+      await documentService.downloadAsPdf(
+        doc.document_id,
+        doc.title,
+        unlockToken ?? undefined,
+      );
     } catch {
       showToast("PDF 다운로드에 실패했습니다.", "error");
     }
@@ -1082,6 +1108,7 @@ const DocumentDetail: React.FC = () => {
         isOpen={pinOpen}
         onClose={() => setPinOpen(false)}
         onVerified={handlePinVerified}
+        verify={verifyForAction}
         title={pinTitle}
         description={pinDescription}
         submitLabel={pinSubmitLabel}

@@ -14,6 +14,8 @@ interface PinVerifyModalProps {
   title?: string;
   description?: string;
   submitLabel?: string;
+  // 단순 PIN 확인이 아니라 다른 동작(잠금 설정 변경 등)과 검증을 함께 처리해야 할 때 주입
+  verify?: (pin: string) => Promise<void>;
 }
 
 const PinVerifyModal: React.FC<PinVerifyModalProps> = ({
@@ -23,6 +25,7 @@ const PinVerifyModal: React.FC<PinVerifyModalProps> = ({
   title = "캐비닛 PIN 입력",
   description = "잠긴 문서를 열려면 캐비닛 PIN 6자리를 입력해주세요.",
   submitLabel = "확인",
+  verify,
 }) => {
   const { showToast } = useToast();
   const [pin, setPin] = useState("");
@@ -40,7 +43,7 @@ const PinVerifyModal: React.FC<PinVerifyModalProps> = ({
 
     setIsLoading(true);
     try {
-      await userService.verifyPin(value);
+      await (verify ? verify(value) : userService.verifyPin(value));
       onVerified(value);
       setPin("");
       onClose();
@@ -50,6 +53,11 @@ const PinVerifyModal: React.FC<PinVerifyModalProps> = ({
         showToast("PIN이 일치하지 않습니다.", "error");
       } else if (errorCode === "PIN_NOT_SET") {
         showToast("등록된 PIN이 없습니다.", "error");
+      } else if (errorCode === "PIN_LOCKED") {
+        showToast(
+          "PIN 입력 횟수를 초과했습니다. 이메일 로그인을 이용해주세요.",
+          "error",
+        );
       } else {
         showToast("PIN 확인에 실패했습니다. 다시 시도해주세요.", "error");
       }
