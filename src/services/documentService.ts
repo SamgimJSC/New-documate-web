@@ -83,31 +83,6 @@ interface DocumentListData {
 }
 
 
-const LOCAL_PROTECTED_DOCUMENTS_KEY = "documate:protected-documents";
-
-const readLocalProtectedDocumentIds = (): string[] => {
-  if (typeof window === "undefined") return [];
-
-  try {
-    const raw = window.localStorage.getItem(LOCAL_PROTECTED_DOCUMENTS_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed)
-      ? parsed.filter((item): item is string => typeof item === "string")
-      : [];
-  } catch {
-    return [];
-  }
-};
-
-const writeLocalProtectedDocumentIds = (ids: string[]) => {
-  if (typeof window === "undefined") return;
-
-  window.localStorage.setItem(
-    LOCAL_PROTECTED_DOCUMENTS_KEY,
-    JSON.stringify(Array.from(new Set(ids))),
-  );
-};
-
 const mapDocument = (raw: DocumentApiItem): Document => ({
   document_id: raw.documentId,
   user_id: raw.userId,
@@ -150,19 +125,27 @@ const mapDocument = (raw: DocumentApiItem): Document => ({
 });
 
 export const documentService = {
-  isDocumentLocallyProtected(documentId: string): boolean {
-    return readLocalProtectedDocumentIds().includes(documentId);
+  async updateLock(
+    id: string,
+    isLocked: boolean,
+    pinNumber: string,
+  ): Promise<Document> {
+    const res = await api.patch<ApiResponse<DocumentApiItem>>(
+      `/documents/${id}/lock`,
+      { isLocked, pinNumber },
+    );
+    return mapDocument(res.data.data);
   },
 
-  setDocumentLocallyProtected(documentId: string, isProtected: boolean): void {
-    const ids = readLocalProtectedDocumentIds();
-
-    if (isProtected) {
-      writeLocalProtectedDocumentIds([...ids, documentId]);
-      return;
-    }
-
-    writeLocalProtectedDocumentIds(ids.filter((id) => id !== documentId));
+  // PIN 검증 성공 시 해당 문서에 한정된 단기 토큰 발급 (메모리에만 보관, 저장소에 남기지 않음)
+  async unlockDocument(
+    id: string,
+    pinNumber: string,
+  ): Promise<{ unlockToken: string; expiresIn: number }> {
+    const res = await api.post<
+      ApiResponse<{ unlockToken: string; expiresIn: number }>
+    >(`/documents/${id}/unlock`, { pinNumber });
+    return res.data.data;
   },
 
   async getCategories(): Promise<DocumentCategory[]> {
@@ -202,8 +185,10 @@ export const documentService = {
     return res.data.data.items.map(mapDocument);
   },
 
-  async getDocument(id: string): Promise<Document> {
-    const res = await api.get<ApiResponse<DocumentApiItem>>(`/documents/${id}`);
+  async getDocument(id: string, unlockToken?: string): Promise<Document> {
+    const res = await api.get<ApiResponse<DocumentApiItem>>(`/documents/${id}`, {
+      headers: unlockToken ? { "x-document-unlock-token": unlockToken } : undefined,
+    });
     return mapDocument(res.data.data);
   },
 
@@ -297,10 +282,11 @@ export const documentService = {
     await api.delete(`/documents/${documentId}/alerts/${alertId}`);
   },
 
-  async downloadAsPdf(id: string, title: string): Promise<void> {
+  async downloadAsPdf(id: string, title: string, unlockToken?: string): Promise<void> {
     const baseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
     const res = await fetch(`${baseUrl}/documents/${id}/download`, {
       credentials: "include",
+      headers: unlockToken ? { "x-document-unlock-token": unlockToken } : undefined,
     });
     if (!res.ok) throw new Error("PDF 다운로드 실패");
     const blob = await res.blob();
