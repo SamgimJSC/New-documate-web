@@ -173,8 +173,6 @@ const DocumentDetail: React.FC = () => {
   const [selectedPage, setSelectedPage] = useState(0);
   const [isProtected, setIsProtected] = useState(false);
   const [pinUnlocked, setPinUnlocked] = useState(false);
-  // 잠긴 문서 열람용 단기 토큰. 새로고침/문서 이동 시 사라지도록 메모리에만 보관 (저장소에 두지 않음)
-  const [unlockToken, setUnlockToken] = useState<string | null>(null);
   const [pinOpen, setPinOpen] = useState(false);
   const [pinAction, setPinAction] = useState<PinAction>("view");
   const [form, setForm] = useState<EditableDocumentState>(EMPTY_FORM);
@@ -211,7 +209,6 @@ const DocumentDetail: React.FC = () => {
     if (!doc) return;
 
     setPinUnlocked(false);
-    setUnlockToken(null);
     setPinOpen(false);
     setPinAction("view");
     setIsEditing(false);
@@ -323,17 +320,10 @@ const DocumentDetail: React.FC = () => {
   // PIN 검증과 잠금 상태 변경을 백엔드에서 한 번에 처리 (검증 성공 없이는 잠금 상태가 바뀌지 않음)
   const verifyForAction = async (pin: string) => {
     if (pinAction === "view") {
-      // 문서 전용 단기 토큰을 발급받아 그 토큰으로만 실제 내용(ocr, 첨부파일 등)을 다시 받아옴.
-      // 이 토큰 없이는 서버가 잠긴 문서의 민감한 필드를 내려주지 않음.
-      const { unlockToken: token } = await documentService.unlockDocument(
-        doc.document_id,
-        pin,
-      );
-      const unlockedDoc = await documentService.getDocument(
-        doc.document_id,
-        token,
-      );
-      setUnlockToken(token);
+      // PIN 검증 성공 시 서버가 언락 쿠키를 심어줌. 이후 같은 문서를 다시 조회하면
+      // 그 쿠키가 자동으로 실려가야만 실제 내용(ocr, 첨부파일 등)을 받아올 수 있음.
+      await documentService.unlockDocument(doc.document_id, pin);
+      const unlockedDoc = await documentService.getDocument(doc.document_id);
       setDoc(unlockedDoc);
       return;
     }
@@ -440,11 +430,7 @@ const DocumentDetail: React.FC = () => {
   const handleDownload = async () => {
     if (isContentLocked) return;
     try {
-      await documentService.downloadAsPdf(
-        doc.document_id,
-        doc.title,
-        unlockToken ?? undefined,
-      );
+      await documentService.downloadAsPdf(doc.document_id, doc.title);
     } catch {
       showToast("PDF 다운로드에 실패했습니다.", "error");
     }
