@@ -270,7 +270,6 @@
   max-width: min(44vw, 500px);
 }
 
-
 /* 영수증/소비 리포트 전용 FAB: 문서 업로드 FAB와 색상으로 구분 */
 .fab--receipt {
   border: 1px solid var(--color-primary-border);
@@ -283,7 +282,7 @@
   border-color: var(--color-primary-soft, var(--color-primary-border));
   background-color: var(--color-chip-bg);
   color: var(--color-primary-dark);
-  box-shadow: 0 14px 30px rgba(91, 157, 153, 0.20);
+  box-shadow: 0 14px 30px rgba(91, 157, 153, 0.2);
 }
 
 /* =========================================
@@ -298,7 +297,10 @@
 }
 
 .fab.fab--receipt:hover {
-  border-color: var(--color-primary-soft, var(--color-primary-border)) !important;
+  border-color: var(
+    --color-primary-soft,
+    var(--color-primary-border)
+  ) !important;
   background-color: var(--color-chip-bg) !important;
   color: var(--color-primary-dark) !important;
   transform: translateY(-2px) scale(1.03);
