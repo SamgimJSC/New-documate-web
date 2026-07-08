@@ -284,6 +284,7 @@ body:has(.processing-center-page) button[class*="fab"] {
 
 .process-list-toolbar {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
@@ -316,12 +317,16 @@ body:has(.processing-center-page) button[class*="fab"] {
 
 .process-toolbar-actions {
   display: flex;
+  flex-wrap: nowrap;
   gap: 8px;
   align-items: center;
+  min-width: 0;
 }
 
 .process-toolbar-actions input {
   width: 170px;
+  min-width: 90px;
+  flex: 1 1 auto;
   height: 36px;
   padding: 0 12px;
   border: 1px solid var(--process-line);
@@ -337,11 +342,19 @@ body:has(.processing-center-page) button[class*="fab"] {
 
 .process-toolbar-actions button {
   min-height: 36px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .process-table {
   display: grid;
   gap: 7px;
+  overflow-x: auto;
+}
+
+.process-table__head,
+.process-table article {
+  min-width: 700px;
 }
 
 .process-table__head,
@@ -401,6 +414,11 @@ body:has(.processing-center-page) button[class*="fab"] {
 .process-document-icon--failed {
   background: #fee2e2;
   color: #ef4444;
+}
+
+.process-document-icon--matchFailed {
+  background: #fff7ed;
+  color: #c2410c;
 }
 
 .process-table b {
@@ -465,6 +483,11 @@ body:has(.processing-center-page) button[class*="fab"] {
 .process-chip--failed {
   background: #fee2e2;
   color: #b91c1c;
+}
+
+.process-chip--matchFailed {
+  background: #fff7ed;
+  color: #c2410c;
 }
 
 .process-chip--waitingSave {
@@ -755,6 +778,12 @@ body:has(.processing-center-page) button[class*="fab"] {
   color: #b91c1c;
 }
 
+.process-status-box--matchFailed {
+  border: 1px solid #f3d7b3;
+  background: #fffaf2;
+  color: #9a5a16;
+}
+
 .process-status-box--waitingSave {
   border: 1px solid #f3d7b3;
   background: #fffaf2;
@@ -920,12 +949,17 @@ body:has(.processing-center-page) button[class*="fab"] {
     width: 100%;
   }
 
+  .process-table {
+    overflow-x: visible;
+  }
+
   .process-table__head {
     display: none;
   }
 
   .process-table article {
     grid-template-columns: 1fr;
+    min-width: 0;
   }
 
   .process-detail-actions,
@@ -1009,15 +1043,6 @@ body:has(.processing-center-page) button[class*="fab"] {
   min-width: 0;
   width: 100%;
   box-sizing: border-box;
-}
-
-.process-table {
-  min-width: 0;
-}
-
-.process-table__head,
-.process-table article {
-  min-width: 0;
 }
 
 .process-table article.is-selected {

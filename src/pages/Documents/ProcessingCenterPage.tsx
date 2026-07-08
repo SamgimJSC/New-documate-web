@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState, type SyntheticEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  uploadLocalService,
-  type UploadProcessItem,
-  type UploadProcessStatus,
+import type {
+  UploadProcessItem,
+  UploadProcessStatus,
 } from "../../services/uploadLocalService";
-import { uploadService } from "../../services/uploadService";
+import { uploadService, type TempDocumentItem } from "../../services/uploadService";
 import { documentService } from "../../services/documentService";
 import { getReceipts } from "../../api/receipt";
 import { useCategories } from "../../hooks/useCategories";
+import type { DocumentCategory } from "../../types/document";
 import type { UploadDocumentCategory } from "../../types/upload";
 import {
   formatUploadedAt,
@@ -39,7 +39,9 @@ const getSummaryFields = (item: UploadProcessItem) => {
   return [
     ...fields,
     { label: "문서명", value: item.displayName },
-    ...(item.status === "completed" ? [{ label: "AI 분류", value: item.category }] : []),
+    ...(item.status === "completed"
+      ? [{ label: "AI 분류", value: item.category }]
+      : []),
     { label: "업로드일", value: formatUploadedAt(item.uploadedAt) },
   ].slice(0, 4);
 };
@@ -55,27 +57,169 @@ const getStatusCardClass = (tab: ProcessTab, activeTab: ProcessTab) => {
   return classes.filter(Boolean).join(" ");
 };
 
+const buildFileName = (files: TempDocumentItem["files"]) =>
+  files[0]?.fileName ?? "업로드 문서";
+
+const buildItemFromTemp = (temp: TempDocumentItem): UploadProcessItem => {
+  const totalSizeBytes = temp.files.reduce(
+    (sum, f) => sum + Number(f.fileSizeBytes || 0),
+    0,
+  );
+  const fileName = buildFileName(temp.files);
+  const status: UploadProcessStatus =
+    temp.aiStatus === "FAILED" ? "failed" : "analyzing";
+
+  return {
+    id: temp.tempDocumentId,
+    fileName,
+    displayName: fileName.replace(/\.(jpg|jpeg|png)$/i, ""),
+    fileType: fileName.toLowerCase().endsWith(".png") ? "PNG" : "JPG",
+    fileSizeBytes: totalSizeBytes,
+    sizeMb: Number((totalSizeBytes / (1024 * 1024)).toFixed(1)),
+    pageCount: temp.files.length || 1,
+    uploadedAt: temp.createdAt,
+    status,
+    category: "기타",
+    extractedFields: [],
+    confidence: status === "failed" ? 0 : 0.88,
+    progress: status === "failed" ? 0 : 50,
+    errorMessage: status === "failed" ? "AI 분석에 실패했어요." : undefined,
+    savedRecordId: temp.tempDocumentId,
+    uploadedFileIds: temp.files.map((f) => ({ id: f.id, pageNo: f.pageNo })),
+    pageFileUrls: temp.files.map((f) => f.fileUrl),
+  };
+};
+
+type MatchResult = {
+  savedTarget: "documents" | "receipts";
+  finalDocumentId: string;
+  category: UploadDocumentCategory;
+  pageFileUrls?: string[];
+  extractedFields?: UploadProcessItem["extractedFields"];
+  memo: string;
+};
+
+const matchByFileUrl = async (
+  fileUrl: string,
+  categories: DocumentCategory[],
+): Promise<MatchResult | null> => {
+  try {
+    const docs = await documentService.getDocuments({ limit: 10 });
+
+    for (const doc of docs) {
+      const detail = await documentService.getDocument(doc.document_id);
+      if (detail.document_files.some((f) => f.file_url === fileUrl)) {
+        const cat = categories.find(
+          (c) => c.category_id === detail.category_id,
+        );
+        return {
+          savedTarget: "documents",
+          finalDocumentId: detail.document_id,
+          category: (cat?.name as UploadDocumentCategory) ?? "기타",
+          pageFileUrls: detail.document_files.map((f) => f.file_url),
+          memo: "AI 분석이 완료되어 디지털 캐비닛에 저장되었습니다.",
+        };
+      }
+    }
+  } catch {
+    // 문서 조회 실패 시 영수증으로 계속 시도
+  }
+
+  try {
+    const res = await getReceipts({ size: 10, sort: "latest" });
+    const matchedReceipt = res.receipts.find((r) => r.fileUrl === fileUrl);
+
+    if (matchedReceipt) {
+      const extractedFields = [
+        { label: "가게명", value: matchedReceipt.storeName || "" },
+        {
+          label: "금액",
+          value:
+            matchedReceipt.totalAmount != null
+              ? `${matchedReceipt.totalAmount.toLocaleString("ko-KR")}원`
+              : "",
+        },
+        { label: "결제일", value: matchedReceipt.purchaseDate || "" },
+        {
+          label: "품목",
+          value:
+            typeof matchedReceipt.paymentItem === "string" &&
+            !/^\s*\[/.test(matchedReceipt.paymentItem)
+              ? matchedReceipt.paymentItem
+              : "",
+        },
+      ].filter((f) => f.value.trim() !== "");
+
+      return {
+        savedTarget: "receipts",
+        finalDocumentId: matchedReceipt.receiptId,
+        category: "영수증",
+        extractedFields,
+        memo: "AI 분석이 완료되어 영수증 보드에 저장되었습니다.",
+      };
+    }
+  } catch {
+    // 영수증 조회 실패는 무시하고 매칭 실패로 처리
+  }
+
+  return null;
+};
+
+const resolveCompletedItem = async (
+  temp: TempDocumentItem,
+  categories: DocumentCategory[],
+): Promise<UploadProcessItem> => {
+  const base = buildItemFromTemp(temp);
+  const primaryFileUrl = temp.files[0]?.fileUrl;
+
+  if (!primaryFileUrl) {
+    return {
+      ...base,
+      status: "matchFailed",
+      progress: 0,
+      errorMessage: "결과 파일 정보를 찾을 수 없어요.",
+    };
+  }
+
+  const match = await matchByFileUrl(primaryFileUrl, categories);
+
+  if (!match) {
+    return {
+      ...base,
+      status: "matchFailed",
+      progress: 0,
+      errorMessage: "완료된 문서를 찾지 못했어요. 다시 확인해 주세요.",
+    };
+  }
+
+  return {
+    ...base,
+    status: "completed",
+    progress: 100,
+    savedTarget: match.savedTarget,
+    finalDocumentId: match.finalDocumentId,
+    category: match.category,
+    pageFileUrls: match.pageFileUrls ?? base.pageFileUrls,
+    extractedFields: match.extractedFields ?? base.extractedFields,
+    memo: match.memo,
+    errorMessage: undefined,
+  };
+};
+
 export function ProcessingCenterPage() {
   const navigate = useNavigate();
   const categories = useCategories();
 
-  const [processItems, setProcessItems] = useState<UploadProcessItem[]>(() =>
-    uploadLocalService.readProcessItems(),
-  );
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(
-    () => uploadLocalService.readProcessItems()[0]?.id ?? null,
-  );
+  const [processItems, setProcessItems] = useState<UploadProcessItem[]>([]);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ProcessTab>("all");
   const [processQuery, setProcessQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   const selectedItem =
     processItems.find((item) => item.id === selectedItemId) ??
     processItems[0] ??
     null;
-
-  useEffect(() => {
-    uploadLocalService.writeProcessItems(processItems);
-  }, [processItems]);
 
   useEffect(() => {
     if (
@@ -89,124 +233,77 @@ export function ProcessingCenterPage() {
   }, [processItems, selectedItemId]);
 
   useEffect(() => {
+    if (categories.length === 0) return;
+
+    let cancelled = false;
+
+    uploadService
+      .getTempList()
+      .then(async (list) => {
+        const built = await Promise.all(
+          list.map((temp) =>
+            temp.aiStatus === "DONE"
+              ? resolveCompletedItem(temp, categories)
+              : Promise.resolve(buildItemFromTemp(temp)),
+          ),
+        );
+
+        if (!cancelled) setProcessItems(built);
+      })
+      .catch(() => {
+        if (!cancelled) setProcessItems([]);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [categories]);
+
+  useEffect(() => {
     const analyzingItems = processItems.filter(
       (item) => item.status === "analyzing" && item.savedRecordId,
     );
 
-    if (analyzingItems.length === 0 || categories.length === 0) return;
+    if (analyzingItems.length === 0) return;
 
     const timer = window.setInterval(() => {
-      uploadService
-        .getTempList()
-        .then((list) => {
-          analyzingItems.forEach((item) => {
-            const found = list.find(
-              (d) => d.tempDocumentId === item.savedRecordId,
-            );
-            if (!found) return;
-
-            if (found.aiStatus === "DONE") {
-              documentService
-                .getDocuments()
-                .then(async (docs) => {
-                  const sorted = [...docs].sort((a, b) =>
-                    b.created_at.localeCompare(a.created_at),
-                  );
-                  const matchedDoc =
-                    sorted.find((d) => d.file_name === item.fileName) ??
-                    sorted.find(
-                      (d) => new Date(d.created_at) >= new Date(item.uploadedAt),
-                    );
-
-                  if (matchedDoc) {
-                    const cat = categories.find(
-                      (c) => c.category_id === matchedDoc.category_id,
-                    );
-                    const category: UploadDocumentCategory = cat
-                      ? (cat.name as UploadDocumentCategory)
-                      : "기타";
-                    const detail = await documentService.getDocument(matchedDoc.document_id);
-                    updateItem(item.id, {
-                      status: "completed",
-                      progress: 100,
-                      savedTarget: "documents",
-                      finalDocumentId: matchedDoc.document_id,
-                      pageFileUrls: detail.document_files?.map((f) => f.file_url) ?? [],
-                      category,
-                      memo: "AI 분석이 완료되어 디지털 캐비닛에 저장되었습니다.",
-                    });
-                    return;
-                  }
-
-                  // documents에 없으면 receipts에서 확인
-                  try {
-                    const res = await getReceipts({ size: 5, sort: "latest" });
-                    const matchedReceipt = res.receipts.find(
-                      (r) => new Date(r.createdAt) >= new Date(item.uploadedAt),
-                    );
-                    if (matchedReceipt) {
-                      const extractedFields = [
-                        { label: "가게명", value: matchedReceipt.storeName || "" },
-                        {
-                          label: "금액",
-                          value: matchedReceipt.totalAmount != null
-                            ? `${matchedReceipt.totalAmount.toLocaleString("ko-KR")}원`
-                            : "",
-                        },
-                        { label: "결제일", value: matchedReceipt.purchaseDate || "" },
-                        {
-                          label: "품목",
-                          value: typeof matchedReceipt.paymentItem === "string" &&
-                            !/^\s*\[/.test(matchedReceipt.paymentItem)
-                            ? matchedReceipt.paymentItem
-                            : "",
-                        },
-                      ].filter((f) => f.value.trim() !== "");
-
-                      updateItem(item.id, {
-                        status: "completed",
-                        progress: 100,
-                        savedTarget: "receipts",
-                        finalDocumentId: matchedReceipt.receiptId,
-                        category: "영수증",
-                        memo: "AI 분석이 완료되어 영수증 보드에 저장되었습니다.",
-                        extractedFields,
-                      });
-                      return;
-                    }
-                  } catch {
-                    // receipts 조회 실패 시 무시
-                  }
-
-                  updateItem(item.id, {
-                    status: "completed",
-                    progress: 100,
-                    savedTarget: "documents",
-                    category: "기타",
-                    memo: "AI 분석이 완료되어 저장되었습니다.",
-                  });
-                })
-                .catch(() => {
-                  updateItem(item.id, {
-                    status: "completed",
-                    progress: 100,
-                    savedTarget: "documents",
-                    memo: "AI 분석이 완료되어 디지털 캐비닛에 저장되었습니다.",
-                  });
-                });
-            } else if (found.aiStatus === "FAILED") {
+      analyzingItems.forEach((item) => {
+        uploadService
+          .getTempDocument(item.savedRecordId!)
+          .then(async (temp) => {
+            if (temp.aiStatus === "FAILED") {
               updateItem(item.id, {
                 status: "failed",
                 progress: 0,
                 confidence: 0,
                 errorMessage: "AI 분석에 실패했어요.",
               });
+              return;
             }
+
+            if (temp.aiStatus === "DONE") {
+              const resolved = await resolveCompletedItem(temp, categories);
+              updateItem(item.id, resolved);
+            }
+          })
+          .catch((error) => {
+            const status = (error as { response?: { status?: number } })
+              ?.response?.status;
+
+            if (status === 404) {
+              updateItem(item.id, {
+                status: "failed",
+                progress: 0,
+                confidence: 0,
+                errorMessage: "분석 중 삭제됨 (3일 경과 자동 정리)",
+              });
+            }
+            // 그 외 네트워크 오류는 다음 폴링에서 재시도
           });
-        })
-        .catch(() => {
-          /* 네트워크 오류는 다음 폴링에서 재시도 */
-        });
+      });
     }, 5000);
 
     return () => window.clearInterval(timer);
@@ -217,7 +314,9 @@ export function ProcessingCenterPage() {
       total: processItems.length,
       analyzing: processItems.filter((item) => item.status === "analyzing")
         .length,
-      failed: processItems.filter((item) => item.status === "failed").length,
+      failed: processItems.filter(
+        (item) => item.status === "failed" || item.status === "matchFailed",
+      ).length,
       completed: processItems.filter((item) => item.status === "completed")
         .length,
     }),
@@ -229,7 +328,10 @@ export function ProcessingCenterPage() {
 
     return processItems
       .filter((item) => {
-        const matchesTab = activeTab === "all" || item.status === activeTab;
+        const matchesTab =
+          activeTab === "all" ||
+          item.status === activeTab ||
+          (activeTab === "failed" && item.status === "matchFailed");
         const matchesQuery =
           !query ||
           item.displayName.toLowerCase().includes(query) ||
@@ -279,6 +381,28 @@ export function ProcessingCenterPage() {
       });
   };
 
+  const refetchMatch = async (itemId: string) => {
+    const item = processItems.find((i) => i.id === itemId);
+    if (!item?.savedRecordId) return;
+
+    updateItem(itemId, {
+      status: "analyzing",
+      errorMessage: undefined,
+      memo: "결과를 다시 확인하고 있어요.",
+    });
+
+    try {
+      const temp = await uploadService.getTempDocument(item.savedRecordId);
+      const resolved = await resolveCompletedItem(temp, categories);
+      updateItem(itemId, resolved);
+    } catch {
+      updateItem(itemId, {
+        status: "matchFailed",
+        errorMessage: "다시 확인하는 데 실패했어요.",
+      });
+    }
+  };
+
   const deleteProcessItem = (itemId: string) => {
     setProcessItems((current) => current.filter((item) => item.id !== itemId));
   };
@@ -308,8 +432,13 @@ export function ProcessingCenterPage() {
           <div>
             <h2>{selectedItem.displayName}</h2>
             <p>
-              페이지 수: {pageCount}장 · AI 결과: {selectedItem.status === "completed" ? selectedItem.category : "분석중"} ·
-              업로드: {formatUploadedAt(selectedItem.uploadedAt)}
+              페이지 수: {pageCount}장 · AI 결과:{" "}
+              {selectedItem.status === "completed"
+                ? selectedItem.category
+                : selectedItem.status === "matchFailed"
+                  ? "결과 확인 필요"
+                  : "분석중"}{" "}
+              · 업로드: {formatUploadedAt(selectedItem.uploadedAt)}
             </p>
           </div>
           <button type="button" aria-label="문서 즐겨찾기">
@@ -327,40 +456,48 @@ export function ProcessingCenterPage() {
               className="process-preview-strip"
               aria-label="문서 페이지 미리보기"
             >
-              {Array.from({ length: Math.min(pageCount, 4) }).map((_, index) => {
-                const url = selectedItem.pageFileUrls?.[index];
-                const handleImgError = (e: SyntheticEvent<HTMLImageElement>) => {
-                  const target = e.currentTarget;
-                  target.style.display = "none";
-                  const wrapper = target.closest(".process-page-thumbnail");
-                  if (wrapper) {
-                    wrapper.classList.add("is-deleted");
-                    if (!wrapper.querySelector(".deleted-icon")) {
-                      const icon = document.createElement("span");
-                      icon.className = "deleted-icon";
-                      icon.innerHTML =
-                        '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
-                      wrapper.insertBefore(icon, wrapper.firstChild);
+              {Array.from({ length: Math.min(pageCount, 4) }).map(
+                (_, index) => {
+                  const url = selectedItem.pageFileUrls?.[index];
+                  const handleImgError = (
+                    e: SyntheticEvent<HTMLImageElement>,
+                  ) => {
+                    const target = e.currentTarget;
+                    target.style.display = "none";
+                    const wrapper = target.closest(".process-page-thumbnail");
+                    if (wrapper) {
+                      wrapper.classList.add("is-deleted");
+                      if (!wrapper.querySelector(".deleted-icon")) {
+                        const icon = document.createElement("span");
+                        icon.className = "deleted-icon";
+                        icon.innerHTML =
+                          '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
+                        wrapper.insertBefore(icon, wrapper.firstChild);
+                      }
                     }
-                  }
-                };
-                return (
-                  <figure key={index}>
-                    <div className="process-page-thumbnail">
-                      {url ? (
-                        <img src={url} alt={`${index + 1}페이지`} onError={handleImgError} />
-                      ) : (
-                        <>
-                          <i />
-                          <i />
-                          <i />
-                        </>
-                      )}
-                    </div>
-                    <figcaption>{index + 1}</figcaption>
-                  </figure>
-                );
-              })}
+                  };
+                  return (
+                    <figure key={index}>
+                      <div className="process-page-thumbnail">
+                        {url ? (
+                          <img
+                            src={url}
+                            alt={`${index + 1}페이지`}
+                            onError={handleImgError}
+                          />
+                        ) : (
+                          <>
+                            <i />
+                            <i />
+                            <i />
+                          </>
+                        )}
+                      </div>
+                      <figcaption>{index + 1}</figcaption>
+                    </figure>
+                  );
+                },
+              )}
               {pageCount > 4 && (
                 <figure className="process-page-more">
                   <div>+{pageCount - 4}</div>
@@ -385,14 +522,18 @@ export function ProcessingCenterPage() {
 
           <div className="process-detail-section-title">
             <h3>분석 요약</h3>
-            {selectedItem.status === "completed" && <span>{selectedItem.category}</span>}
+            {selectedItem.status === "completed" && (
+              <span>{selectedItem.category}</span>
+            )}
           </div>
           <p className="process-analysis-description">
             {selectedItem.status === "failed"
               ? "분석에 실패했습니다. 재시도하거나 수기로 등록해 주세요."
-              : selectedItem.status === "completed"
-              ? `${selectedItem.category} 문서의 주요 정보가 추출되었습니다.`
-              : "AI가 문서를 분석하고 있습니다."}
+              : selectedItem.status === "matchFailed"
+                ? "AI 분석은 완료됐지만 저장된 결과를 찾지 못했어요. 재조회해 주세요."
+                : selectedItem.status === "completed"
+                  ? `${selectedItem.category} 문서의 주요 정보가 추출되었습니다.`
+                  : "AI가 문서를 분석하고 있습니다."}
           </p>
 
           <dl className="process-summary-grid">
@@ -421,6 +562,23 @@ export function ProcessingCenterPage() {
                 onClick={() => retryAnalysis(selectedItem.id)}
               >
                 재시도
+              </button>
+              <button
+                type="button"
+                className="process-text-button"
+                onClick={() => deleteProcessItem(selectedItem.id)}
+              >
+                업로드 목록에서 삭제
+              </button>
+            </>
+          ) : selectedItem.status === "matchFailed" ? (
+            <>
+              <button
+                type="button"
+                className="process-danger-button"
+                onClick={() => refetchMatch(selectedItem.id)}
+              >
+                재조회
               </button>
               <button
                 type="button"
@@ -527,7 +685,11 @@ export function ProcessingCenterPage() {
         </button>
       </div>
 
-      {processItems.length === 0 ? (
+      {isLoading ? (
+        <section className="process-empty-card">
+          <strong>업로드 현황을 불러오고 있어요...</strong>
+        </section>
+      ) : processItems.length === 0 ? (
         <section className="process-empty-card">
           <strong>처리 중인 문서가 없어요.</strong>
           <p>업로드 스튜디오에서 파일을 선택하고 AI 분석을 시작해 주세요.</p>
@@ -615,6 +777,15 @@ export function ProcessingCenterPage() {
                           onClick={() => retryAnalysis(item.id)}
                         >
                           재시도
+                        </button>
+                      )}
+                      {item.status === "matchFailed" && (
+                        <button
+                          type="button"
+                          className="is-danger"
+                          onClick={() => refetchMatch(item.id)}
+                        >
+                          재조회
                         </button>
                       )}
                       {item.status === "completed" && (

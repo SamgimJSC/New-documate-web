@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Camera,
   ChevronRight,
   CreditCard,
   HardDrive,
@@ -10,36 +9,38 @@ import {
   Mail,
   PencilLine,
   ShieldCheck,
-  Trash2,
-  UserCircle,
   UserRound,
   UserX,
 } from "lucide-react";
 import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
-import ProfilePhotoModal from "../../components/modal/ProfilePhotoModal";
 import PinResetModal from "../../components/modal/PinResetModal";
 import { useUserStore } from "../../store/userStore";
 import { useToast } from "../../components/common/Toast";
+import { authService } from "../../services/authService";
+import { userService } from "../../services/userService";
 import "./MyPage.css";
 
 const MyPageProfile: React.FC = () => {
   const navigate = useNavigate();
   const user = useUserStore((s) => s.user);
+  const setUser = useUserStore((s) => s.setUser);
   const { showToast } = useToast();
 
   const [isReauthed, setIsReauthed] = useState(false);
   const [reauthPassword, setReauthPassword] = useState("");
+  const [isReauthing, setIsReauthing] = useState(false);
 
   const [editNickname, setEditNickname] = useState(false);
   const [nickname, setNickname] = useState("");
+  const [isSavingNickname, setIsSavingNickname] = useState(false);
 
   const [editPassword, setEditPassword] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
 
-  const [photoOpen, setPhotoOpen] = useState(false);
   const [pinOpen, setPinOpen] = useState(false);
 
   useEffect(() => {
@@ -84,26 +85,64 @@ const MyPageProfile: React.FC = () => {
     setConfirmPassword("");
   };
 
-  const handleReauth = () => {
+  const handleReauth = async () => {
     if (!reauthPassword.trim()) {
       showToast("비밀번호를 입력해주세요.", "error");
       return;
     }
 
-    setIsReauthed(true);
-    setReauthPassword("");
-    showToast("재인증이 완료되었습니다.", "success");
+    setIsReauthing(true);
+    try {
+      const valid = await authService.verifyPassword(reauthPassword);
+      if (!valid) {
+        showToast("비밀번호가 일치하지 않습니다.", "error");
+        return;
+      }
+
+      setIsReauthed(true);
+      setReauthPassword("");
+      showToast("재인증이 완료되었습니다.", "success");
+    } catch (err: any) {
+      const errorCode = err?.response?.data?.errorCode;
+      if (errorCode === "INVALID_PASSWORD") {
+        showToast("비밀번호가 일치하지 않습니다.", "error");
+      } else {
+        showToast("재인증에 실패했습니다. 다시 시도해주세요.", "error");
+      }
+    } finally {
+      setIsReauthing(false);
+    }
   };
 
-  const handleSaveNickname = () => {
-    if (!nickname.trim()) {
+  const handleSaveNickname = async () => {
+    const trimmed = nickname.trim();
+
+    if (!trimmed) {
       showToast("닉네임을 입력해주세요.", "error");
       return;
     }
 
-    setNickname(nickname.trim());
-    setEditNickname(false);
-    showToast("닉네임이 변경되었습니다.", "success");
+    setIsSavingNickname(true);
+    try {
+      const updatedNickname = await userService.updateNickname(trimmed);
+      setNickname(updatedNickname);
+      setEditNickname(false);
+      if (user) {
+        setUser({ ...user, nickname: updatedNickname });
+      }
+      showToast("닉네임이 변경되었습니다.", "success");
+    } catch (err: any) {
+      const errorCode = err?.response?.data?.errorCode;
+      if (errorCode === "NICKNAME_ALREADY_USED") {
+        showToast("이미 사용 중인 닉네임입니다.", "error");
+      } else if (errorCode === "INVALID_NICKNAME") {
+        showToast("닉네임 형식을 확인해주세요. (2~8자, 한글 또는 영문)", "error");
+      } else {
+        showToast("닉네임 변경에 실패했습니다.", "error");
+      }
+    } finally {
+      setIsSavingNickname(false);
+    }
   };
 
   const handleCancelNickname = () => {
@@ -111,7 +150,7 @@ const MyPageProfile: React.FC = () => {
     setEditNickname(false);
   };
 
-  const handleSavePassword = () => {
+  const handleSavePassword = async () => {
     if (!currentPassword.trim()) {
       showToast("현재 비밀번호를 입력해주세요.", "error");
       return;
@@ -132,9 +171,24 @@ const MyPageProfile: React.FC = () => {
       return;
     }
 
-    resetPasswordForm();
-    setEditPassword(false);
-    showToast("비밀번호가 변경되었습니다.", "success");
+    setIsSavingPassword(true);
+    try {
+      await authService.updatePassword(currentPassword, newPassword);
+      resetPasswordForm();
+      setEditPassword(false);
+      showToast("비밀번호가 변경되었습니다.", "success");
+    } catch (err: any) {
+      const errorCode = err?.response?.data?.errorCode;
+      if (errorCode === "INVALID_PASSWORD") {
+        showToast("현재 비밀번호가 일치하지 않습니다.", "error");
+      } else if (errorCode === "INVALID_NEW_PASSWORD_FORMAT") {
+        showToast("새 비밀번호 형식을 확인해주세요.", "error");
+      } else {
+        showToast("비밀번호 변경에 실패했습니다.", "error");
+      }
+    } finally {
+      setIsSavingPassword(false);
+    }
   };
 
   const handleCancelPassword = () => {
@@ -177,11 +231,11 @@ const MyPageProfile: React.FC = () => {
 
             <Button
               variant="primary"
-              disabled={!reauthPassword.trim()}
+              disabled={!reauthPassword.trim() || isReauthing}
               onClick={handleReauth}
               fullWidth
             >
-              확인하고 회원정보 보기
+              {isReauthing ? "확인 중..." : "확인하고 회원정보 보기"}
             </Button>
 
             <button
@@ -204,55 +258,11 @@ const MyPageProfile: React.FC = () => {
 
   return (
     <div className="mypage-section mypage-profile mypage-profile--edit-page">
-      <section className="mypage-profile__unified-card">
-        <div className="mypage-profile__unified-photo">
-          <div className="mypage-profile__photo-cardlet mypage-profile__photo-cardlet--large">
-            <div className="mypage-profile__card-title">
-              <h3>프로필 사진</h3>
-            </div>
-
-            <div className="mypage-profile__photo-preview">
-              {user.profile_img_url ? (
-                <img src={user.profile_img_url} alt="프로필" />
-              ) : (
-                <UserCircle size={84} />
-              )}
-            </div>
-
-            <div className="mypage-profile__photo-actions">
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => setPhotoOpen(true)}
-              >
-                <Camera size={15} />
-                사진 변경
-              </Button>
-
-              <button
-                type="button"
-                className="mypage-profile__danger-outline"
-                onClick={() =>
-                  showToast(
-                    "프로필 사진 삭제 기능은 추후 연결 예정입니다.",
-                    "success",
-                  )
-                }
-              >
-                <Trash2 size={15} />
-                삭제
-              </button>
-
-              <p>JPG, PNG / 5MB 이하 권장</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mypage-profile__unified-divider" />
-
+      <section className="mypage-profile__unified-card mypage-profile__unified-card--no-photo">
         <div className="mypage-profile__unified-account">
           <div className="mypage-profile__card-title">
             <h3>기본 정보</h3>
+            <p>자주 변경하는 정보와 보안 설정만 모아두었어요.</p>
           </div>
 
           <div className="mypage-profile__account-rows">
@@ -272,13 +282,18 @@ const MyPageProfile: React.FC = () => {
                       placeholder="닉네임을 입력해주세요"
                     />
                     <div className="mypage-profile__inline-actions">
-                      <Button size="sm" onClick={handleSaveNickname}>
-                        저장
+                      <Button
+                        size="sm"
+                        onClick={handleSaveNickname}
+                        disabled={isSavingNickname}
+                      >
+                        {isSavingNickname ? "저장 중..." : "저장"}
                       </Button>
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={handleCancelNickname}
+                        disabled={isSavingNickname}
                       >
                         취소
                       </Button>
@@ -391,13 +406,18 @@ const MyPageProfile: React.FC = () => {
                     </div>
 
                     <div className="mypage-profile__inline-actions mypage-profile__password-actions">
-                      <Button size="sm" onClick={handleSavePassword}>
-                        변경하기
+                      <Button
+                        size="sm"
+                        onClick={handleSavePassword}
+                        disabled={isSavingPassword}
+                      >
+                        {isSavingPassword ? "변경 중..." : "변경하기"}
                       </Button>
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={handleCancelPassword}
+                        disabled={isSavingPassword}
                       >
                         취소
                       </Button>
@@ -527,11 +547,6 @@ const MyPageProfile: React.FC = () => {
           <ChevronRight size={18} />
         </button>
       </section>
-
-      <ProfilePhotoModal
-        isOpen={photoOpen}
-        onClose={() => setPhotoOpen(false)}
-      />
 
       <PinResetModal isOpen={pinOpen} onClose={() => setPinOpen(false)} />
     </div>
