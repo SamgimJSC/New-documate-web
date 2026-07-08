@@ -137,15 +137,10 @@ export const documentService = {
     return mapDocument(res.data.data);
   },
 
-  // PIN 검증 성공 시 해당 문서에 한정된 단기 토큰 발급 (메모리에만 보관, 저장소에 남기지 않음)
-  async unlockDocument(
-    id: string,
-    pinNumber: string,
-  ): Promise<{ unlockToken: string; expiresIn: number }> {
-    const res = await api.post<
-      ApiResponse<{ unlockToken: string; expiresIn: number }>
-    >(`/documents/${id}/unlock`, { pinNumber });
-    return res.data.data;
+  // PIN 검증 성공 시 서버가 해당 문서에 한정된 단기 언락 토큰을 httpOnly 쿠키로 내려줌.
+  // 프론트는 토큰을 직접 다루지 않고, withCredentials로 자동 전송되는 쿠키에 맡김.
+  async unlockDocument(id: string, pinNumber: string): Promise<void> {
+    await api.post(`/documents/${id}/unlock`, { pinNumber });
   },
 
   async getCategories(): Promise<DocumentCategory[]> {
@@ -185,10 +180,8 @@ export const documentService = {
     return res.data.data.items.map(mapDocument);
   },
 
-  async getDocument(id: string, unlockToken?: string): Promise<Document> {
-    const res = await api.get<ApiResponse<DocumentApiItem>>(`/documents/${id}`, {
-      headers: unlockToken ? { "x-document-unlock-token": unlockToken } : undefined,
-    });
+  async getDocument(id: string): Promise<Document> {
+    const res = await api.get<ApiResponse<DocumentApiItem>>(`/documents/${id}`);
     return mapDocument(res.data.data);
   },
 
@@ -282,11 +275,10 @@ export const documentService = {
     await api.delete(`/documents/${documentId}/alerts/${alertId}`);
   },
 
-  async downloadAsPdf(id: string, title: string, unlockToken?: string): Promise<void> {
+  async downloadAsPdf(id: string, title: string): Promise<void> {
     const baseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
     const res = await fetch(`${baseUrl}/documents/${id}/download`, {
       credentials: "include",
-      headers: unlockToken ? { "x-document-unlock-token": unlockToken } : undefined,
     });
     if (!res.ok) throw new Error("PDF 다운로드 실패");
     const blob = await res.blob();
