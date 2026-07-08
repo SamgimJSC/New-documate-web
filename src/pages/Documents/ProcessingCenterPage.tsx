@@ -39,7 +39,9 @@ const getSummaryFields = (item: UploadProcessItem) => {
   return [
     ...fields,
     { label: "문서명", value: item.displayName },
-    ...(item.status === "completed" ? [{ label: "AI 분류", value: item.category }] : []),
+    ...(item.status === "completed"
+      ? [{ label: "AI 분류", value: item.category }]
+      : []),
     { label: "업로드일", value: formatUploadedAt(item.uploadedAt) },
   ].slice(0, 4);
 };
@@ -115,7 +117,8 @@ export function ProcessingCenterPage() {
                   const matchedDoc =
                     sorted.find((d) => d.file_name === item.fileName) ??
                     sorted.find(
-                      (d) => new Date(d.created_at) >= new Date(item.uploadedAt),
+                      (d) =>
+                        new Date(d.created_at) >= new Date(item.uploadedAt),
                     );
 
                   if (matchedDoc) {
@@ -125,13 +128,16 @@ export function ProcessingCenterPage() {
                     const category: UploadDocumentCategory = cat
                       ? (cat.name as UploadDocumentCategory)
                       : "기타";
-                    const detail = await documentService.getDocument(matchedDoc.document_id);
+                    const detail = await documentService.getDocument(
+                      matchedDoc.document_id,
+                    );
                     updateItem(item.id, {
                       status: "completed",
                       progress: 100,
                       savedTarget: "documents",
                       finalDocumentId: matchedDoc.document_id,
-                      pageFileUrls: detail.document_files?.map((f) => f.file_url) ?? [],
+                      pageFileUrls:
+                        detail.document_files?.map((f) => f.file_url) ?? [],
                       category,
                       memo: "AI 분석이 완료되어 디지털 캐비닛에 저장되었습니다.",
                     });
@@ -146,20 +152,28 @@ export function ProcessingCenterPage() {
                     );
                     if (matchedReceipt) {
                       const extractedFields = [
-                        { label: "가게명", value: matchedReceipt.storeName || "" },
+                        {
+                          label: "가게명",
+                          value: matchedReceipt.storeName || "",
+                        },
                         {
                           label: "금액",
-                          value: matchedReceipt.totalAmount != null
-                            ? `${matchedReceipt.totalAmount.toLocaleString("ko-KR")}원`
-                            : "",
+                          value:
+                            matchedReceipt.totalAmount != null
+                              ? `${matchedReceipt.totalAmount.toLocaleString("ko-KR")}원`
+                              : "",
                         },
-                        { label: "결제일", value: matchedReceipt.purchaseDate || "" },
+                        {
+                          label: "결제일",
+                          value: matchedReceipt.purchaseDate || "",
+                        },
                         {
                           label: "품목",
-                          value: typeof matchedReceipt.paymentItem === "string" &&
+                          value:
+                            typeof matchedReceipt.paymentItem === "string" &&
                             !/^\s*\[/.test(matchedReceipt.paymentItem)
-                            ? matchedReceipt.paymentItem
-                            : "",
+                              ? matchedReceipt.paymentItem
+                              : "",
                         },
                       ].filter((f) => f.value.trim() !== "");
 
@@ -308,8 +322,11 @@ export function ProcessingCenterPage() {
           <div>
             <h2>{selectedItem.displayName}</h2>
             <p>
-              페이지 수: {pageCount}장 · AI 결과: {selectedItem.status === "completed" ? selectedItem.category : "분석중"} ·
-              업로드: {formatUploadedAt(selectedItem.uploadedAt)}
+              페이지 수: {pageCount}장 · AI 결과:{" "}
+              {selectedItem.status === "completed"
+                ? selectedItem.category
+                : "분석중"}{" "}
+              · 업로드: {formatUploadedAt(selectedItem.uploadedAt)}
             </p>
           </div>
           <button type="button" aria-label="문서 즐겨찾기">
@@ -327,40 +344,48 @@ export function ProcessingCenterPage() {
               className="process-preview-strip"
               aria-label="문서 페이지 미리보기"
             >
-              {Array.from({ length: Math.min(pageCount, 4) }).map((_, index) => {
-                const url = selectedItem.pageFileUrls?.[index];
-                const handleImgError = (e: SyntheticEvent<HTMLImageElement>) => {
-                  const target = e.currentTarget;
-                  target.style.display = "none";
-                  const wrapper = target.closest(".process-page-thumbnail");
-                  if (wrapper) {
-                    wrapper.classList.add("is-deleted");
-                    if (!wrapper.querySelector(".deleted-icon")) {
-                      const icon = document.createElement("span");
-                      icon.className = "deleted-icon";
-                      icon.innerHTML =
-                        '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
-                      wrapper.insertBefore(icon, wrapper.firstChild);
+              {Array.from({ length: Math.min(pageCount, 4) }).map(
+                (_, index) => {
+                  const url = selectedItem.pageFileUrls?.[index];
+                  const handleImgError = (
+                    e: SyntheticEvent<HTMLImageElement>,
+                  ) => {
+                    const target = e.currentTarget;
+                    target.style.display = "none";
+                    const wrapper = target.closest(".process-page-thumbnail");
+                    if (wrapper) {
+                      wrapper.classList.add("is-deleted");
+                      if (!wrapper.querySelector(".deleted-icon")) {
+                        const icon = document.createElement("span");
+                        icon.className = "deleted-icon";
+                        icon.innerHTML =
+                          '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
+                        wrapper.insertBefore(icon, wrapper.firstChild);
+                      }
                     }
-                  }
-                };
-                return (
-                  <figure key={index}>
-                    <div className="process-page-thumbnail">
-                      {url ? (
-                        <img src={url} alt={`${index + 1}페이지`} onError={handleImgError} />
-                      ) : (
-                        <>
-                          <i />
-                          <i />
-                          <i />
-                        </>
-                      )}
-                    </div>
-                    <figcaption>{index + 1}</figcaption>
-                  </figure>
-                );
-              })}
+                  };
+                  return (
+                    <figure key={index}>
+                      <div className="process-page-thumbnail">
+                        {url ? (
+                          <img
+                            src={url}
+                            alt={`${index + 1}페이지`}
+                            onError={handleImgError}
+                          />
+                        ) : (
+                          <>
+                            <i />
+                            <i />
+                            <i />
+                          </>
+                        )}
+                      </div>
+                      <figcaption>{index + 1}</figcaption>
+                    </figure>
+                  );
+                },
+              )}
               {pageCount > 4 && (
                 <figure className="process-page-more">
                   <div>+{pageCount - 4}</div>
@@ -385,14 +410,16 @@ export function ProcessingCenterPage() {
 
           <div className="process-detail-section-title">
             <h3>분석 요약</h3>
-            {selectedItem.status === "completed" && <span>{selectedItem.category}</span>}
+            {selectedItem.status === "completed" && (
+              <span>{selectedItem.category}</span>
+            )}
           </div>
           <p className="process-analysis-description">
             {selectedItem.status === "failed"
               ? "분석에 실패했습니다. 재시도하거나 수기로 등록해 주세요."
               : selectedItem.status === "completed"
-              ? `${selectedItem.category} 문서의 주요 정보가 추출되었습니다.`
-              : "AI가 문서를 분석하고 있습니다."}
+                ? `${selectedItem.category} 문서의 주요 정보가 추출되었습니다.`
+                : "AI가 문서를 분석하고 있습니다."}
           </p>
 
           <dl className="process-summary-grid">
