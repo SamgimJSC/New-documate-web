@@ -11,6 +11,7 @@ export const PROCESS_STATUS_LABEL: Record<UploadProcessStatus, string> = {
   analyzing: "분석 중",
   waitingSave: "저장 대기",
   failed: "분석 실패",
+  matchFailed: "매칭 실패",
   completed: "등록 완료",
 };
 
@@ -18,6 +19,7 @@ export const PROCESS_STATUS_HELPER: Record<UploadProcessStatus, string> = {
   analyzing: "AI가 문서 내용을 읽고 있어요. 페이지를 벗어나도 처리 센터에서 다시 확인할 수 있습니다.",
   waitingSave: "분석이 완료되었습니다. 추출 정보를 확인하고 저장해 주세요.",
   failed: "이미지가 흐리거나 필수 정보를 읽지 못했어요. 재시도하거나 수기로 등록할 수 있습니다.",
+  matchFailed: "AI 분석은 완료됐지만 저장된 결과를 찾지 못했어요. 다시 확인해 주세요.",
   completed: "저장이 완료되었습니다. 저장 위치로 이동해 내용을 확인할 수 있어요.",
 };
 

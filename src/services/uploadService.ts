@@ -25,6 +25,23 @@ interface AiStatusData {
   aiStatus: AiStatus;
 }
 
+export type TempAiStatus = "PENDING" | "PROCESSING" | "DONE" | "FAILED";
+
+export interface TempUploadFile {
+  id: string;
+  fileUrl: string;
+  fileName: string | null;
+  pageNo: number;
+  fileSizeBytes: string;
+}
+
+export interface TempDocumentItem {
+  tempDocumentId: string;
+  aiStatus: TempAiStatus;
+  createdAt: string;
+  files: TempUploadFile[];
+}
+
 export const uploadService = {
   async startSession(): Promise<string> {
     const res = await api.get<ApiResponse<StartSessionData>>("/upload/start");
@@ -67,15 +84,16 @@ export const uploadService = {
     return res.data.data;
   },
 
-  async getTempList(): Promise<
-    Array<{ tempDocumentId: string; aiStatus: AiStatus | "PROCESSING" }>
-  > {
+  async getTempList(): Promise<TempDocumentItem[]> {
     const res =
-      await api.get<
-        ApiResponse<
-          Array<{ tempDocumentId: string; aiStatus: AiStatus | "PROCESSING" }>
-        >
-      >("/upload/temp-list");
+      await api.get<ApiResponse<TempDocumentItem[]>>("/upload/temp-list");
+    return res.data.data;
+  },
+
+  async getTempDocument(tempDocumentId: string): Promise<TempDocumentItem> {
+    const res = await api.get<ApiResponse<TempDocumentItem>>(
+      `/upload/${tempDocumentId}`,
+    );
     return res.data.data;
   },
 

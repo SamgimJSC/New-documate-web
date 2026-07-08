@@ -416,6 +416,11 @@ body:has(.processing-center-page) button[class*="fab"] {
   color: #ef4444;
 }
 
+.process-document-icon--matchFailed {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
 .process-table b {
   display: block;
   overflow: hidden;
@@ -478,6 +483,11 @@ body:has(.processing-center-page) button[class*="fab"] {
 .process-chip--failed {
   background: #fee2e2;
   color: #b91c1c;
+}
+
+.process-chip--matchFailed {
+  background: #fff7ed;
+  color: #c2410c;
 }
 
 .process-chip--waitingSave {
@@ -766,6 +776,12 @@ body:has(.processing-center-page) button[class*="fab"] {
   border: 1px solid #fecaca;
   background: #fef2f2;
   color: #b91c1c;
+}
+
+.process-status-box--matchFailed {
+  border: 1px solid #f3d7b3;
+  background: #fffaf2;
+  color: #9a5a16;
 }
 
 .process-status-box--waitingSave {

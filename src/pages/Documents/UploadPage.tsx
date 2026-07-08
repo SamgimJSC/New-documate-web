@@ -19,7 +19,6 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, RefreshCw } from "lucide-react";
 import { uploadCategoryGuide } from "../../data/uploadCategories";
 import { AnalysisStartModal } from "../../components/upload/AnalysisStartModal";
-import { uploadLocalService } from "../../services/uploadLocalService";
 import { uploadService } from "../../services/uploadService";
 import { AnalysisStartedModal } from "../../components/upload/AnalysisStartedModal";
 import {
@@ -362,23 +361,7 @@ export function UploadPage() {
         .filter((f) => f.uploadStatus === "uploaded" && f.uploadedFileId)
         .map((f, i) => ({ id: f.uploadedFileId!, pageNo: i + 1 }));
 
-      const { tempDocumentId: confirmedId } = await uploadService.requestAi(
-        tempDocumentId,
-        uploadedFiles,
-      );
-
-      uploadLocalService.writeProcessItems([
-        ...uploadLocalService.readProcessItems(),
-        uploadLocalService.buildProcessDocument({
-          fileName: studioFiles[0].fileName,
-          sizeMb: studioFiles.reduce((sum, f) => sum + f.sizeMb, 0),
-          fileSizeBytes: studioFiles.reduce((sum, f) => sum + f.fileSizeBytes, 0),
-          pageCount: studioFiles.length,
-          status: "analyzing",
-          savedRecordId: confirmedId,
-          uploadedFileIds: uploadedFiles,
-        }),
-      ]);
+      await uploadService.requestAi(tempDocumentId, uploadedFiles);
 
       setStartedFileCount(studioFiles.length);
       setStudioFiles([]);

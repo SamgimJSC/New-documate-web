@@ -6,6 +6,7 @@ export type UploadProcessStatus =
   | "analyzing"
   | "waitingSave"
   | "failed"
+  | "matchFailed"
   | "completed";
 
 export type UploadSaveTarget = "documents" | "receipts";
@@ -50,7 +51,6 @@ export type ManualRegistrationInput = {
 
 const LOCAL_DOCUMENTS_KEY = "documate.localDocuments";
 const LOCAL_RECEIPTS_KEY = "documate.localReceipts";
-const LOCAL_UPLOAD_PROCESS_KEY = "documate.localUploadProcess";
 
 const isBrowser = () =>
   typeof window !== "undefined" && Boolean(window.localStorage);
@@ -158,14 +158,6 @@ const normalizeFileType = (fileName: string): DocumentFileType => {
 };
 
 export const uploadLocalService = {
-  readProcessItems() {
-    return safeRead<UploadProcessItem[]>(LOCAL_UPLOAD_PROCESS_KEY, []);
-  },
-
-  writeProcessItems(items: UploadProcessItem[]) {
-    safeWrite(LOCAL_UPLOAD_PROCESS_KEY, items);
-  },
-
   readDocuments() {
     return safeRead<Document[]>(LOCAL_DOCUMENTS_KEY, []);
   },
@@ -214,42 +206,6 @@ export const uploadLocalService = {
     );
 
     safeWrite(LOCAL_RECEIPTS_KEY, receipts);
-  },
-
-  buildProcessDocument(input: {
-    fileName: string;
-    sizeMb: number;
-    fileSizeBytes: number;
-    pageCount?: number;
-    category?: UploadDocumentCategory;
-    extractedFields?: UploadExtractedField[];
-    status?: UploadProcessStatus;
-    savedRecordId?: string;
-    uploadedFileIds?: Array<{ id: string; pageNo: number }>;
-  }): UploadProcessItem {
-    const fileType = normalizeFileType(input.fileName);
-
-    return {
-      id: createId("process"),
-      fileName: input.fileName,
-      displayName: input.fileName.replace(/\.(jpg|jpeg|png)$/i, ""),
-      fileType,
-      fileSizeBytes: input.fileSizeBytes,
-      sizeMb: input.sizeMb,
-      pageCount: input.pageCount ?? 1,
-      uploadedAt: now(),
-      status: input.status ?? "waitingSave",
-      category: input.category ?? "기타",
-      extractedFields: input.extractedFields ?? [],
-      confidence: input.status === "failed" ? 0 : 0.88,
-      progress: input.status === "failed" ? 0 : 100,
-      savedRecordId: input.savedRecordId,
-      uploadedFileIds: input.uploadedFileIds,
-      errorMessage:
-        input.status === "failed"
-          ? "이미지가 흐리거나 필수 정보를 읽지 못했어요."
-          : undefined,
-    };
   },
 
   toDocument(
