@@ -83,31 +83,6 @@ interface DocumentListData {
 }
 
 
-const LOCAL_PROTECTED_DOCUMENTS_KEY = "documate:protected-documents";
-
-const readLocalProtectedDocumentIds = (): string[] => {
-  if (typeof window === "undefined") return [];
-
-  try {
-    const raw = window.localStorage.getItem(LOCAL_PROTECTED_DOCUMENTS_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed)
-      ? parsed.filter((item): item is string => typeof item === "string")
-      : [];
-  } catch {
-    return [];
-  }
-};
-
-const writeLocalProtectedDocumentIds = (ids: string[]) => {
-  if (typeof window === "undefined") return;
-
-  window.localStorage.setItem(
-    LOCAL_PROTECTED_DOCUMENTS_KEY,
-    JSON.stringify(Array.from(new Set(ids))),
-  );
-};
-
 const mapDocument = (raw: DocumentApiItem): Document => ({
   document_id: raw.documentId,
   user_id: raw.userId,
@@ -150,19 +125,22 @@ const mapDocument = (raw: DocumentApiItem): Document => ({
 });
 
 export const documentService = {
-  isDocumentLocallyProtected(documentId: string): boolean {
-    return readLocalProtectedDocumentIds().includes(documentId);
+  async updateLock(
+    id: string,
+    isLocked: boolean,
+    pinNumber: string,
+  ): Promise<Document> {
+    const res = await api.patch<ApiResponse<DocumentApiItem>>(
+      `/documents/${id}/lock`,
+      { isLocked, pinNumber },
+    );
+    return mapDocument(res.data.data);
   },
 
-  setDocumentLocallyProtected(documentId: string, isProtected: boolean): void {
-    const ids = readLocalProtectedDocumentIds();
-
-    if (isProtected) {
-      writeLocalProtectedDocumentIds([...ids, documentId]);
-      return;
-    }
-
-    writeLocalProtectedDocumentIds(ids.filter((id) => id !== documentId));
+  // PIN 검증 성공 시 서버가 해당 문서에 한정된 단기 언락 토큰을 httpOnly 쿠키로 내려줌.
+  // 프론트는 토큰을 직접 다루지 않고, withCredentials로 자동 전송되는 쿠키에 맡김.
+  async unlockDocument(id: string, pinNumber: string): Promise<void> {
+    await api.post(`/documents/${id}/unlock`, { pinNumber });
   },
 
   async getCategories(): Promise<DocumentCategory[]> {

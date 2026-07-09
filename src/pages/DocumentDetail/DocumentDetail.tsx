@@ -195,10 +195,7 @@ const DocumentDetail: React.FC = () => {
         setIsFavorite(d.is_favorite);
         setTags(d.tags);
         setAlerts(a);
-        setIsProtected(
-          getDocumentLockedFromServer(d) ||
-            documentService.isDocumentLocallyProtected(d.document_id),
-        );
+        setIsProtected(getDocumentLockedFromServer(d));
       })
       .catch(() => {
         setDoc(null);
@@ -320,6 +317,25 @@ const DocumentDetail: React.FC = () => {
     setPinOpen(true);
   };
 
+  // PIN 검증과 잠금 상태 변경을 백엔드에서 한 번에 처리 (검증 성공 없이는 잠금 상태가 바뀌지 않음)
+  const verifyForAction = async (pin: string) => {
+    if (pinAction === "view") {
+      // PIN 검증 성공 시 서버가 언락 쿠키를 심어줌. 이후 같은 문서를 다시 조회하면
+      // 그 쿠키가 자동으로 실려가야만 실제 내용(ocr, 첨부파일 등)을 받아올 수 있음.
+      await documentService.unlockDocument(doc.document_id, pin);
+      const unlockedDoc = await documentService.getDocument(doc.document_id);
+      setDoc(unlockedDoc);
+      return;
+    }
+
+    const updated = await documentService.updateLock(
+      doc.document_id,
+      pinAction === "enable",
+      pin,
+    );
+    setDoc(updated);
+  };
+
   const handlePinVerified = () => {
     if (pinAction === "view") {
       setPinUnlocked(true);
@@ -327,20 +343,16 @@ const DocumentDetail: React.FC = () => {
       return;
     }
 
-    if (pinAction === "enable") {
-      documentService.setDocumentLocallyProtected(doc.document_id, true);
-      setIsProtected(true);
-      setPinUnlocked(false);
-      setIsEditing(false);
-      showToast("문서가 캐비닛 PIN으로 보호됩니다.", "success");
-      return;
-    }
-
-    documentService.setDocumentLocallyProtected(doc.document_id, false);
-    setIsProtected(false);
+    const nowLocked = pinAction === "enable";
+    setIsProtected(nowLocked);
     setPinUnlocked(false);
     setIsEditing(false);
-    showToast("문서 PIN 보호가 해제되었습니다.", "success");
+    showToast(
+      nowLocked
+        ? "문서가 캐비닛 PIN으로 보호됩니다."
+        : "문서 PIN 보호가 해제되었습니다.",
+      "success",
+    );
   };
 
   const handleProtectionToggle = () => {
@@ -1082,6 +1094,7 @@ const DocumentDetail: React.FC = () => {
         isOpen={pinOpen}
         onClose={() => setPinOpen(false)}
         onVerified={handlePinVerified}
+        verify={verifyForAction}
         title={pinTitle}
         description={pinDescription}
         submitLabel={pinSubmitLabel}

@@ -6,7 +6,6 @@ import Button from "../common/Button";
 import { useToast } from "../common/Toast";
 import { startUpload, uploadTempFile, requestAiAnalyse } from "../../api/upload";
 import { AnalysisStartedModal } from "../upload/AnalysisStartedModal";
-import { uploadLocalService } from "../../services/uploadLocalService";
 import "./ReceiptUploadModal.css";
 
 interface Props {
@@ -81,19 +80,6 @@ const ReceiptUploadModal: React.FC<Props> = ({ isOpen, onClose }) => {
       const { files } = await uploadTempFile(tempDocumentId, file, 1);
       const uploadedFileIds = [{ id: files[0].id, pageNo: 1 }];
       await requestAiAnalyse(tempDocumentId, uploadedFileIds);
-
-      uploadLocalService.writeProcessItems([
-        ...uploadLocalService.readProcessItems(),
-        uploadLocalService.buildProcessDocument({
-          fileName: file.name,
-          sizeMb: file.size / (1024 * 1024),
-          fileSizeBytes: file.size,
-          pageCount: 1,
-          status: "analyzing",
-          savedRecordId: tempDocumentId,
-          uploadedFileIds,
-        }),
-      ]);
 
       setAnalysisStarted(true);
     } catch {

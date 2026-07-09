@@ -5013,3 +5013,77 @@
     justify-items: start !important;
   }
 }
+
+.mypage-profile__unified-card--no-photo {
+  display: block !important;
+  width: min(100%, 1120px) !important;
+  margin: 0 auto !important;
+  padding: 38px 48px !important;
+}
+
+.mypage-profile__unified-card--no-photo .mypage-profile__unified-account {
+  width: 100% !important;
+  max-width: 980px !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+}
+
+.mypage-profile__unified-card--no-photo .mypage-profile__card-title p {
+  margin: 7px 0 0;
+  color: var(--color-muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
+.mypage-profile__unified-card--no-photo .mypage-profile__account-rows {
+  margin-top: 22px !important;
+}
+
+.mypage-profile__unified-card--no-photo .mypage-profile__account-row {
+  min-height: 72px !important;
+}
+
+.mypage-profile--edit-page .mypage-profile__usage-card,
+.mypage-profile--edit-page .mypage-profile__footer-grid {
+  width: min(100%, 1120px) !important;
+  margin-right: auto !important;
+  margin-left: auto !important;
+}
+
+.mypage-profile--edit-page .mypage-profile__usage-card {
+  padding: 28px 40px !important;
+}
+
+.mypage-profile--edit-page .mypage-profile__usage-grid {
+  gap: 14px !important;
+}
+
+.mypage-profile--edit-page .mypage-profile__usage-item {
+  min-height: 94px !important;
+  padding: 16px 18px !important;
+}
+
+.mypage-profile--edit-page .mypage-profile__footer-grid .mypage-profile__safe-note--single,
+.mypage-profile--edit-page .mypage-profile__withdraw-card {
+  min-height: 72px !important;
+  padding: 15px 18px !important;
+}
+
+@media (max-width: 1180px) {
+  .mypage-profile__unified-card--no-photo {
+    width: 100% !important;
+    padding: 30px !important;
+  }
+
+  .mypage-profile--edit-page .mypage-profile__usage-card,
+  .mypage-profile--edit-page .mypage-profile__footer-grid {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .mypage-profile__unified-card--no-photo {
+    padding: 20px !important;
+  }
+}

@@ -36,8 +36,7 @@ const getDocumentProtected = (doc: Document) =>
   doc.cabinet_locked === true ||
   doc.is_locked === "Y" ||
   doc.cabinet_locked === "Y" ||
-  doc.lock_status === "LOCKED" ||
-  documentService.isDocumentLocallyProtected(doc.document_id);
+  doc.lock_status === "LOCKED";
 
 const Documents: React.FC = () => {
   const navigate = useNavigate();

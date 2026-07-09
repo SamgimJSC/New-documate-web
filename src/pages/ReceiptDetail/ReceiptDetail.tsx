@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft,
   Pencil,
   Trash2,
   AlertCircle,
@@ -37,6 +36,17 @@ const ReceiptDetail: React.FC = () => {
   const [zoom, setZoom] = useState(100);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // 인라인 줌 드래그 패닝
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const previewDragRef = useRef<{ mouseX: number; mouseY: number; panX: number; panY: number } | null>(null);
+
+  // 전체화면 드래그 패닝
+  const [fullscreenPan, setFullscreenPan] = useState({ x: 0, y: 0 });
+  const [isFullscreenDragging, setIsFullscreenDragging] = useState(false);
+  const fullscreenDragRef = useRef<{ mouseX: number; mouseY: number; panX: number; panY: number } | null>(null);
+  const fullscreenMoved = useRef(false);
+
   useEffect(() => {
     if (!receipt_id || receipt_id === "confirm") {
       setLoading(false);
@@ -57,6 +67,61 @@ const ReceiptDetail: React.FC = () => {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [isFullscreen]);
+
+  // 줌이 100%로 돌아오면 패닝 초기화
+  useEffect(() => {
+    if (zoom === 100) setPan({ x: 0, y: 0 });
+  }, [zoom]);
+
+  // 전체화면 열릴 때 패닝 초기화
+  useEffect(() => {
+    if (isFullscreen) {
+      setFullscreenPan({ x: 0, y: 0 });
+      fullscreenMoved.current = false;
+    }
+  }, [isFullscreen]);
+
+  // 인라인 줌 드래그 핸들러
+  const handlePreviewMouseDown = (e: React.MouseEvent) => {
+    if (zoom <= 100) return;
+    e.preventDefault();
+    previewDragRef.current = { mouseX: e.clientX, mouseY: e.clientY, panX: pan.x, panY: pan.y };
+    setIsDragging(true);
+  };
+
+  const handlePreviewMouseMove = (e: React.MouseEvent) => {
+    if (!previewDragRef.current) return;
+    setPan({
+      x: previewDragRef.current.panX + e.clientX - previewDragRef.current.mouseX,
+      y: previewDragRef.current.panY + e.clientY - previewDragRef.current.mouseY,
+    });
+  };
+
+  const handlePreviewMouseUp = () => {
+    previewDragRef.current = null;
+    setIsDragging(false);
+  };
+
+  // 전체화면 드래그 핸들러
+  const handleFullscreenImgMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    fullscreenMoved.current = false;
+    fullscreenDragRef.current = { mouseX: e.clientX, mouseY: e.clientY, panX: fullscreenPan.x, panY: fullscreenPan.y };
+    setIsFullscreenDragging(true);
+  };
+
+  const handleFullscreenMouseMove = (e: React.MouseEvent) => {
+    if (!fullscreenDragRef.current) return;
+    const dx = e.clientX - fullscreenDragRef.current.mouseX;
+    const dy = e.clientY - fullscreenDragRef.current.mouseY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) fullscreenMoved.current = true;
+    setFullscreenPan({ x: fullscreenDragRef.current.panX + dx, y: fullscreenDragRef.current.panY + dy });
+  };
+
+  const handleFullscreenMouseUp = () => {
+    fullscreenDragRef.current = null;
+    setIsFullscreenDragging(false);
+  };
 
   const handleDelete = async () => {
     if (!receipt) return;
@@ -98,31 +163,36 @@ const ReceiptDetail: React.FC = () => {
     );
   }
 
+  type PaymentItemEntry = {
+    name: string;
+    qty: string | null;
+    price: string | null;
+    rawAmount: number | null;
+  };
+
   const paymentItems = (() => {
-    const formatPaymentAmount = (value: number | string) => {
-      const amount =
+    const parseAmount = (value: number | string): number | null => {
+      const n =
         typeof value === "number"
           ? value
           : Number(String(value).replace(/[^0-9.-]/g, ""));
-
-      if (Number.isNaN(amount)) return String(value);
-      return `${amount.toLocaleString("ko-KR")}원`;
+      return Number.isNaN(n) ? null : n;
     };
-
-    const prettifyPaymentText = (text: string) => {
-      const trimmed = text.trim();
-      if (!trimmed) return "";
-
-      return trimmed.replace(/×\s*([0-9,]+)\s*(원)?/g, (_, amount: string) => {
-        return `× ${formatPaymentAmount(amount)}`;
-      });
+    const fmtAmount = (value: number | string): string => {
+      const n = parseAmount(value);
+      if (n === null) return String(value);
+      return `${n.toLocaleString("ko-KR")}원`;
     };
 
     const raw = receipt.paymentItem?.trim();
-    if (!raw) return [];
+    if (!raw) return [] as PaymentItemEntry[];
 
     if (!/^\s*\[/.test(raw)) {
-      return raw.split(",").map(prettifyPaymentText).filter(Boolean);
+      return raw
+        .split(",")
+        .map((text) => text.trim())
+        .filter(Boolean)
+        .map((text): PaymentItemEntry => ({ name: text, qty: null, price: null, rawAmount: null }));
     }
 
     try {
@@ -141,19 +211,35 @@ const ReceiptDetail: React.FC = () => {
       }>;
 
       return items
-        .map((item) => {
+        .map((item): PaymentItemEntry => {
           const name = item.name?.trim() || "상품명";
+          const monetaryValue = item.amount ?? item.price ?? item.totalPrice ?? null;
           const rawAmount =
-            item.amount ?? item.price ?? item.totalPrice ?? item.quantity;
-
-          if (rawAmount == null || rawAmount === "") return name;
-          return `${name} × ${formatPaymentAmount(rawAmount)}`;
+            monetaryValue != null && monetaryValue !== ""
+              ? parseAmount(monetaryValue)
+              : null;
+          const qty = item.quantity;
+          return {
+            name,
+            qty: qty != null && qty !== "" && Number(qty) > 0 ? `×${qty}개` : null,
+            price: rawAmount != null ? fmtAmount(rawAmount) : null,
+            rawAmount,
+          };
         })
-        .filter(Boolean);
+        .filter((item) => item.name);
     } catch {
-      return raw.split(",").map(prettifyPaymentText).filter(Boolean);
+      return raw
+        .split(",")
+        .map((text) => text.trim())
+        .filter(Boolean)
+        .map((text): PaymentItemEntry => ({ name: text, qty: null, price: null, rawAmount: null }));
     }
   })();
+
+  const itemsTotalAmount = paymentItems.reduce((sum, item) => sum + (item.rawAmount ?? 0), 0);
+  const itemsTotalText = itemsTotalAmount > 0
+    ? `${itemsTotalAmount.toLocaleString("ko-KR")}원`
+    : null;
 
   const isOcr = receipt.inputMethod === "OCR";
   const missingCount = [
@@ -214,15 +300,25 @@ const ReceiptDetail: React.FC = () => {
 
           <div className="receipt-detail__preview-body">
             {receipt.fileUrl ? (
-              <div className="receipt-detail__zoom-wrap">
+              <div
+                className="receipt-detail__zoom-wrap"
+                onMouseMove={handlePreviewMouseMove}
+                onMouseUp={handlePreviewMouseUp}
+                onMouseLeave={handlePreviewMouseUp}
+              >
                 <img
                   className="receipt-detail__image-file"
                   src={receipt.fileUrl}
                   alt="영수증"
+                  draggable={false}
                   style={{
-                    transform: `scale(${zoom / 100})`,
+                    transform: `scale(${zoom / 100}) translate(${pan.x * (100 / zoom)}px, ${pan.y * (100 / zoom)}px)`,
                     transformOrigin: "top center",
+                    cursor: zoom > 100 ? (isDragging ? "grabbing" : "grab") : "default",
+                    transition: isDragging ? "none" : "transform 0.15s",
+                    userSelect: "none",
                   }}
+                  onMouseDown={handlePreviewMouseDown}
                 />
               </div>
             ) : (
@@ -258,19 +354,13 @@ const ReceiptDetail: React.FC = () => {
 
           {hasMissingFields && (
             <div className="receipt-detail__ocr-banner">
-              <AlertCircle
-                size={15}
-                className="receipt-detail__ocr-banner-icon"
-              />
+              <AlertCircle size={15} className="receipt-detail__ocr-banner-icon" />
               <span>
                 {isOcr
                   ? `OCR에서 인식하지 못한 항목이 ${missingCount}개 있습니다.`
                   : `입력되지 않은 항목이 ${missingCount}개 있습니다.`}
               </span>
-              <button
-                className="receipt-detail__ocr-banner-btn"
-                onClick={() => setEditOpen(true)}
-              >
+              <button className="receipt-detail__ocr-banner-btn" onClick={() => setEditOpen(true)}>
                 직접 입력하기
               </button>
             </div>
@@ -288,41 +378,27 @@ const ReceiptDetail: React.FC = () => {
               <div className="receipt-detail__table-row">
                 <span className="receipt-detail__table-label">결제 금액</span>
                 <span className="receipt-detail__table-value receipt-detail__table-value--amount">
-                  {receipt.totalAmount != null ? (
-                    formatKRW(receipt.totalAmount)
-                  ) : (
-                    <FieldMissing isOcr={isOcr} />
-                  )}
+                  {receipt.totalAmount != null ? formatKRW(receipt.totalAmount) : <FieldMissing isOcr={isOcr} />}
                 </span>
               </div>
               <div className="receipt-detail__table-row">
                 <span className="receipt-detail__table-label">결제일</span>
                 <span className="receipt-detail__table-value">
-                  {receipt.purchaseDate ? (
-                    formatDate(receipt.purchaseDate)
-                  ) : (
-                    <FieldMissing isOcr={isOcr} />
-                  )}
+                  {receipt.purchaseDate ? formatDate(receipt.purchaseDate) : <FieldMissing isOcr={isOcr} />}
                 </span>
               </div>
               <div className="receipt-detail__table-row">
                 <span className="receipt-detail__table-label">카테고리</span>
                 <span className="receipt-detail__table-value">
-                  {receipt.categoryName ? (
-                    <span className="receipt-detail__category-badge">
-                      {receipt.categoryName}
-                    </span>
-                  ) : (
-                    <FieldMissing isOcr={isOcr} />
-                  )}
+                  {receipt.categoryName
+                    ? <span className="receipt-detail__category-badge">{receipt.categoryName}</span>
+                    : <FieldMissing isOcr={isOcr} />}
                 </span>
               </div>
               <div className="receipt-detail__table-row">
                 <span className="receipt-detail__table-label">입력 방식</span>
                 <span className="receipt-detail__table-value">
-                  <span
-                    className={`receipt-detail__method-badge receipt-detail__method-badge--${isOcr ? "ocr" : "manual"}`}
-                  >
+                  <span className={`receipt-detail__method-badge receipt-detail__method-badge--${isOcr ? "ocr" : "manual"}`}>
                     {isOcr ? "OCR 스캔" : "직접 입력"}
                   </span>
                 </span>
@@ -330,10 +406,7 @@ const ReceiptDetail: React.FC = () => {
               {receipt.storeAddress && (
                 <div className="receipt-detail__table-row">
                   <span className="receipt-detail__table-label">주소</span>
-                  <span
-                    className="receipt-detail__table-value"
-                    style={{ fontWeight: 400 }}
-                  >
+                  <span className="receipt-detail__table-value" style={{ fontWeight: 400 }}>
                     {receipt.storeAddress}
                   </span>
                 </div>
@@ -346,23 +419,19 @@ const ReceiptDetail: React.FC = () => {
               <p className="receipt-detail__section-title">결제 항목</p>
               <div className="receipt-detail__items-chip-list">
                 {paymentItems.map((item, index) => (
-                  <span
-                    className="receipt-detail__item-chip"
-                    key={`${item}-${index}`}
-                  >
-                    {item}
+                  <span className="receipt-detail__item-chip" key={`${item.name}-${index}`}>
+                    <span className="receipt-detail__item-chip-name">
+                      {item.name}{item.qty ? ` ${item.qty}` : ""}
+                    </span>
+                    {item.price && (
+                      <span className="receipt-detail__item-chip-price">{item.price}</span>
+                    )}
                   </span>
                 ))}
               </div>
             </div>
           )}
 
-          {receipt.memo && (
-            <div className="receipt-detail__section">
-              <p className="receipt-detail__section-title">메모</p>
-              <p className="receipt-detail__memo-text">{receipt.memo}</p>
-            </div>
-          )}
         </div>
       </div>
 
@@ -370,11 +439,14 @@ const ReceiptDetail: React.FC = () => {
       {isFullscreen && receipt.fileUrl && (
         <div
           className="receipt-detail__fullscreen"
-          onClick={() => setIsFullscreen(false)}
+          onMouseMove={handleFullscreenMouseMove}
+          onMouseUp={handleFullscreenMouseUp}
+          onMouseLeave={handleFullscreenMouseUp}
+          onClick={() => { if (!fullscreenMoved.current) setIsFullscreen(false); }}
         >
           <button
             className="receipt-detail__fullscreen-close"
-            onClick={() => setIsFullscreen(false)}
+            onClick={(e) => { e.stopPropagation(); setIsFullscreen(false); }}
           >
             <X size={20} />
           </button>
@@ -382,6 +454,14 @@ const ReceiptDetail: React.FC = () => {
             src={receipt.fileUrl}
             alt="영수증 전체화면"
             className="receipt-detail__fullscreen-img"
+            draggable={false}
+            style={{
+              transform: `translate(${fullscreenPan.x}px, ${fullscreenPan.y}px)`,
+              cursor: isFullscreenDragging ? "grabbing" : "grab",
+              transition: isFullscreenDragging ? "none" : "transform 0.1s",
+              userSelect: "none",
+            }}
+            onMouseDown={handleFullscreenImgMouseDown}
             onClick={(e) => e.stopPropagation()}
           />
         </div>

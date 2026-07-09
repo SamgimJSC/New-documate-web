@@ -47,4 +47,19 @@ export const authService = {
     const res = await api.post<ApiResponse>("/auth/logout");
     return res.data;
   },
+
+  async verifyPassword(password: string): Promise<boolean> {
+    const res = await api.post<ApiResponse<{ valid: boolean }>>(
+      "/auth/password/verify",
+      { password },
+    );
+    return res.data.data.valid;
+  },
+
+  async updatePassword(currentPassword: string, newPassword: string): Promise<void> {
+    await api.post<ApiResponse>("/auth/password/update", {
+      current_password: currentPassword,
+      new_password: newPassword,
+    });
+  },
 };
