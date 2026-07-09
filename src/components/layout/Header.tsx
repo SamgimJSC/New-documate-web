@@ -14,6 +14,7 @@ const PAGE_NAMES: Record<string, string> = {
   "/receipts": "영수증 관리",
   "/finance": "가계부",
   "/finance/report": "소비 리포트",
+  "/cards": "카드 추천",
   "/subscription": "요금제",
 };
 
