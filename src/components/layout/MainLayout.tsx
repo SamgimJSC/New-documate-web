@@ -12,7 +12,9 @@ const MainLayout: React.FC = () => {
 
   const isMyPage = location.pathname.startsWith("/mypage");
   const isReceiptFabPage =
-    location.pathname === "/receipts" || location.pathname === "/finance/report";
+    location.pathname === "/receipts" ||
+    location.pathname === "/finance/report" ||
+    location.pathname === "/cards";
 
   const hideFab =
     isMyPage ||
