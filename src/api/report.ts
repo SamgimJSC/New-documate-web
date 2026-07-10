@@ -3,6 +3,8 @@ import type {
   MonthlySpendResponse,
   DailySpendResponse,
   CategorySummaryResponse,
+  TopStoresResponse,
+  WeekdaySummaryResponse,
 } from "../types/report";
 
 export const getMonthlySpend = (year: number) =>
@@ -22,4 +24,20 @@ export const getCategorySummary = (params: {
 }) =>
   client
     .get<CategorySummaryResponse>("/reports/category-summary", { params })
+    .then((r) => r.data);
+
+export const getTopStores = (params: {
+  year?: number;
+  month?: number;
+  limit?: number;
+}) =>
+  client
+    .get<TopStoresResponse>("/reports/top-stores", { params })
+    .then((r) => r.data);
+
+export const getWeekdaySummary = (year?: number) =>
+  client
+    .get<WeekdaySummaryResponse>("/reports/weekday-summary", {
+      params: { year },
+    })
     .then((r) => r.data);
