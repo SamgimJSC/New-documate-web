@@ -3382,6 +3382,96 @@
   font-weight: 650;
 }
 
+.mypage-plan-modern__subtle-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.mypage-plan-modern__history-empty {
+  margin: 0;
+  padding: 30px 0;
+  color: var(--color-muted);
+  font-size: 12.5px;
+  font-weight: 650;
+  text-align: center;
+}
+
+.mypage-plan-modern__history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mypage-plan-modern__history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.mypage-plan-modern__history-row > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mypage-plan-modern__history-row > div:first-child strong {
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.mypage-plan-modern__history-row > div:first-child span {
+  color: var(--color-muted);
+  font-size: 11.5px;
+  font-weight: 650;
+}
+
+.mypage-plan-modern__history-row > div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mypage-plan-modern__history-row > div:last-child strong {
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.mypage-plan-modern__history-status {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: var(--color-text-sub);
+  font-size: 10.5px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.mypage-plan-modern__history-status--approved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.mypage-plan-modern__history-status--failed {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.mypage-plan-modern__history-status--canceled {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
 .mypage-plan-modern__compare {
   padding: 26px;
 }

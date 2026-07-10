@@ -1,21 +1,31 @@
-import React from "react";
+import React, { useState } from "react";
 import Modal from "../common/Modal";
 import Button from "../common/Button";
-import { useToast } from "../common/Toast";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm?: () => void;
+  onConfirm?: () => Promise<void> | void;
 }
 
 const PlanCancelModal: React.FC<Props> = ({ isOpen, onClose, onConfirm }) => {
-  const { showToast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleCancel = () => {
-    onConfirm?.();
-    showToast("요금제가 해지 예약되었습니다.", "info");
-    onClose();
+  const handleCancel = async () => {
+    if (!onConfirm) {
+      onClose();
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await onConfirm();
+      onClose();
+    } catch {
+      // 실패 토스트는 호출부(onConfirm)에서 표시, 모달은 다시 시도할 수 있게 유지
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -42,10 +52,10 @@ const PlanCancelModal: React.FC<Props> = ({ isOpen, onClose, onConfirm }) => {
       </div>
 
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-        <Button variant="primary" onClick={onClose}>
+        <Button variant="primary" onClick={onClose} disabled={isSubmitting}>
           계속 사용하기
         </Button>
-        <Button variant="ghost" onClick={handleCancel}>
+        <Button variant="ghost" onClick={handleCancel} loading={isSubmitting}>
           해지하기
         </Button>
       </div>
