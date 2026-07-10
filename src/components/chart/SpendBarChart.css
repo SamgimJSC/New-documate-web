@@ -1,0 +1,13 @@
+.spend-bar-chart {
+  cursor: pointer;
+}
+
+.spend-bar-chart:focus,
+.spend-bar-chart *:focus,
+.spend-bar-chart svg:focus,
+.spend-bar-chart .recharts-wrapper:focus,
+.spend-bar-chart .recharts-surface:focus,
+.spend-bar-chart .recharts-bar-rectangle:focus,
+.spend-bar-chart path:focus {
+  outline: none;
+}
