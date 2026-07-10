@@ -36,6 +36,9 @@ interface UserSettingsApiResponse {
   updatedAt: string;
 }
 
+const FREE_STORAGE_QUOTA_BYTES = 1 * 1024 * 1024 * 1024;
+const PRO_STORAGE_QUOTA_BYTES = 10 * 1024 * 1024 * 1024;
+
 const mapUser = (raw: UserApiResponse): User => ({
   user_id: raw.userId,
   email: raw.email,
@@ -45,8 +48,10 @@ const mapUser = (raw: UserApiResponse): User => ({
   role: raw.role,
   plan: raw.plan,
   storage_used_bytes: Number(raw.storageUsedBytes ?? 0),
-  // TODO: 백엔드에서 storageQuotaBytes 기본값 설정 후 제거 예정
-  storage_quota_bytes: Number(raw.storageQuotaBytes ?? (1 * 1024 * 1024 * 1024)),
+  // 백엔드 storageQuotaBytes 값이 유저마다 제각각이라, 백엔드가 표준화하기 전까지는
+  // plan 기준으로 프론트에서 직접 계산한다. (FREE 1GB / PRO 10GB로 통일)
+  storage_quota_bytes:
+    raw.plan === "PRO" ? PRO_STORAGE_QUOTA_BYTES : FREE_STORAGE_QUOTA_BYTES,
   is_email_verified: raw.isEmailVerified,
   last_login_at: raw.lastLoginAt ?? undefined,
   created_at: raw.createdAt,

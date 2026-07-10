@@ -5,6 +5,8 @@ import {
   CreditCard,
   Crown,
   Database,
+  Lightbulb,
+  Lock,
   ShieldCheck,
 } from "lucide-react";
 import Button from "../../components/common/Button";
@@ -15,6 +17,7 @@ import { useUserStore } from "../../store/userStore";
 import { formatDate } from "../../utils/formatDate";
 import { formatKRW } from "../../utils/formatCurrency";
 import { useToast } from "../../components/common/Toast";
+import paymentWalletIcon from "../../assets/payment-wallet-icon.png";
 import "./MyPage.css";
 
 const PRO_MONTHLY_PRICE = 9900;
@@ -55,7 +58,7 @@ const MyPagePlan: React.FC = () => {
   const [isChangingMethod, setIsChangingMethod] = useState(false);
   const [isUndoingCancel, setIsUndoingCancel] = useState(false);
 
-  useEffect(() => {
+  const loadPlanData = () => {
     paymentService
       .getSubscription()
       .then(setSubscription)
@@ -69,12 +72,32 @@ const MyPagePlan: React.FC = () => {
       .catch(() => {
         // 결제 내역 조회 실패는 조용히 빈 목록으로 유지
       });
+  };
+
+  useEffect(() => {
+    loadPlanData();
+
+    // 카카오페이로 이동했다가 브라우저 뒤로가기로 돌아오면 bfcache 복원으로
+    // 페이지가 재마운트되지 않고 이동 직전 상태(로딩 중)가 그대로 보여진다.
+    // pageshow(persisted)로 복원을 감지해 로딩 상태를 풀고 최신 데이터를 다시 받는다.
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (!event.persisted) return;
+
+      setIsUpgrading(false);
+      setIsChangingMethod(false);
+      setIsUndoingCancel(false);
+      loadPlanData();
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
   }, []);
 
   if (!user) return null;
 
   const isPro = subscription ? subscription.plan === "PRO" : user.plan === "PRO";
   const isCanceled = subscription?.is_canceled ?? false;
+  const visiblePaymentMethod = isPro ? subscription?.payment_method : undefined;
   const nextBillingDate =
     subscription?.next_billing_at ?? subscription?.current_period_end;
 
@@ -224,35 +247,81 @@ const MyPagePlan: React.FC = () => {
         <article className="mypage-plan-modern__payment-card">
           <div className="mypage-plan-modern__card-top">
             <span className="mypage-plan-modern__eyebrow">결제 정보</span>
-            <span className="mypage-plan-modern__chip">기본 수단</span>
+            {visiblePaymentMethod && (
+              <span className="mypage-plan-modern__chip">기본 수단</span>
+            )}
           </div>
 
-          <div className="mypage-plan-modern__payment-method">
-            <span className="mypage-plan-modern__pay-mark">pay</span>
+          {!isPro ? (
+            <div className="mypage-plan-modern__free-payment-shell">
+              <div className="mypage-plan-modern__free-payment-guide">
+                <div className="mypage-plan-modern__wallet-visual" aria-hidden="true">
+                  <img src={paymentWalletIcon} alt="" />
+                </div>
 
-            <div>
-              <strong>
-                {subscription?.payment_method?.display_name ?? "카카오페이"}
-              </strong>
-              <p>{user.email}</p>
+                <div className="mypage-plan-modern__free-payment-copy">
+                  <strong>등록된 결제 수단이 없어요</strong>
+                  <p>
+                    PRO로 업그레이드하면 카드 정보를 등록하고 결제를 진행할 수 있어요.
+                  </p>
+                  <button
+                    type="button"
+                    className="mypage-plan-modern__guide-btn mypage-plan-modern__guide-btn--locked"
+                    disabled
+                  >
+                    PRO에서 변경 가능
+                    <Lock size={15} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="mypage-plan-modern__free-payment-note">
+                <span>
+                  <Lightbulb size={18} />
+                </span>
+                <p>
+                  FREE 플랜에서는 결제 기능을 사용할 수 없어요.
+                  <br />
+                  <strong>PRO 결제 시 결제 수단을 등록할 수 있습니다.</strong>
+                </p>
+              </div>
             </div>
+          ) : visiblePaymentMethod ? (
+            <div className="mypage-plan-modern__payment-method">
+              <span className="mypage-plan-modern__pay-mark">pay</span>
 
-            <CreditCard size={20} />
-          </div>
+              <div>
+                <strong>{visiblePaymentMethod.display_name}</strong>
+                <p>{user.email}</p>
+              </div>
 
-          <button
-            type="button"
-            className="mypage-plan-modern__subtle-btn"
-            onClick={handlePaymentChange}
-            disabled={isChangingMethod}
-          >
-            {isChangingMethod ? "이동 중..." : "결제 수단 변경"}
-            <ArrowRight size={16} />
-          </button>
+              <CreditCard size={20} />
+            </div>
+          ) : (
+            <div className="mypage-plan-modern__payment-method mypage-plan-modern__payment-method--empty">
+              <p>등록된 결제 수단이 없어요.</p>
+            </div>
+          )}
 
-          <p className="mypage-plan-modern__payment-note">
-            안전한 결제를 위해 모든 결제 정보는 암호화되어 처리됩니다.
-          </p>
+          {isPro && (
+            <button
+              type="button"
+              className="mypage-plan-modern__subtle-btn"
+              onClick={handlePaymentChange}
+              disabled={isChangingMethod}
+            >
+              {isChangingMethod ? "이동 중..." : "결제 수단 변경"}
+              <ArrowRight size={16} />
+            </button>
+          )}
+
+          {isPro && (
+            <p className="mypage-plan-modern__payment-note">
+              {visiblePaymentMethod
+                ? "안전한 결제를 위해 모든 결제 정보는 암호화되어 처리됩니다."
+                : "PRO 결제 시 결제 수단을 등록할 수 있습니다."}
+            </p>
+          )}
         </article>
       </section>
 
