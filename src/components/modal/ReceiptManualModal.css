@@ -49,10 +49,6 @@
   grid-column: 1 / -1;
 }
 
-.receipt-manual-modal input[type="date"]::-webkit-calendar-picker-indicator {
-  display: none;
-}
-
 .receipt-manual-modal__photo-field {
   display: flex;
   flex-direction: column;

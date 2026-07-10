@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  CalendarDays,
   ImagePlus,
   ListChecks,
   MapPin,
@@ -219,7 +218,6 @@ const ReceiptManualModal: React.FC<Props> = ({
               value={date}
               onChange={(e) => setDate(e.target.value)}
               required
-              suffix={<CalendarDays size={15} />}
             />
           </div>
 
