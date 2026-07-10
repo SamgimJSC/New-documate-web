@@ -64,3 +64,26 @@ export interface CategorySummaryResponse {
   totalSpend: number;
   categories: CategorySummaryItem[];
 }
+
+export interface TopStoreItem {
+  storeName: string;
+  totalSpend: number;
+  visitCount: number;
+}
+
+export interface TopStoresResponse {
+  year: number;
+  month: number | null;
+  stores: TopStoreItem[];
+}
+
+export interface WeekdaySummaryItem {
+  weekday: number;
+  totalSpend: number;
+  receiptCount: number;
+}
+
+export interface WeekdaySummaryResponse {
+  year: number;
+  weekdays: WeekdaySummaryItem[];
+}
