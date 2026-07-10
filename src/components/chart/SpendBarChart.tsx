@@ -24,6 +24,7 @@ const SpendBarChart: React.FC<SpendBarChartProps> = ({ data, selectedDate, onDat
           <Tooltip
             formatter={(value) => [formatKRW(Number(value ?? 0)), "지출"]}
             contentStyle={{ borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13 }}
+            cursor={false}
           />
           <Bar
             dataKey="amount"

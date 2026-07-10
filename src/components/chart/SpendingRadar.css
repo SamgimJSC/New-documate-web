@@ -1,0 +1,15 @@
+.spending-radar,
+.spending-radar *,
+.spending-radar svg,
+.spending-radar svg:focus,
+.spending-radar .recharts-wrapper,
+.spending-radar .recharts-wrapper svg,
+.spending-radar .recharts-surface {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.spending-radar .recharts-radar-dot {
+  display: none;
+}

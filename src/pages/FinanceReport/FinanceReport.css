@@ -360,6 +360,88 @@
   font-weight: 650;
 }
 
+.finance-report__coaching-card {
+  background: var(--color-primary-light) !important;
+  border: 1px solid var(--color-primary-border) !important;
+  overflow: hidden;
+}
+
+.finance-report__coaching-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 760px) minmax(150px, 190px);
+  align-items: center;
+  justify-content: center;
+  min-height: 104px;
+  gap: clamp(14px, 2vw, 28px);
+  max-width: 1080px;
+  margin-inline: auto;
+  padding-inline: clamp(12px, 3vw, 44px);
+}
+
+.finance-report__coaching-body {
+  flex: 1;
+  min-width: 0;
+  padding-block: 6px;
+}
+
+.finance-report__coaching-title {
+  margin: 0 0 8px 0;
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.finance-report__coaching-text {
+  margin: 0;
+  font-size: var(--font-size-md);
+  color: var(--color-text-sub);
+  line-height: 1.75;
+  font-weight: 550;
+}
+
+.finance-report__coaching-visual {
+  display: grid;
+  place-items: center;
+  width: clamp(150px, 14vw, 190px);
+  align-self: stretch;
+  flex-shrink: 0;
+  padding-inline: 4px 10px;
+  border-radius: 28px;
+  background: radial-gradient(circle, rgb(255 255 255 / 72%) 0%, transparent 68%);
+}
+
+.finance-report__coaching-list {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-sub);
+  font-size: var(--font-size-sm);
+  line-height: 1.55;
+  font-weight: 550;
+}
+
+.finance-report__coaching-list li {
+  position: relative;
+  padding-left: 16px;
+}
+
+.finance-report__coaching-list li::before {
+  position: absolute;
+  left: 0;
+  color: var(--color-primary-dark);
+  content: "•";
+}
+
+.finance-report__coaching-mascot {
+  display: block;
+  width: 100%;
+  height: 108px;
+  object-fit: contain;
+  object-position: left center;
+}
+
 .finance-report__empty-text {
   margin: 0;
   color: var(--color-muted);
@@ -850,6 +932,26 @@
   .finance-report__card-rec-box {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .finance-report__coaching-inner {
+    grid-template-columns: minmax(0, 1fr) 112px;
+    align-items: flex-end;
+    gap: 12px;
+    padding-inline: 0;
+  }
+
+  .finance-report__coaching-visual {
+    width: 112px;
+    min-height: 92px;
+    padding: 0;
+    margin-right: -4px;
+  }
+
+  .finance-report__coaching-mascot {
+    height: 88px;
   }
 }
 /* Finance report intro eyebrow */

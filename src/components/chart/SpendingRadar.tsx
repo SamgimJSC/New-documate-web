@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
 import { formatKRW } from "../../utils/formatCurrency";
+import "./SpendingRadar.css";
 
 interface SpendingRadarProps {
   data: { category: string; score: number; amount: number }[];
@@ -46,6 +47,7 @@ const SpendingRadar: React.FC<SpendingRadarProps> = ({ data }) => {
   };
 
   return (
+    <div className="spending-radar">
     <ResponsiveContainer width="100%" height={240}>
       <RadarChart data={data} outerRadius="70%">
         <PolarGrid stroke="#e5e7eb" />
@@ -55,6 +57,8 @@ const SpendingRadar: React.FC<SpendingRadarProps> = ({ data }) => {
           stroke="#5b9d99"
           fill="#5b9d99"
           fillOpacity={0.35}
+          dot={false}
+          activeDot={false}
         />
 
         {hovered && (
@@ -78,6 +82,7 @@ const SpendingRadar: React.FC<SpendingRadarProps> = ({ data }) => {
         )}
       </RadarChart>
     </ResponsiveContainer>
+    </div>
   );
 };
 
