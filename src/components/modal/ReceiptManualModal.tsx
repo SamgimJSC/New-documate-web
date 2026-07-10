@@ -125,22 +125,24 @@ const ReceiptManualModal: React.FC<Props> = ({
 
     setSaving(true);
     try {
-      const body = {
+      const baseBody = {
         storeName,
         storeAddress: storeAddress || undefined,
         totalAmount: Number(amount),
         purchaseDate: date,
         spendCategoryId: categoryId ? Number(categoryId) : null,
         paymentItem: paymentItem || undefined,
-        memo: memo || undefined,
       };
 
       let saved: Receipt;
       if (mode === "EDIT" && receipt) {
-        saved = await updateReceipt(receipt.receiptId, body);
+        saved = await updateReceipt(receipt.receiptId, {
+          ...baseBody,
+          memo: memo || null,
+        });
       } else {
         saved = await createReceipt(
-          { ...body, inputMethod: "MANUAL" },
+          { ...baseBody, inputMethod: "MANUAL", memo: memo || undefined },
           image ?? undefined,
         );
       }
