@@ -7,6 +7,7 @@ import RiskGauge from "../../../components/common/RiskGauge";
 import SpendBarChart from "../../../components/chart/SpendBarChart";
 import CalendarHeatmap from "../../../components/chart/CalendarHeatmap";
 import SpendingRadar from "../../../components/chart/SpendingRadar";
+import documateCoaching from "../../../assets/documate-coaching.png";
 import {
   getMonthlySpend,
   getDailySpend,
@@ -155,36 +156,72 @@ const AnnualPatternTab: React.FC<AnnualPatternTabProps> = ({
     return { items: top, totalSaving };
   }, [annualCategoryData]);
 
-  const coachingText = useMemo(() => {
+  const coachingInsights = useMemo(() => {
+    const insights: string[] = [];
     const weekdays = weekdaySummary?.weekdays ?? [];
-    if (weekdays.length < 7) return null;
+    if (weekdays.length >= 7) {
+      const weekendTotal =
+        (weekdays[0]?.totalSpend ?? 0) + (weekdays[6]?.totalSpend ?? 0);
+      const weekdayTotal = weekdays
+        .slice(1, 6)
+        .reduce((sum, d) => sum + d.totalSpend, 0);
+      const weekendAvg = weekendTotal / 2;
+      const weekdayAvg = weekdayTotal / 5;
 
-    const weekendTotal = (weekdays[0]?.totalSpend ?? 0) + (weekdays[6]?.totalSpend ?? 0);
-    const weekdayTotal = weekdays
-      .slice(1, 6)
-      .reduce((sum, d) => sum + d.totalSpend, 0);
-
-    if (weekendTotal === 0 && weekdayTotal === 0) return null;
-
-    const weekendAvg = weekendTotal / 2;
-    const weekdayAvg = weekdayTotal / 5;
-
-    if (weekendAvg > weekdayAvg && weekdayAvg > 0) {
-      const diffPct = Math.round(((weekendAvg - weekdayAvg) / weekdayAvg) * 100);
-      const annualSaving = Math.round((weekendAvg - weekdayAvg) * 2 * 52);
-      return `주말(토·일) 하루 평균 지출이 평일보다 ${diffPct}% 많아요. 주말 지출을 평일 수준으로만 줄여도 연간 약 ${formatKRW(annualSaving)} 절약할 수 있어요.`;
+      if (weekendAvg > weekdayAvg && weekdayAvg > 0) {
+        const diffPct = Math.round(
+          ((weekendAvg - weekdayAvg) / weekdayAvg) * 100,
+        );
+        const annualSaving = Math.round((weekendAvg - weekdayAvg) * 2 * 52);
+        insights.push(
+          `주말 하루 평균 지출이 평일보다 ${diffPct}% 많아요. 주말 소비를 평일 수준으로 조절하면 연간 약 ${formatKRW(annualSaving)}을 아낄 수 있어요.`,
+        );
+      } else if (weekdayAvg > weekendAvg && weekendAvg >= 0) {
+        const diffPct =
+          weekendAvg > 0
+            ? Math.round(((weekdayAvg - weekendAvg) / weekendAvg) * 100)
+            : 100;
+        insights.push(
+          `평일 하루 평균 지출이 주말보다 ${diffPct}% 많아요. 식비·교통처럼 반복되는 평일 소비를 먼저 점검해보세요.`,
+        );
+      } else if (weekendTotal > 0 || weekdayTotal > 0) {
+        insights.push(
+          "평일과 주말 지출이 고르게 분포되어 있어요. 현재 소비 리듬을 유지해보세요.",
+        );
+      }
     }
 
-    if (weekdayAvg > weekendAvg && weekendAvg >= 0) {
-      const diffPct =
-        weekendAvg > 0
-          ? Math.round(((weekdayAvg - weekendAvg) / weekendAvg) * 100)
-          : 100;
-      return `평일 하루 평균 지출이 주말보다 ${diffPct}% 많아요. 평일 지출(식비·교통 등)을 점검해보세요.`;
+    const topCategory = annualCategoryData?.categories?.[0];
+    if (topCategory && topCategory.totalSpend > 0) {
+      const category = topCategory as typeof topCategory & {
+        categoryName?: string;
+      };
+      const categoryName = category.categoryName ?? category.name ?? "기타";
+      insights.push(
+        `${categoryName} 지출이 연간 소비의 ${Math.round(topCategory.percentage)}%로 가장 커요. 이 항목을 10%만 줄여도 약 ${formatKRW(Math.round(topCategory.totalSpend * 0.1))}을 절약할 수 있어요.`,
+      );
     }
 
-    return "평일과 주말 지출이 고르게 분포되어 있어요. 지금처럼 관리하면 좋아요.";
-  }, [weekdaySummary]);
+    const activeMonths = (monthlyData?.months ?? []).filter(
+      (month) => month.totalSpend > 0,
+    );
+    if (activeMonths.length > 1) {
+      const peakMonth = activeMonths.reduce((peak, month) =>
+        month.totalSpend > peak.totalSpend ? month : peak,
+      );
+      const monthlyAverage =
+        activeMonths.reduce((sum, month) => sum + month.totalSpend, 0) /
+        activeMonths.length;
+      const peakDiffPct = Math.round(
+        ((peakMonth.totalSpend - monthlyAverage) / monthlyAverage) * 100,
+      );
+      insights.push(
+        `${peakMonth.month}월 지출이 소비가 있었던 달의 평균보다 ${peakDiffPct}% 높았어요. 해당 월의 큰 지출 내역을 다시 확인해보세요.`,
+      );
+    }
+
+    return insights.slice(0, 3);
+  }, [annualCategoryData, monthlyData, weekdaySummary]);
 
   const riskInfo = useMemo(() => {
     const months = (monthlyData?.months ?? []).filter((m) => m.totalSpend > 0);
@@ -302,13 +339,6 @@ const AnnualPatternTab: React.FC<AnnualPatternTabProps> = ({
         </Card>
       </div>
 
-      <Card>
-        <h3 className="finance-report__section-title">AI 소비 코칭</h3>
-        <p className="finance-report__ai-text">
-          {coachingText ?? "요일별 소비 데이터가 부족합니다. 영수증을 더 등록하면 코칭을 받을 수 있어요."}
-        </p>
-      </Card>
-
       <div className="finance-report__grid">
         <Card>
           <h3 className="finance-report__section-title">절약 가능 금액 (시뮬레이션)</h3>
@@ -367,6 +397,32 @@ const AnnualPatternTab: React.FC<AnnualPatternTabProps> = ({
           )}
         </Card>
       </div>
+
+      <Card className="finance-report__coaching-card">
+        <div className="finance-report__coaching-inner">
+          <div className="finance-report__coaching-body">
+            <h3 className="finance-report__coaching-title">💡 AI 소비 코칭</h3>
+            {coachingInsights.length > 0 ? (
+              <ul className="finance-report__coaching-list">
+                {coachingInsights.map((insight) => (
+                  <li key={insight}>{insight}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="finance-report__coaching-text">
+                소비 데이터가 부족합니다. 영수증을 더 등록하면 맞춤 코칭을 받을 수 있어요.
+              </p>
+            )}
+          </div>
+          <div className="finance-report__coaching-visual" aria-hidden="true">
+            <img
+              src={documateCoaching}
+              alt=""
+              className="finance-report__coaching-mascot"
+            />
+          </div>
+        </div>
+      </Card>
     </>
   );
 };
