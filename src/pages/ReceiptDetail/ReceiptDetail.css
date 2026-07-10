@@ -84,7 +84,9 @@
   background: none;
   color: var(--color-muted);
   cursor: pointer;
-  transition: background 0.12s, color 0.12s;
+  transition:
+    background 0.12s,
+    color 0.12s;
   text-decoration: none;
 }
 
@@ -362,43 +364,101 @@
   border: 1px solid #f0d9b8;
 }
 
-/* 결제 항목 칩 리스트 */
-.receipt-detail__items-chip-list {
+/* 결제 항목 테이블 */
+.receipt-detail__items-header {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px 10px;
-  padding-top: 2px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
 }
 
-.receipt-detail__item-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 32px;
-  padding: 6px 12px;
+.receipt-detail__items-header .receipt-detail__section-title {
+  margin-bottom: 0;
+}
+
+.receipt-detail__items-count {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.receipt-detail__items-table {
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-full);
-  background: var(--color-bg-cool);
-  line-height: 1.2;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.receipt-detail__items-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(90px, 120px);
+  align-items: center;
+  column-gap: 16px;
+  min-height: 54px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.receipt-detail__items-name-group {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+  gap: 6px;
+}
+
+.receipt-detail__items-row:last-child {
+  border-bottom: none;
+}
+
+.receipt-detail__items-name {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.receipt-detail__items-qty {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-muted);
   white-space: nowrap;
 }
 
-.receipt-detail__item-chip-name {
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--color-text);
-}
-
-.receipt-detail__item-chip-price {
+.receipt-detail__items-price {
   font-size: var(--font-size-sm);
   font-weight: 700;
+  color: var(--color-text);
+  text-align: right;
+}
+
+.receipt-detail__items-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--color-bg-cool);
+  border-top: 1px solid var(--color-border);
+}
+
+.receipt-detail__items-total-label {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-text-sub);
+}
+
+.receipt-detail__items-total-amount {
+  font-size: var(--font-size-md);
+  font-weight: 800;
   color: var(--color-primary);
+  letter-spacing: -0.02em;
 }
 
 @media (max-width: 520px) {
-  .receipt-detail__item-chip {
-    width: 100%;
-    justify-content: center;
+  .receipt-detail__items-row {
+    grid-template-columns: minmax(0, 1fr) minmax(72px, auto);
+    column-gap: 8px;
+    padding-inline: 12px;
   }
 }
 
