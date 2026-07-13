@@ -64,80 +64,103 @@ const getPreviewTitle = (categoryName?: string) => {
 
 const EXCLUDED_EXTRACTED_KEYS = new Set(["_meta"]);
 
-const EXTRACTED_LABEL_DICTIONARY: Record<string, string> = {
-  drug_code: "약품 코드",
-  issue_date: "발급일",
-  patient_age: "환자 나이",
-  patient_height: "환자 키",
-  patient_weight: "환자 체중",
-  prescription_number: "처방전 번호",
-  contract_date: "계약일",
-  contractDate: "계약일",
-  expiry_date: "만료일",
-  expiryDate: "만료일",
-  renewal_date: "갱신일",
-  renewalDate: "갱신일",
-  contractor: "계약자",
-  contractor_name: "계약자",
-  issuer: "발행처",
-  amount: "금액",
-  total_amount: "총액",
-  price: "금액",
-  memo: "메모",
-  note: "메모",
-  payment_date: "결제일",
-  purchase_date: "구매일",
-  store_name: "가게명",
-  merchant_name: "가게명",
-  item_name: "품목",
-  product_name: "제품명",
-  hospital_name: "병원명",
-  pharmacy_name: "약국명",
-  medical_institution: "기관명",
-  visit_date: "진료일",
-  treatment_date: "진료일",
-  drug_name: "약품명",
-  medication: "약품명",
-  warranty_period: "보증기간",
-  repair_date: "수리일",
-  service_date: "수리일",
-  model_name: "모델명",
-  title: "제목",
-  upload_date: "업로드일",
-  created_at: "생성일",
-  color: "색상",
-  email: "이메일",
-  website: "웹사이트",
-  customer_name: "고객명",
-  serial_number: "제품번호(시리얼번호)",
-  warranty_type: "보증유형",
-  customer_phone: "연락처",
-  company_address: "제조사 주소",
-  installation_date: "설치일자",
-  manufacturing_date: "제조일자",
-  service_center_number: "서비스센터 번호",
+type ExtractedFieldConfig = {
+  key: string;
+  label: string;
+  aliases: string[];
 };
 
-const hasHangul = (text: string) => /[가-힣]/.test(text);
+const createExtractedField = (
+  key: string,
+  label: string,
+  aliases: string[] = [],
+): ExtractedFieldConfig => ({
+  key,
+  label,
+  aliases: [key, label, ...aliases],
+});
 
-const formatExtractedLabel = (key: string) => {
-  if (EXTRACTED_LABEL_DICTIONARY[key]) return EXTRACTED_LABEL_DICTIONARY[key];
-  if (hasHangul(key)) return key;
-
-  return key
-    .split(/[_\s]+/)
-    .filter(Boolean)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+const CATEGORY_EXTRACTED_FIELDS: Record<string, ExtractedFieldConfig[]> = {
+  계약서: [
+    createExtractedField("contract_date", "계약일", ["contractDate", "Contract Date"]),
+    createExtractedField("expiry_date", "만료일", ["expiryDate", "Expiration Date", "Expire Date"]),
+    createExtractedField("renewal_date", "갱신일", ["renewalDate", "Renewal Date"]),
+    createExtractedField("contractor", "계약자", ["contractor_name", "Contractor", "Contractor Name"]),
+  ],
+  영수증: [
+    createExtractedField("payment_date", "날짜", ["date", "receipt_date", "purchase_date", "Payment Date", "Purchase Date", "Date"]),
+    createExtractedField("store_name", "가게명", ["merchant_name", "shop_name", "Store Name", "Merchant Name"]),
+    createExtractedField("amount", "금액", ["total_amount", "price", "Total Amount", "Amount", "Price"]),
+    createExtractedField("item_name", "품목", ["items", "product_name", "Item Name", "Product Name", "Items"]),
+  ],
+  "병원/약국": [
+    createExtractedField("hospital_name", "병원명", ["pharmacy_name", "medical_institution", "Medical Institution", "Medical Institution Name", "Hospital Name", "Pharmacy Name"]),
+    createExtractedField("visit_date", "진료일", ["treatment_date", "prescription_date", "Prescription Date", "Treatment Date", "Visit Date"]),
+    createExtractedField("amount", "금액", ["total_amount", "price", "medical_fee", "Total Amount", "Amount", "Price"]),
+    createExtractedField("drug_name", "약품명", ["medication", "medicine_name", "Drug Name", "Medication", "Medicine Name"]),
+  ],
+  "보증서/A·S": [
+    createExtractedField("product_name", "제품명", ["model_name", "Product Name", "Model Name"]),
+    createExtractedField("purchase_date", "구매일", ["Purchase Date", "buy_date", "purchaseDate"]),
+    createExtractedField("warranty_period", "보증기간", ["Warranty Period", "warrantyPeriod"]),
+    createExtractedField("repair_date", "수리일", ["service_date", "Repair Date", "Service Date"]),
+  ],
+  기타: [
+    createExtractedField("title", "제목", ["Title", "document_title"]),
+    createExtractedField("upload_date", "업로드일", ["created_at", "createdAt", "Upload Date", "Created At"]),
+  ],
 };
 
-const formatExtractedValue = (value: string) => {
+const normalizeCategoryName = (categoryName?: string) => {
+  if (categoryName === "계약서") return "계약서";
+  if (categoryName === "영수증") return "영수증";
+  if (categoryName === "병원/약국") return "병원/약국";
+  if (categoryName === "보증서/A·S" || categoryName === "보증서/A/S") return "보증서/A·S";
+  return "기타";
+};
+
+const getExtractedFieldsByCategory = (categoryName?: string) =>
+  CATEGORY_EXTRACTED_FIELDS[normalizeCategoryName(categoryName)] ?? CATEGORY_EXTRACTED_FIELDS.기타;
+
+const normalizeExtractedKey = (key: string) =>
+  key
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/[\s \-]+/g, "_")
+    .replace(/[^a-zA-Z0-9가-힣_]/g, "")
+    .toLowerCase();
+
+const getExtractedValueByField = (
+  data: Record<string, string>,
+  field: ExtractedFieldConfig,
+) => {
+  const normalizedAliases = new Set(field.aliases.map(normalizeExtractedKey));
+  const matchedEntry = Object.entries(data).find(([key]) =>
+    normalizedAliases.has(normalizeExtractedKey(key)),
+  );
+
+  return matchedEntry?.[1] ?? "";
+};
+
+const buildExtractedDataByCategory = (
+  data: Record<string, string>,
+  categoryName?: string,
+) =>
+  Object.fromEntries(
+    getExtractedFieldsByCategory(categoryName).map((field) => [
+      field.key,
+      getExtractedValueByField(data, field),
+    ]),
+  );
+
+const formatExtractedValue = (value: string, fieldKey?: string) => {
   if (!value) return "-";
   if (value === "true") return "예";
   if (value === "false") return "아니오";
-  if (/^-?\d+(\.\d+)?$/.test(value)) {
-    return Number(value).toLocaleString("ko-KR");
+
+  if (fieldKey === "amount" && /^-?\d+(\.\d+)?$/.test(value)) {
+    return `${Number(value).toLocaleString("ko-KR")}원`;
   }
+
   return value;
 };
 
@@ -460,7 +483,10 @@ const DocumentDetail: React.FC = () => {
         issueDate: form.issueDate || undefined,
         expiryDate: form.expiryDate || undefined,
         renewalDate: form.renewalDate || undefined,
-        extractedData: form.extractedData,
+        extractedData: buildExtractedDataByCategory(
+          form.extractedData,
+          activeCategory?.name,
+        ),
       });
       setDoc(updated);
       setIsEditing(false);
@@ -597,8 +623,7 @@ const DocumentDetail: React.FC = () => {
                   </select>
                 </div>
                 <p className="doc-detail__field-note">
-                  문서 유형은 분류 정보로만 사용되며, 아래 AI 추출 정보 항목에는
-                  영향을 주지 않습니다.
+                  문서 유형에 따라 아래 AI 추출 정보 항목이 자동으로 정리됩니다.
                 </p>
               </>
             ) : (
@@ -913,33 +938,30 @@ const DocumentDetail: React.FC = () => {
                 <div className="doc-detail__section-title">
                   {doc?.is_confirmed ? "수기 입력 정보" : "AI 추출 정보"}
                 </div>
-                {isEditing && (
-                  <p className="doc-detail__ai-note">
-                    AI가 문서에서 추출한 항목을 그대로 표시합니다.
-                  </p>
-                )}
+                <p className="doc-detail__ai-note">
+                  {normalizeCategoryName(activeCategory?.name)} 문서 기준으로 주요 추출 데이터만 표시합니다.
+                </p>
 
                 <div className="doc-detail__field-grid doc-detail__field-grid--ai">
-                  {Object.keys(form.extractedData).length === 0 && (
-                    <p className="doc-detail__empty-text">
-                      추출된 정보가 없습니다.
-                    </p>
-                  )}
-                  {Object.entries(form.extractedData).map(([key, value]) => (
-                    <label key={key} className="doc-detail__field">
-                      <span>{formatExtractedLabel(key)}</span>
-                      {isEditing ? (
-                        <input
-                          value={value}
-                          onChange={(event) =>
-                            handleExtractedChange(key, event.target.value)
-                          }
-                        />
-                      ) : (
-                        <b>{formatExtractedValue(value)}</b>
-                      )}
-                    </label>
-                  ))}
+                  {getExtractedFieldsByCategory(activeCategory?.name).map((field) => {
+                    const value = getExtractedValueByField(form.extractedData, field);
+
+                    return (
+                      <label key={field.key} className="doc-detail__field">
+                        <span>{field.label}</span>
+                        {isEditing ? (
+                          <input
+                            value={value}
+                            onChange={(event) =>
+                              handleExtractedChange(field.key, event.target.value)
+                            }
+                          />
+                        ) : (
+                          <b>{formatExtractedValue(value, field.key)}</b>
+                        )}
+                      </label>
+                    );
+                  })}
                 </div>
               </section>
 
