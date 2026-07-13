@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Wallet, ReceiptText, Sparkles } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Wallet,
+  ReceiptText,
+  Sparkles,
+  CreditCard,
+} from "lucide-react";
 import Card from "../../../components/common/Card";
 import MonthlyLineChart from "../../../components/chart/MonthlyLineChart";
 import CategoryPieChart, {
@@ -20,6 +27,7 @@ import type {
 import { formatDate } from "../../../utils/formatDate";
 import { formatKRW } from "../../../utils/formatCurrency";
 import type { Receipt } from "../../../types/receipt";
+import Badge from "../../../components/common/Badge";
 
 const getMonthKey = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
@@ -465,6 +473,36 @@ const MonthlyTab: React.FC<MonthlyTabProps> = ({ refreshKey }) => {
           {selectedDate ? "선택 날짜 AI 소비패턴 분석" : "AI 소비패턴 분석"}
         </h3>
         <p className="finance-report__ai-text">{aiAnalysisText}</p>
+      </Card>
+
+      <Card>
+        <div className="finance-report__card-rec-box">
+          <div className="finance-report__card-rec-left">
+            <div className="finance-report__summary-icon finance-report__summary-icon--primary">
+              <CreditCard size={20} />
+            </div>
+            <div>
+              <div className="finance-report__card-rec-header">
+                <h3 className="finance-report__section-title">
+                  카드 추천 보기
+                </h3>
+                <Badge variant="pro">PRO</Badge>
+              </div>
+              <p className="finance-report__card-rec-text">
+                주요 소비 카테고리를 기반으로 혜택이 높은 카드를 확인할 수
+                있습니다.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="finance-report__card-rec-button"
+            onClick={() => navigate("/cards")}
+          >
+            추천 보기
+          </button>
+        </div>
       </Card>
 
       {!selectedDate && sortedCategoryData.length > 0 && categoryTotal > 0 && (
