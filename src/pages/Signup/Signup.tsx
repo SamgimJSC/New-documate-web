@@ -5,6 +5,9 @@ import Input from "../../components/common/Input";
 import Button from "../../components/common/Button";
 import PinKeypad from "../../components/common/PinKeypad";
 import { useToast } from "../../components/common/Toast";
+import { authService } from "../../services/authService";
+import { userService } from "../../services/userService";
+import { useUserStore } from "../../store/userStore";
 import {
   formatCountdown,
   PASSWORD_RULE_MESSAGE,
@@ -18,12 +21,16 @@ type PinStage = "input" | "confirm" | "done";
 const Signup: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const setUser = useUserStore((s) => s.setUser);
 
   const [email, setEmail] = useState("");
   const [verCode, setVerCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
+  const [emailVerificationId, setEmailVerificationId] = useState("");
   const [seconds, setSeconds] = useState(0);
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
 
   const [password, setPassword] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
@@ -37,6 +44,8 @@ const Signup: React.FC = () => {
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [privacyAgreed, setPrivacyAgreed] = useState(false);
   const [marketingAgreed, setMarketingAgreed] = useState(false);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!codeSent || emailVerified || seconds <= 0) return;
@@ -73,19 +82,51 @@ const Signup: React.FC = () => {
     ],
   );
 
-  const handleSendCode = () => {
-    if (!email.trim()) return;
-    setCodeSent(true);
-    setEmailVerified(false);
-    setSeconds(180);
-    setVerCode("");
-    showToast("인증번호가 전송되었습니다.", "success");
+  const handleSendCode = async () => {
+    if (!email.trim() || isSendingCode) return;
+
+    setIsSendingCode(true);
+    try {
+      const res = await authService.sendEmailVerification(email, "SIGNUP");
+      setEmailVerificationId(res.data.emailVerificationId);
+      setCodeSent(true);
+      setEmailVerified(false);
+      setSeconds(180);
+      setVerCode("");
+      showToast("인증번호가 전송되었습니다.", "success");
+    } catch (err: any) {
+      const errorCode = err?.response?.data?.errorCode;
+      if (errorCode === "EMAIL_ALREADY_USED") {
+        showToast("이미 가입된 이메일입니다.", "error");
+      } else {
+        showToast("인증번호 전송에 실패했습니다. 다시 시도해주세요.", "error");
+      }
+    } finally {
+      setIsSendingCode(false);
+    }
   };
 
-  const handleVerifyCode = () => {
-    if (verCode.length !== 6 || seconds <= 0) return;
-    setEmailVerified(true);
-    showToast("이메일 인증이 완료되었습니다.", "success");
+  const handleVerifyCode = async () => {
+    if (verCode.length !== 6 || seconds <= 0 || isVerifyingCode) return;
+
+    setIsVerifyingCode(true);
+    try {
+      await authService.verifyEmail(emailVerificationId, verCode);
+      setEmailVerified(true);
+      showToast("이메일 인증이 완료되었습니다.", "success");
+    } catch (err: any) {
+      const errorCode = err?.response?.data?.errorCode;
+      // 백엔드는 "코드 틀림"과 "코드 만료"를 구분하지 않고
+      // INVALID_EMAIL_VERIFICATION(409) 하나로 합쳐서 던진다.
+      if (errorCode === "INVALID_EMAIL_VERIFICATION") {
+        showToast("이메일 인증이 유효하지 않습니다. 재전송해주세요.", "error");
+      } else {
+        showToast("이메일 인증에 실패했습니다. 다시 시도해주세요.", "error");
+      }
+      setVerCode("");
+    } finally {
+      setIsVerifyingCode(false);
+    }
   };
 
   const handlePinSubmit = (value: string) => {
@@ -120,12 +161,50 @@ const Signup: React.FC = () => {
     setPinStage("input");
   };
 
-  const handleSignup = () => {
-    if (!canSignup) return;
+  const handleSignup = async () => {
+    if (!canSignup || isSubmitting) return;
 
-    // TODO: API 연결 시 authService.signup({ email, password, nickname, pin, consents }) 호출
-    showToast("회원가입 정보가 준비되었습니다.", "success");
-    window.setTimeout(() => navigate("/login", { replace: true }), 700);
+    setIsSubmitting(true);
+    try {
+      await authService.signup({
+        email,
+        password,
+        nickname,
+        pinNumber: pin,
+        emailVerificationId,
+      });
+
+      // 회원가입 응답만으로는 로그인 처리가 되지 않으므로, 동의 항목을 반영하려면
+      // 먼저 로그인해서 세션(JWT 쿠키)을 확보해야 한다.
+      await authService.login(email, password, false);
+      sessionStorage.setItem("sessionActive", "true");
+
+      const user = await userService.getMe();
+      setUser(user);
+
+      // 필수 약관은 가입 버튼이 눌린 시점에 이미 체크된 상태이므로 항상 true로 반영한다.
+      // 동의 반영이 실패해도 가입 자체는 끝난 상태라 사용자를 막지 않고 조용히 넘어간다.
+      const consentUpdates: Promise<unknown>[] = [
+        userService.updateConsent("TERMS", true),
+        userService.updateConsent("PRIVACY", true),
+      ];
+      if (marketingAgreed) {
+        consentUpdates.push(userService.updateConsent("MARKETING", true));
+      }
+      await Promise.allSettled(consentUpdates);
+
+      showToast("회원가입이 완료되었습니다!", "success");
+      navigate("/dashboard", { replace: true });
+    } catch (err: any) {
+      const errorCode = err?.response?.data?.errorCode;
+      if (errorCode === "EMAIL_ALREADY_USED") {
+        showToast("이미 가입된 이메일입니다.", "error");
+      } else {
+        showToast("회원가입에 실패했습니다. 다시 시도해주세요.", "error");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const activePinValue = pinStage === "input" ? pin : pinConfirm;
@@ -157,9 +236,9 @@ const Signup: React.FC = () => {
               variant="secondary"
               size="sm"
               onClick={handleSendCode}
-              disabled={!email.trim() || emailVerified}
+              disabled={!email.trim() || emailVerified || isSendingCode}
             >
-              {codeSent ? "재전송" : "인증번호 전송"}
+              {isSendingCode ? "전송 중..." : codeSent ? "재전송" : "인증번호 전송"}
             </Button>
           </div>
 
@@ -182,10 +261,10 @@ const Signup: React.FC = () => {
               <Button
                 variant="secondary"
                 size="sm"
-                disabled={verCode.length !== 6 || seconds === 0}
+                disabled={verCode.length !== 6 || seconds === 0 || isVerifyingCode}
                 onClick={handleVerifyCode}
               >
-                확인
+                {isVerifyingCode ? "확인 중..." : "확인"}
               </Button>
             </div>
           )}
@@ -314,10 +393,10 @@ const Signup: React.FC = () => {
           <Button
             variant="primary"
             fullWidth
-            disabled={!canSignup}
+            disabled={!canSignup || isSubmitting}
             onClick={handleSignup}
           >
-            회원가입 완료
+            {isSubmitting ? "가입 처리 중..." : "회원가입 완료"}
           </Button>
         </div>
 

@@ -1,5 +1,5 @@
 import { api } from "./api";
-import type { User, UserSettings } from "../types/user";
+import type { ConsentType, User, UserConsent, UserSettings } from "../types/user";
 
 interface ApiResponse<T = null> {
   message: string;
@@ -36,6 +36,18 @@ interface UserSettingsApiResponse {
   updatedAt: string;
 }
 
+interface ConsentApiResponse {
+  consentId: string;
+  userId: string;
+  consentType: ConsentType;
+  isRequired: boolean;
+  isAgreed: boolean;
+  agreedAt: string | null;
+}
+
+const FREE_STORAGE_QUOTA_BYTES = 1 * 1024 * 1024 * 1024;
+const PRO_STORAGE_QUOTA_BYTES = 10 * 1024 * 1024 * 1024;
+
 const mapUser = (raw: UserApiResponse): User => ({
   user_id: raw.userId,
   email: raw.email,
@@ -45,8 +57,10 @@ const mapUser = (raw: UserApiResponse): User => ({
   role: raw.role,
   plan: raw.plan,
   storage_used_bytes: Number(raw.storageUsedBytes ?? 0),
-  // TODO: 백엔드에서 storageQuotaBytes 기본값 설정 후 제거 예정
-  storage_quota_bytes: Number(raw.storageQuotaBytes ?? (1 * 1024 * 1024 * 1024)),
+  // 백엔드 storageQuotaBytes 값이 유저마다 제각각이라, 백엔드가 표준화하기 전까지는
+  // plan 기준으로 프론트에서 직접 계산한다. (FREE 1GB / PRO 10GB로 통일)
+  storage_quota_bytes:
+    raw.plan === "PRO" ? PRO_STORAGE_QUOTA_BYTES : FREE_STORAGE_QUOTA_BYTES,
   is_email_verified: raw.isEmailVerified,
   last_login_at: raw.lastLoginAt ?? undefined,
   created_at: raw.createdAt,
@@ -63,6 +77,15 @@ const mapSettings = (raw: UserSettingsApiResponse): UserSettings => ({
   dark_mode: raw.darkMode,
   app_lock_enabled: raw.appLockEnabled,
   updated_at: raw.updatedAt,
+});
+
+const mapConsent = (raw: ConsentApiResponse): UserConsent => ({
+  consent_id: raw.consentId,
+  user_id: raw.userId,
+  consent_type: raw.consentType,
+  is_required: raw.isRequired,
+  is_agreed: raw.isAgreed,
+  agreed_at: raw.agreedAt ?? undefined,
 });
 
 export const userService = {
@@ -99,5 +122,18 @@ export const userService = {
       { nickname },
     );
     return res.data.data.nickname;
+  },
+
+  async getConsents(): Promise<UserConsent[]> {
+    const res = await api.get<ApiResponse<ConsentApiResponse[]>>("/users/me/consents");
+    return res.data.data.map(mapConsent);
+  },
+
+  async updateConsent(consentType: ConsentType, isAgreed: boolean): Promise<UserConsent> {
+    const res = await api.patch<ApiResponse<ConsentApiResponse>>(
+      `/users/me/consents/${consentType}`,
+      { isAgreed },
+    );
+    return mapConsent(res.data.data);
   },
 };
