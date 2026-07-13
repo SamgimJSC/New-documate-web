@@ -8,6 +8,7 @@ import { uploadService, type TempDocumentItem } from "../../services/uploadServi
 import { documentService } from "../../services/documentService";
 import { getReceipts } from "../../api/receipt";
 import { useCategories } from "../../hooks/useCategories";
+import { useToast } from "../../components/common/Toast";
 import type { DocumentCategory } from "../../types/document";
 import type { UploadDocumentCategory } from "../../types/upload";
 import {
@@ -209,6 +210,7 @@ const resolveCompletedItem = async (
 export function ProcessingCenterPage() {
   const navigate = useNavigate();
   const categories = useCategories();
+  const { showToast } = useToast();
 
   const [processItems, setProcessItems] = useState<UploadProcessItem[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
@@ -403,8 +405,21 @@ export function ProcessingCenterPage() {
     }
   };
 
-  const deleteProcessItem = (itemId: string) => {
-    setProcessItems((current) => current.filter((item) => item.id !== itemId));
+  const deleteProcessItem = async (itemId: string) => {
+    try {
+      await uploadService.deleteTempDocument(itemId);
+      setProcessItems((current) => current.filter((item) => item.id !== itemId));
+    } catch (error) {
+      const status = (error as { response?: { status?: number } })?.response
+        ?.status;
+
+      if (status === 409) {
+        showToast("분석 진행 중에는 삭제할 수 없어요.", "error");
+        return;
+      }
+
+      showToast("삭제에 실패했어요. 다시 시도해 주세요.", "error");
+    }
   };
 
   const renderDetailPanel = () => {

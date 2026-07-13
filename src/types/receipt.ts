@@ -58,7 +58,7 @@ export interface UpdateReceiptBody {
   spendCategoryId?: number | null;
   storeAddress?: string;
   paymentItem?: string;
-  memo?: string;
+  memo?: string | null;
   isConfirmed?: boolean;
 }
 

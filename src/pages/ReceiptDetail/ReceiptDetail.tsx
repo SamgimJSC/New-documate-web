@@ -15,7 +15,6 @@ import ReceiptDeleteConfirmModal from "../../components/modal/ReceiptDeleteConfi
 import { getReceipt, deleteReceipt } from "../../api/receipt";
 import { formatDate } from "../../utils/formatDate";
 import { formatKRW } from "../../utils/formatCurrency";
-import { useToast } from "../../components/common/Toast";
 import type { Receipt } from "../../types/receipt";
 import "./ReceiptDetail.css";
 
@@ -28,7 +27,6 @@ const FieldMissing: React.FC<{ isOcr: boolean }> = ({ isOcr }) => (
 const ReceiptDetail: React.FC = () => {
   const { receipt_id } = useParams<{ receipt_id: string }>();
   const navigate = useNavigate();
-  const { showToast } = useToast();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
@@ -125,13 +123,8 @@ const ReceiptDetail: React.FC = () => {
 
   const handleDelete = async () => {
     if (!receipt) return;
-    try {
-      await deleteReceipt(receipt.receiptId);
-      showToast("영수증이 삭제되었습니다.", "success");
-      navigate("/receipts");
-    } catch {
-      showToast("삭제 중 오류가 발생했습니다.", "error");
-    }
+    await deleteReceipt(receipt.receiptId);
+    navigate("/receipts");
   };
 
   if (loading) {
@@ -221,7 +214,7 @@ const ReceiptDetail: React.FC = () => {
           const qty = item.quantity;
           return {
             name,
-            qty: qty != null && qty !== "" && Number(qty) > 0 ? `×${qty}개` : null,
+            qty: qty != null && qty !== "" && Number(qty) > 0 ? `×${qty}` : null,
             price: rawAmount != null ? fmtAmount(rawAmount) : null,
             rawAmount,
           };
@@ -235,11 +228,6 @@ const ReceiptDetail: React.FC = () => {
         .map((text): PaymentItemEntry => ({ name: text, qty: null, price: null, rawAmount: null }));
     }
   })();
-
-  const itemsTotalAmount = paymentItems.reduce((sum, item) => sum + (item.rawAmount ?? 0), 0);
-  const itemsTotalText = itemsTotalAmount > 0
-    ? `${itemsTotalAmount.toLocaleString("ko-KR")}원`
-    : null;
 
   const isOcr = receipt.inputMethod === "OCR";
   const missingCount = [
@@ -416,19 +404,38 @@ const ReceiptDetail: React.FC = () => {
 
           {paymentItems.length > 0 && (
             <div className="receipt-detail__section">
-              <p className="receipt-detail__section-title">결제 항목</p>
-              <div className="receipt-detail__items-chip-list">
-                {paymentItems.map((item, index) => (
-                  <span className="receipt-detail__item-chip" key={`${item.name}-${index}`}>
-                    <span className="receipt-detail__item-chip-name">
-                      {item.name}{item.qty ? ` ${item.qty}` : ""}
-                    </span>
-                    {item.price && (
-                      <span className="receipt-detail__item-chip-price">{item.price}</span>
-                    )}
-                  </span>
-                ))}
+              <div className="receipt-detail__items-header">
+                <p className="receipt-detail__section-title">결제 항목</p>
+                <span className="receipt-detail__items-count">총 {paymentItems.length}개 항목</span>
               </div>
+              <div className="receipt-detail__items-table">
+                {paymentItems.map((item, index) => (
+                  <div className="receipt-detail__items-row" key={`${item.name}-${index}`}>
+                    <span className="receipt-detail__items-name-group">
+                      <span className="receipt-detail__items-name">{item.name}</span>
+                      <span className="receipt-detail__items-qty">
+                        {item.qty ?? "×1"}
+                      </span>
+                    </span>
+                    <span className="receipt-detail__items-price">
+                      {item.price ?? "-"}
+                    </span>
+                  </div>
+                ))}
+                {receipt.totalAmount != null && (
+                  <div className="receipt-detail__items-total">
+                    <span className="receipt-detail__items-total-label">합계</span>
+                    <span className="receipt-detail__items-total-amount">{formatKRW(receipt.totalAmount)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {receipt.memo && (
+            <div className="receipt-detail__section">
+              <p className="receipt-detail__section-title">메모</p>
+              <p className="receipt-detail__memo-text">{receipt.memo}</p>
             </div>
           )}
 

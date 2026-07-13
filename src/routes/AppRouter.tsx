@@ -22,6 +22,7 @@ import MyPageHome from "../pages/MyPage/MyPageHome";
 import MyPageProfile from "../pages/MyPage/MyPageProfile";
 import MyPageSettings from "../pages/MyPage/MyPageSettings";
 import MyPagePlan from "../pages/MyPage/MyPagePlan";
+import PaymentResultPage from "../pages/MyPage/PaymentResultPage";
 import MyPageWithdraw from "../pages/MyPage/MyPageWithdraw";
 import ResetPassword from "../pages/Login/ResetPassword";
 
@@ -53,6 +54,18 @@ const AppRouter: React.FC = () => {
             <Route path="/mypage/profile" element={<MyPageProfile />} />
             <Route path="/mypage/settings" element={<MyPageSettings />} />
             <Route path="/mypage/plan" element={<MyPagePlan />} />
+            <Route
+              path="/mypage/payment/success"
+              element={<PaymentResultPage variant="success" />}
+            />
+            <Route
+              path="/mypage/payment/cancel"
+              element={<PaymentResultPage variant="cancel" />}
+            />
+            <Route
+              path="/mypage/payment/fail"
+              element={<PaymentResultPage variant="fail" />}
+            />
             <Route path="/mypage/withdraw" element={<MyPageWithdraw />} />
           </Route>
         </Route>

@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  CalendarDays,
   ImagePlus,
   ListChecks,
   MapPin,
   ReceiptText,
   StickyNote,
   Store,
-  Tags,
   Wallet,
   X,
 } from "lucide-react";
@@ -126,22 +124,24 @@ const ReceiptManualModal: React.FC<Props> = ({
 
     setSaving(true);
     try {
-      const body = {
+      const baseBody = {
         storeName,
         storeAddress: storeAddress || undefined,
         totalAmount: Number(amount),
         purchaseDate: date,
         spendCategoryId: categoryId ? Number(categoryId) : null,
         paymentItem: paymentItem || undefined,
-        memo: memo || undefined,
       };
 
       let saved: Receipt;
       if (mode === "EDIT" && receipt) {
-        saved = await updateReceipt(receipt.receiptId, body);
+        saved = await updateReceipt(receipt.receiptId, {
+          ...baseBody,
+          memo: memo || null,
+        });
       } else {
         saved = await createReceipt(
-          { ...body, inputMethod: "MANUAL" },
+          { ...baseBody, inputMethod: "MANUAL", memo: memo || undefined },
           image ?? undefined,
         );
       }
@@ -179,28 +179,27 @@ const ReceiptManualModal: React.FC<Props> = ({
 
         <div className="receipt-manual-modal__grid">
           <div className="receipt-manual-modal__field receipt-manual-modal__field--wide">
-            <span className="receipt-manual-modal__field-icon"><Store size={15} /></span>
             <Input
               label="가맹점명"
               placeholder="가맹점명을 입력하세요"
               value={storeName}
               onChange={(e) => setStoreName(e.target.value)}
               required
+              suffix={<Store size={15} />}
             />
           </div>
 
           <div className="receipt-manual-modal__field receipt-manual-modal__field--wide">
-            <span className="receipt-manual-modal__field-icon"><MapPin size={15} /></span>
             <Input
               label="주소"
               placeholder="주소를 입력하세요 (선택)"
               value={storeAddress}
               onChange={(e) => setStoreAddress(e.target.value)}
+              suffix={<MapPin size={15} />}
             />
           </div>
 
           <div className="receipt-manual-modal__field">
-            <span className="receipt-manual-modal__field-icon"><Wallet size={15} /></span>
             <Input
               label="결제 금액"
               type="number"
@@ -208,11 +207,11 @@ const ReceiptManualModal: React.FC<Props> = ({
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               required
+              suffix={<Wallet size={15} />}
             />
           </div>
 
           <div className="receipt-manual-modal__field">
-            <span className="receipt-manual-modal__field-icon"><CalendarDays size={15} /></span>
             <Input
               label="결제일"
               type="date"
@@ -223,7 +222,6 @@ const ReceiptManualModal: React.FC<Props> = ({
           </div>
 
           <div className="receipt-manual-modal__field">
-            <span className="receipt-manual-modal__field-icon"><Tags size={15} /></span>
             <Select
               label="카테고리"
               value={categoryId}
@@ -235,22 +233,22 @@ const ReceiptManualModal: React.FC<Props> = ({
           </div>
 
           <div className="receipt-manual-modal__field">
-            <span className="receipt-manual-modal__field-icon"><ListChecks size={15} /></span>
             <Input
               label="결제 항목"
               placeholder="예: 아메리카노, 샌드위치"
               value={paymentItem}
               onChange={(e) => setPaymentItem(e.target.value)}
+              suffix={<ListChecks size={15} />}
             />
           </div>
 
           <div className="receipt-manual-modal__field receipt-manual-modal__field--wide">
-            <span className="receipt-manual-modal__field-icon"><StickyNote size={15} /></span>
             <Input
               label="메모"
               placeholder="메모를 입력하세요 (선택)"
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
+              suffix={<StickyNote size={15} />}
             />
           </div>
         </div>

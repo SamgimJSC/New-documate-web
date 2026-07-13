@@ -8,10 +8,9 @@ import {
   Smartphone,
 } from "lucide-react";
 import Badge from "../../components/common/Badge";
-import { mockUserConsents } from "../../data/mockUsers";
 import { userService } from "../../services/userService";
 import { useToast } from "../../components/common/Toast";
-import type { ConsentType, UserSettings } from "../../types/user";
+import type { ConsentType, UserConsent, UserSettings } from "../../types/user";
 import "./MyPage.css";
 
 const CONSENT_LABELS: Record<ConsentType, string> = {
@@ -32,7 +31,7 @@ const MyPageSettings: React.FC = () => {
   const { showToast } = useToast();
 
   const [settings, setSettings] = useState<UserSettings | null>(null);
-  const [consents, setConsents] = useState(mockUserConsents);
+  const [consents, setConsents] = useState<UserConsent[] | null>(null);
   const [showSavedNote, setShowSavedNote] = useState(false);
 
   useEffect(() => {
@@ -40,10 +39,15 @@ const MyPageSettings: React.FC = () => {
       .getSettings()
       .then(setSettings)
       .catch(() => showToast("설정을 불러오지 못했습니다.", "error"));
+
+    userService
+      .getConsents()
+      .then(setConsents)
+      .catch(() => showToast("동의 항목을 불러오지 못했습니다.", "error"));
   }, []);
 
   const marketingConsent =
-    consents.find((c) => c.consent_type === "MARKETING")?.is_agreed ?? false;
+    consents?.find((c) => c.consent_type === "MARKETING")?.is_agreed ?? false;
 
   const toggleSetting = async (key: "push_enabled" | "email_noti_enabled") => {
     if (!settings) return;
@@ -73,35 +77,50 @@ const MyPageSettings: React.FC = () => {
     }
   };
 
-  const toggleConsent = (consentId: string) => {
+  const toggleConsent = async (consent: UserConsent) => {
+    if (consent.is_required) return;
+
+    const nextAgreed = !consent.is_agreed;
+
+    // 낙관적 업데이트
     setConsents((prev) =>
-      prev.map((consent) => {
-        if (consent.consent_id !== consentId) return consent;
-        if (consent.is_required) return consent;
-
-        const nextAgreed = !consent.is_agreed;
-
-        if (consent.consent_type === "MARKETING" && !nextAgreed) {
-          setSettings((current) => ({
-            ...current,
-            push_enabled: false,
-            updated_at: new Date().toISOString(),
-          }));
-        }
-
-        return {
-          ...consent,
-          is_agreed: nextAgreed,
-          agreed_at: nextAgreed ? new Date().toISOString() : undefined,
-        };
-      }),
+      prev &&
+      prev.map((c) =>
+        c.consent_id === consent.consent_id ? { ...c, is_agreed: nextAgreed } : c,
+      ),
     );
 
-    setShowSavedNote(true);
-    showToast("동의 설정이 변경되었습니다.", "success");
+    try {
+      const updated = await userService.updateConsent(
+        consent.consent_type,
+        nextAgreed,
+      );
+      setConsents((prev) =>
+        prev && prev.map((c) => (c.consent_id === updated.consent_id ? updated : c)),
+      );
+
+      if (consent.consent_type === "MARKETING" && !nextAgreed) {
+        // 마케팅 동의를 끄면 서버가 push_enabled도 함께 꺼주므로 최신 설정을 다시 받아온다.
+        userService.getSettings().then(setSettings).catch(() => {});
+      }
+
+      setShowSavedNote(true);
+      showToast("동의 설정이 변경되었습니다.", "success");
+    } catch {
+      // 실패 시 원래 값으로 롤백
+      setConsents((prev) =>
+        prev &&
+        prev.map((c) =>
+          c.consent_id === consent.consent_id
+            ? { ...c, is_agreed: consent.is_agreed }
+            : c,
+        ),
+      );
+      showToast("동의 설정 변경에 실패했습니다.", "error");
+    }
   };
 
-  if (!settings) {
+  if (!settings || !consents) {
     return (
       <div className="mypage-section mypage-settings-figma">
         설정을 불러오는 중...
@@ -216,7 +235,7 @@ const MyPageSettings: React.FC = () => {
                 <input
                   type="checkbox"
                   checked={consent.is_agreed}
-                  onChange={() => toggleConsent(consent.consent_id)}
+                  onChange={() => toggleConsent(consent)}
                   disabled={consent.is_required}
                 />
                 <span className="mypage-settings__slider" />

@@ -26,7 +26,6 @@ const navItems: NavItem[] = [
     to: "/finance/report",
     icon: <TrendingUp size={18} />,
     label: "소비 리포트",
-    isPro: true,
   },
 ];
 

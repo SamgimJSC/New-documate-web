@@ -129,6 +129,10 @@ export const uploadService = {
     await api.delete(`/upload/${tempDocumentId}/files`);
   },
 
+  async deleteTempDocument(tempDocumentId: string): Promise<void> {
+    await api.delete(`/upload/${tempDocumentId}`);
+  },
+
   async getAiStatus(documentId: string): Promise<AiStatus> {
     const res = await api.get<ApiResponse<AiStatusData>>(
       `/documents/${documentId}/ai-status`,

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Bell,
@@ -11,10 +11,11 @@ import {
   UserRound,
 } from "lucide-react";
 import Badge from "../../components/common/Badge";
-import { mockUserSettings } from "../../data/mockUsers";
 import { useUserStore } from "../../store/userStore";
 import { formatDate } from "../../utils/formatDate";
 import { authService } from "../../services/authService";
+import { userService } from "../../services/userService";
+import type { UserSettings } from "../../types/user";
 import "./MyPage.css";
 
 type StatusCard = {
@@ -39,6 +40,16 @@ type MenuCard = {
 const MyPageHome: React.FC = () => {
   const navigate = useNavigate();
   const user = useUserStore((s) => s.user);
+  const [settings, setSettings] = useState<UserSettings | null>(null);
+
+  useEffect(() => {
+    userService
+      .getSettings()
+      .then(setSettings)
+      .catch(() => {
+        // 조회 실패 시 알림 상태 카드는 꺼짐 상태로 폴백
+      });
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -69,7 +80,7 @@ const MyPageHome: React.FC = () => {
       : "-";
 
   const hasAnyNotification =
-    mockUserSettings.email_noti_enabled || mockUserSettings.push_enabled;
+    !!settings && (settings.email_noti_enabled || settings.push_enabled);
 
   const statusCards: StatusCard[] = [
     {
