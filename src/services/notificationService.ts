@@ -32,4 +32,12 @@ export const notificationService = {
   async deleteNotification(notificationId: string): Promise<void> {
     await api.delete(`/notifications/${notificationId}`);
   },
+
+  async registerDeviceToken(token: string, platform: "WEB" | "IOS" | "ANDROID" = "WEB") {
+    const res = await api.post<ApiResponse<{ tokenId: string }>>("/notifications/device-tokens", {
+      token,
+      platform,
+    });
+    return res.data.data;
+  },
 };
