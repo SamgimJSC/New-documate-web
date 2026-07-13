@@ -5,6 +5,8 @@ import Input from "../../components/common/Input";
 import Button from "../../components/common/Button";
 import { authService } from "../../services/authService";
 import { userService } from "../../services/userService";
+import { notificationService } from "../../services/notificationService";
+import { requestFcmToken } from "../../services/firebaseMessaging";
 import { useUserStore } from "../../store/userStore";
 import "./Login.css";
 
@@ -32,6 +34,12 @@ const Login: React.FC = () => {
       } else {
         localStorage.removeItem('stayLoggedIn');
       }
+      requestFcmToken()
+        .then((fcmToken) => {
+          if (fcmToken) return notificationService.registerDeviceToken(fcmToken, "WEB");
+        })
+        .catch((err) => console.error("FCM 토큰 등록 실패", err));
+
       const redirect = new URLSearchParams(location.search).get("redirect");
       navigate(redirect || "/dashboard");
     } catch {
