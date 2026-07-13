@@ -2,6 +2,7 @@ import { api } from "./api";
 import type {
   BillingCycle,
   Payment,
+  PaymentFlow,
   PaymentMethodType,
   PaymentReady,
   PaymentStatus,
@@ -177,4 +178,19 @@ export const pickKakaoRedirectUrl = (ready: PaymentReady): string => {
   }
 
   return ready.pc_redirect_url || ready.redirect_url;
+};
+
+// 카카오페이 결제창으로 나갔다가 돌아왔을 때, 구독 결제와 결제수단 변경 중
+// 어떤 흐름이었는지는 백엔드 리다이렉션 URL만으로 구분할 수 없다.
+// 카카오로 넘어가기 직전에 sessionStorage에 흐름을 기록해두고 결과 페이지에서 꺼내 쓴다.
+const KAKAO_PAYMENT_FLOW_STORAGE_KEY = "documate:kakaoPaymentFlow";
+
+export const setKakaoPaymentFlow = (flow: PaymentFlow): void => {
+  sessionStorage.setItem(KAKAO_PAYMENT_FLOW_STORAGE_KEY, flow);
+};
+
+export const consumeKakaoPaymentFlow = (): PaymentFlow => {
+  const flow = sessionStorage.getItem(KAKAO_PAYMENT_FLOW_STORAGE_KEY);
+  sessionStorage.removeItem(KAKAO_PAYMENT_FLOW_STORAGE_KEY);
+  return flow === "METHOD_CHANGE" ? "METHOD_CHANGE" : "SUBSCRIBE";
 };

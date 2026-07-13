@@ -1,5 +1,5 @@
 import { api } from "./api";
-import type { User, UserSettings } from "../types/user";
+import type { ConsentType, User, UserConsent, UserSettings } from "../types/user";
 
 interface ApiResponse<T = null> {
   message: string;
@@ -36,6 +36,15 @@ interface UserSettingsApiResponse {
   updatedAt: string;
 }
 
+interface ConsentApiResponse {
+  consentId: string;
+  userId: string;
+  consentType: ConsentType;
+  isRequired: boolean;
+  isAgreed: boolean;
+  agreedAt: string | null;
+}
+
 const FREE_STORAGE_QUOTA_BYTES = 1 * 1024 * 1024 * 1024;
 const PRO_STORAGE_QUOTA_BYTES = 10 * 1024 * 1024 * 1024;
 
@@ -68,6 +77,15 @@ const mapSettings = (raw: UserSettingsApiResponse): UserSettings => ({
   dark_mode: raw.darkMode,
   app_lock_enabled: raw.appLockEnabled,
   updated_at: raw.updatedAt,
+});
+
+const mapConsent = (raw: ConsentApiResponse): UserConsent => ({
+  consent_id: raw.consentId,
+  user_id: raw.userId,
+  consent_type: raw.consentType,
+  is_required: raw.isRequired,
+  is_agreed: raw.isAgreed,
+  agreed_at: raw.agreedAt ?? undefined,
 });
 
 export const userService = {
@@ -104,5 +122,18 @@ export const userService = {
       { nickname },
     );
     return res.data.data.nickname;
+  },
+
+  async getConsents(): Promise<UserConsent[]> {
+    const res = await api.get<ApiResponse<ConsentApiResponse[]>>("/users/me/consents");
+    return res.data.data.map(mapConsent);
+  },
+
+  async updateConsent(consentType: ConsentType, isAgreed: boolean): Promise<UserConsent> {
+    const res = await api.patch<ApiResponse<ConsentApiResponse>>(
+      `/users/me/consents/${consentType}`,
+      { isAgreed },
+    );
+    return mapConsent(res.data.data);
   },
 };

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   Check,
@@ -11,8 +12,14 @@ import {
 } from "lucide-react";
 import Button from "../../components/common/Button";
 import PlanCancelModal from "../../components/modal/PlanCancelModal";
-import { paymentService, pickKakaoRedirectUrl } from "../../services/paymentService";
+import PaymentResultModal from "../../components/modal/PaymentResultModal";
+import {
+  paymentService,
+  pickKakaoRedirectUrl,
+  setKakaoPaymentFlow,
+} from "../../services/paymentService";
 import type { Payment, PaymentStatus, Subscription } from "../../types/payment";
+import type { PaymentResultInfo } from "../../components/modal/PaymentResultModal";
 import { useUserStore } from "../../store/userStore";
 import { formatDate } from "../../utils/formatDate";
 import { formatKRW } from "../../utils/formatCurrency";
@@ -20,7 +27,7 @@ import { useToast } from "../../components/common/Toast";
 import paymentWalletIcon from "../../assets/payment-wallet-icon.png";
 import "./MyPage.css";
 
-const PRO_MONTHLY_PRICE = 9900;
+const PRO_MONTHLY_PRICE = 3900;
 
 const PAYMENT_STATUS_LABEL: Record<PaymentStatus, string> = {
   READY: "결제 대기",
@@ -50,6 +57,8 @@ const PRO_FEATURES = [
 const MyPagePlan: React.FC = () => {
   const user = useUserStore((s) => s.user);
   const { showToast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -57,6 +66,10 @@ const MyPagePlan: React.FC = () => {
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [isChangingMethod, setIsChangingMethod] = useState(false);
   const [isUndoingCancel, setIsUndoingCancel] = useState(false);
+  const [paymentResult, setPaymentResult] = useState<PaymentResultInfo | null>(
+    (location.state as { paymentResult?: PaymentResultInfo } | null)
+      ?.paymentResult ?? null
+  );
 
   const loadPlanData = () => {
     paymentService
@@ -93,6 +106,13 @@ const MyPagePlan: React.FC = () => {
     return () => window.removeEventListener("pageshow", handlePageShow);
   }, []);
 
+  useEffect(() => {
+    // 결제 결과 모달을 띄운 뒤에는 history state를 비워서
+    // 새로고침이나 뒤로가기로 모달이 다시 뜨지 않도록 한다.
+    if (!location.state) return;
+    navigate(location.pathname, { replace: true });
+  }, [location.pathname, location.state, navigate]);
+
   if (!user) return null;
 
   const isPro = subscription ? subscription.plan === "PRO" : user.plan === "PRO";
@@ -113,6 +133,7 @@ const MyPagePlan: React.FC = () => {
     setIsUpgrading(true);
     try {
       const ready = await paymentService.readyKakaoPay("MONTHLY");
+      setKakaoPaymentFlow("SUBSCRIBE");
       window.location.href = pickKakaoRedirectUrl(ready);
     } catch {
       showToast("결제 준비에 실패했어요. 다시 시도해 주세요.", "error");
@@ -150,6 +171,7 @@ const MyPagePlan: React.FC = () => {
     setIsChangingMethod(true);
     try {
       const ready = await paymentService.readyKakaoPayMethodChange();
+      setKakaoPaymentFlow("METHOD_CHANGE");
       window.location.href = pickKakaoRedirectUrl(ready);
     } catch {
       showToast("결제 수단 변경 준비에 실패했어요. 다시 시도해 주세요.", "error");
@@ -436,6 +458,12 @@ const MyPagePlan: React.FC = () => {
         isOpen={cancelOpen}
         onClose={() => setCancelOpen(false)}
         onConfirm={handleCancelReserved}
+      />
+
+      <PaymentResultModal
+        isOpen={!!paymentResult}
+        onClose={() => setPaymentResult(null)}
+        result={paymentResult}
       />
     </div>
   );

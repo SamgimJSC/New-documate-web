@@ -4,6 +4,7 @@ export type PaymentMethodType = "KAKAOPAY" | "NAVERPAY" | "CARD";
 export type BillingCycle = "MONTHLY" | "YEARLY";
 export type SubscriptionStatus = "TRIAL" | "ACTIVE" | "CANCELED" | "EXPIRED";
 export type PaymentStatus = "READY" | "APPROVED" | "CANCELED" | "FAILED";
+export type PaymentFlow = "SUBSCRIBE" | "METHOD_CHANGE";
 
 export interface SubscriptionPaymentMethod {
   method_id: string;
