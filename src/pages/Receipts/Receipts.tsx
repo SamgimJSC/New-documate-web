@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, ShoppingCart, Calendar, TrendingDown, AlertCircle, ChevronDown } from "lucide-react";
 import Card from "../../components/common/Card";
@@ -37,7 +37,8 @@ const toDateValue = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
-const getSummaryParams = (period: SummaryPeriod) => {
+// 선택된 기간(일/주/월/연)을 실제 fromDate~toDate 범위로 변환
+const getPeriodRange = (period: SummaryPeriod) => {
   const now = new Date();
 
   if (period === "day") {
@@ -59,13 +60,30 @@ const getSummaryParams = (period: SummaryPeriod) => {
   }
 
   if (period === "year") {
-    return { year: now.getFullYear() };
+    return {
+      fromDate: toDateValue(new Date(now.getFullYear(), 0, 1)),
+      toDate: toDateValue(new Date(now.getFullYear(), 11, 31)),
+    };
   }
 
   return {
-    year: now.getFullYear(),
-    month: now.getMonth() + 1,
+    fromDate: toDateValue(new Date(now.getFullYear(), now.getMonth(), 1)),
+    toDate: toDateValue(new Date(now.getFullYear(), now.getMonth() + 1, 0)),
   };
+};
+
+// 기간 범위를 수동 날짜(~) 입력으로 좁힘 (교집합). 수동 입력이 없으면 기간 범위 그대로 사용.
+const narrowRangeToManualDates = (
+  range: { fromDate: string; toDate: string },
+  manualFromDate: string,
+  manualToDate: string,
+) => {
+  const fromDate =
+    manualFromDate && manualFromDate > range.fromDate ? manualFromDate : range.fromDate;
+  const toDate =
+    manualToDate && manualToDate < range.toDate ? manualToDate : range.toDate;
+
+  return { fromDate, toDate };
 };
 
 const isNullVal = (v: string | null | undefined) =>
@@ -99,6 +117,8 @@ const Receipts: React.FC = () => {
     SUMMARY_PERIOD_OPTIONS.find((option) => option.value === summaryPeriod) ??
     SUMMARY_PERIOD_OPTIONS[2];
 
+  const periodRange = useMemo(() => getPeriodRange(summaryPeriod), [summaryPeriod]);
+
   useEffect(() => {
     const handleReceiptSaved = () => {
       setPage(1);
@@ -111,7 +131,7 @@ const Receipts: React.FC = () => {
 
   useEffect(() => {
     getReceipts({
-      ...getSummaryParams(summaryPeriod),
+      ...periodRange,
       size: 100,
     })
       .then((res) => {
@@ -148,11 +168,17 @@ const Receipts: React.FC = () => {
 
   useEffect(() => {
     setLoading(true);
+    const { fromDate: effectiveFromDate, toDate: effectiveToDate } = narrowRangeToManualDates(
+      periodRange,
+      fromDate,
+      toDate,
+    );
+
     getReceipts({
       keyword: query || undefined,
       categoryId,
-      fromDate: fromDate || undefined,
-      toDate: toDate || undefined,
+      fromDate: effectiveFromDate,
+      toDate: effectiveToDate,
       sort,
       page,
       size: PAGE_SIZE,
@@ -163,7 +189,7 @@ const Receipts: React.FC = () => {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [query, categoryId, fromDate, toDate, sort, page, refreshKey]);
+  }, [query, categoryId, fromDate, toDate, sort, page, refreshKey, summaryPeriod]);
 
   return (
     <div className="receipts">
@@ -206,6 +232,9 @@ const Receipts: React.FC = () => {
                     onClick={() => {
                       setSummaryPeriod(option.value);
                       setSummaryOpen(false);
+                      setFromDate("");
+                      setToDate("");
+                      setPage(1);
                     }}
                   >
                     {option.label}
@@ -242,9 +271,23 @@ const Receipts: React.FC = () => {
           />
         </div>
         <div className="receipts__date-filter">
-          <input type="date" className="receipts__date-input" value={fromDate} onChange={(e) => { setFromDate(e.target.value); setPage(1); }} />
+          <input
+            type="date"
+            className="receipts__date-input"
+            value={fromDate}
+            min={periodRange.fromDate}
+            max={periodRange.toDate}
+            onChange={(e) => { setFromDate(e.target.value); setPage(1); }}
+          />
           <span>~</span>
-          <input type="date" className="receipts__date-input" value={toDate} onChange={(e) => { setToDate(e.target.value); setPage(1); }} />
+          <input
+            type="date"
+            className="receipts__date-input"
+            value={toDate}
+            min={periodRange.fromDate}
+            max={periodRange.toDate}
+            onChange={(e) => { setToDate(e.target.value); setPage(1); }}
+          />
         </div>
       </div>
 
