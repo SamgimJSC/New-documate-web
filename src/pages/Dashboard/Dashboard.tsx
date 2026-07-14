@@ -6,19 +6,25 @@ import Badge from "../../components/common/Badge";
 import { useUserStore } from "../../store/userStore";
 import { documentService } from "../../services/documentService";
 import { reportsService, type ThisMonthSummary } from "../../services/reportsService";
-import { mockMonthlyReports } from "../../data/mockReports";
+import { getCategorySummary } from "../../api/report";
+import type { CategorySummaryItem } from "../../types/report";
 import type { Document } from "../../types/document";
 import { formatDate, getDday } from "../../utils/formatDate";
 import { formatKRW } from "../../utils/formatCurrency";
 import "./Dashboard.css";
+
+const getCategoryName = (item: CategorySummaryItem) =>
+  (item as unknown as { categoryName?: string }).categoryName ?? item.name ?? "기타";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<"recent" | "favorite">("recent");
   const [documents, setDocuments] = useState<Document[]>([]);
   const [thisMonth, setThisMonth] = useState<ThisMonthSummary | null>(null);
+  const [topCategory, setTopCategory] = useState<CategorySummaryItem | null>(null);
 
   const user = useUserStore((s) => s.user);
+  const isPro = user?.plan === "PRO";
 
   useEffect(() => {
     documentService.getDocuments()
@@ -29,6 +35,18 @@ const Dashboard: React.FC = () => {
       .then(setThisMonth)
       .catch(() => setThisMonth({ year: 0, month: 0, totalSpend: 0, receiptCount: 0 }));
   }, []);
+
+  useEffect(() => {
+    if (!isPro) return;
+
+    const now = new Date();
+    getCategorySummary({ year: now.getFullYear(), month: now.getMonth() + 1 })
+      .then((summary) => {
+        const sorted = [...summary.categories].sort((a, b) => b.totalSpend - a.totalSpend);
+        setTopCategory(sorted[0] ?? null);
+      })
+      .catch(() => {});
+  }, [isPro]);
 
   if (!user) return null;
 
@@ -42,7 +60,6 @@ const Dashboard: React.FC = () => {
   });
   const thisMonthSpend = thisMonth?.totalSpend ?? 0;
   const thisMonthReceiptCount = thisMonth?.receiptCount ?? 0;
-  const latestReport = mockMonthlyReports[mockMonthlyReports.length - 1];
   const storagePercent = user.storage_quota_bytes > 0
     ? Math.round((user.storage_used_bytes / user.storage_quota_bytes) * 100)
     : 0;
@@ -50,7 +67,9 @@ const Dashboard: React.FC = () => {
   const quotaGB = user.storage_quota_bytes > 0
     ? (user.storage_quota_bytes / 1024 / 1024 / 1024).toFixed(0)
     : "-";
-  const isPro = user.plan === "PRO";
+  const spendInsightText = topCategory
+    ? `이번 달은 ${getCategoryName(topCategory)} 지출 비중이 ${Math.round(topCategory.percentage)}%로 가장 높아요. 관련 소비를 조금만 줄여도 다음 달 지출 관리에 도움이 됩니다.`
+    : "이번 달 등록된 소비 데이터가 아직 없어요. 영수증을 등록하면 소비 인사이트를 확인할 수 있어요.";
 
   const displayDocs = tab === "recent"
     ? [...docs].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 4)
@@ -175,7 +194,7 @@ const Dashboard: React.FC = () => {
             </div>
             {isPro ? (
               <>
-                <p className="dashboard__pro-analysis">{latestReport.ai_analysis}</p>
+                <p className="dashboard__pro-analysis">{spendInsightText}</p>
                 <button className="dashboard__view-all dashboard__view-all--center" onClick={() => navigate("/finance/report")}>리포트 보기</button>
               </>
             ) : (
