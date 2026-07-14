@@ -17,7 +17,7 @@ import Receipts from "../pages/Receipts/Receipts";
 import ReceiptDetail from "../pages/ReceiptDetail/ReceiptDetail";
 import Finance from "../pages/Finance/Finance";
 import FinanceReport from "../pages/FinanceReport/FinanceReport";
-import Cards from "../pages/Cards/Cards";
+import CardsRoute from "../pages/Cards/CardsRoute";
 import MyPageHome from "../pages/MyPage/MyPageHome";
 import MyPageProfile from "../pages/MyPage/MyPageProfile";
 import MyPageSettings from "../pages/MyPage/MyPageSettings";
@@ -46,7 +46,7 @@ const AppRouter: React.FC = () => {
           <Route path="/receipts/:receipt_id" element={<ReceiptDetail />} />
           <Route path="/finance" element={<Finance />} />
           <Route path="/finance/report" element={<FinanceReport />} />
-          <Route path="/cards" element={<Cards />} />
+          <Route path="/cards" element={<CardsRoute />} />
           <Route path="/subscription" element={<MyPagePlan />} />
 
           <Route element={<MyPageLayout />}>

@@ -24,6 +24,7 @@
 .modal--sm { width: 100%; max-width: 380px; }
 .modal--md { width: 100%; max-width: 540px; }
 .modal--lg { width: 100%; max-width: 740px; }
+.modal--xl { width: 100%; max-width: 880px; }
 
 .modal__header {
   display: flex;
@@ -73,7 +74,8 @@
   .modal,
   .modal--sm,
   .modal--md,
-  .modal--lg {
+  .modal--lg,
+  .modal--xl {
     width: 100%;
     max-width: 100%;
     max-height: 92vh;
