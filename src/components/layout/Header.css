@@ -306,3 +306,98 @@
   transform: translateY(-2px) scale(1.03);
   box-shadow: 0 14px 30px rgba(91, 157, 153, 0.2) !important;
 }
+
+/* =========================================
+   모바일 헤더 (햄버거 / 터치 타깃 / 여백)
+========================================= */
+.header__menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin-right: 4px;
+  border-radius: 12px;
+  color: var(--color-text-sub);
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease;
+}
+
+.header__menu-btn:hover {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 0 14px;
+  }
+
+  .header--mypage {
+    padding-left: 14px;
+  }
+
+  /* 햄버거 노출 (모바일에서 사이드바 대체) */
+  .header__menu-btn {
+    display: flex;
+  }
+
+  /* 마이페이지 헤더의 브랜드 좌측 보더 제거·간격 축소 */
+  .header__brand {
+    width: auto;
+    padding: 0 8px 0 0;
+    border-right: 0;
+  }
+
+  .header__mypage-start {
+    gap: 10px;
+  }
+
+  /* 터치 타깃 44px 확보 */
+  .header__icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .header__actions {
+    gap: 2px;
+  }
+
+  /* breadcrumb: 상위 링크는 숨기고 현재 항목만 노출해 넘침 방지 */
+  .header__breadcrumb > button,
+  .header__breadcrumb > span,
+  .header__mypage-path > button,
+  .header__mypage-path > span {
+    display: none;
+  }
+
+  .header__breadcrumb b {
+    max-width: 52vw;
+    font-size: var(--font-size-base);
+  }
+
+  .header__mypage-path b {
+    max-width: 50vw;
+    font-size: var(--font-size-base);
+  }
+
+  .header__page-name {
+    font-size: var(--font-size-base);
+  }
+
+  /* FAB: 모바일에서 살짝 안쪽으로 */
+  .fab {
+    right: 18px;
+    bottom: 18px;
+    width: 50px;
+    height: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header__mypage-title {
+    font-size: var(--font-size-base);
+  }
+}

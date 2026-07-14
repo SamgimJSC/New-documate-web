@@ -10,6 +10,7 @@ import {
   Settings,
   CreditCard,
   LogOut,
+  ChevronLeft,
 } from "lucide-react";
 import Badge from "../common/Badge";
 import { useUserStore } from "../../store/userStore";
@@ -64,11 +65,27 @@ const quickMenuItems = [
   },
 ];
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
   const navigate = useNavigate();
   const user = useUserStore((s) => s.user);
   const [isQuickMenuOpen, setIsQuickMenuOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(
+    () => localStorage.getItem("sidebarCollapsed") === "true",
+  );
   const quickMenuRef = useRef<HTMLDivElement>(null);
+
+  const toggleCollapsed = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem("sidebarCollapsed", String(next));
+      return next;
+    });
+  };
 
   const displayName = user?.nickname || user?.real_name || "게스트";
   const planText = formatPlanName(user?.plan);
@@ -102,10 +119,33 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="sidebar">
-      <div className="sidebar__logo" onClick={() => navigate("/dashboard")}>
-        <span className="sidebar__logo-mark">D</span>
-        <span className="sidebar__logo-text">DocuMate</span>
+    <aside
+      className={`sidebar${isOpen ? " sidebar--open" : ""}${
+        isCollapsed ? " sidebar--collapsed" : ""
+      }`}
+    >
+      <div className="sidebar__top">
+        <button
+          type="button"
+          className="sidebar__logo"
+          onClick={() => {
+            onClose?.();
+            navigate("/dashboard");
+          }}
+        >
+          <span className="sidebar__logo-mark">D</span>
+          <span className="sidebar__logo-text">DocuMate</span>
+        </button>
+        <button
+          type="button"
+          className="sidebar__collapse-toggle"
+          onClick={toggleCollapsed}
+          aria-label={isCollapsed ? "사이드바 펼치기" : "사이드바 접기"}
+          aria-expanded={!isCollapsed}
+          title={isCollapsed ? "사이드바 펼치기" : "사이드바 접기"}
+        >
+          <ChevronLeft size={18} />
+        </button>
       </div>
 
       <nav className="sidebar__nav">
@@ -113,6 +153,7 @@ const Sidebar: React.FC = () => {
           <NavLink
             key={item.to}
             to={item.to}
+            title={item.label}
             className={({ isActive }) =>
               `sidebar__nav-item${isActive ? " sidebar__nav-item--active" : ""}`
             }

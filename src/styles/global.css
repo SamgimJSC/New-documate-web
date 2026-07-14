@@ -49,6 +49,24 @@ body {
   white-space: nowrap;
 }
 
+/* 반응형 유틸: 표/차트 등 넓은 콘텐츠는 이 래퍼로 감싸 가로 스크롤 처리 */
+.scroll-x {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 전역 가로 오버플로 방지 (페이지 본문이 뷰포트를 넘지 않도록) */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+table {
+  max-width: 100%;
+}
+
 
 /* Landing page */
 .landing-page {
