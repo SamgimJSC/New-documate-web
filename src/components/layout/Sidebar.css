@@ -149,27 +149,37 @@
 }
 
 .sidebar__profile {
-  appearance: none;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 4px;
   width: calc(100% - 16px);
   min-height: 50px;
   margin: 0 8px 14px;
-  padding: 7px 8px;
-  border: 0;
+  padding: 4px;
   border-radius: 12px;
-  background: transparent;
   color: var(--color-text);
+  transition: background-color 0.14s ease;
+}
+
+.sidebar__profile-main {
+  appearance: none;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 3px 4px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: inherit;
   text-align: left;
   box-shadow: none;
   cursor: pointer;
-  transition:
-    background-color 0.14s ease,
-    color 0.14s ease;
+  transition: background-color 0.14s ease;
 }
 
-.sidebar__profile:hover {
+.sidebar__profile-main:hover {
   background-color: rgba(15, 23, 42, 0.045);
 }
 
@@ -226,18 +236,26 @@
 }
 
 .sidebar__profile-more {
+  appearance: none;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
+  border: 0;
   border-radius: 8px;
+  background: transparent;
   color: var(--color-muted);
   opacity: 0.7;
+  cursor: pointer;
+  transition:
+    background-color 0.14s ease,
+    color 0.14s ease,
+    opacity 0.14s ease;
 }
 
-.sidebar__profile:hover .sidebar__profile-more {
+.sidebar__profile-more:hover {
   background-color: rgba(15, 23, 42, 0.055);
   color: var(--color-text-sub);
   opacity: 1;

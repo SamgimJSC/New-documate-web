@@ -159,30 +159,40 @@ const Sidebar: React.FC = () => {
           </div>
         )}
 
-        <button
-          type="button"
-          className="sidebar__profile"
-          onClick={() => setIsQuickMenuOpen((prev) => !prev)}
-          aria-label="마이페이지 퀵메뉴"
-          aria-expanded={isQuickMenuOpen}
-        >
-          <span className="sidebar__profile-avatar">
-            {user?.profile_img_url ? (
-              <img src={user.profile_img_url} alt="프로필" />
-            ) : (
-              initial
-            )}
-          </span>
+        <div className="sidebar__profile">
+          <button
+            type="button"
+            className="sidebar__profile-main"
+            onClick={() => {
+              setIsQuickMenuOpen(false);
+              navigate("/mypage");
+            }}
+            aria-label="마이페이지로 이동"
+          >
+            <span className="sidebar__profile-avatar">
+              {user?.profile_img_url ? (
+                <img src={user.profile_img_url} alt="프로필" />
+              ) : (
+                initial
+              )}
+            </span>
 
-          <span className="sidebar__profile-info">
-            <span className="sidebar__profile-name">{displayName}</span>
-            <span className="sidebar__profile-plan">{planText}</span>
-          </span>
+            <span className="sidebar__profile-info">
+              <span className="sidebar__profile-name">{displayName}</span>
+              <span className="sidebar__profile-plan">{planText}</span>
+            </span>
+          </button>
 
-          <span className="sidebar__profile-more" aria-hidden="true">
+          <button
+            type="button"
+            className="sidebar__profile-more"
+            onClick={() => setIsQuickMenuOpen((prev) => !prev)}
+            aria-label="마이페이지 퀵메뉴"
+            aria-expanded={isQuickMenuOpen}
+          >
             <MoreHorizontal size={17} />
-          </span>
-        </button>
+          </button>
+        </div>
       </div>
     </aside>
   );
