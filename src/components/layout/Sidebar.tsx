@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -6,9 +6,14 @@ import {
   Receipt,
   TrendingUp,
   MoreHorizontal,
+  UserRound,
+  Settings,
+  CreditCard,
+  LogOut,
 } from "lucide-react";
 import Badge from "../common/Badge";
 import { useUserStore } from "../../store/userStore";
+import { authService } from "../../services/authService";
 import "./Sidebar.css";
 
 interface NavItem {
@@ -41,13 +46,60 @@ const formatPlanName = (plan?: string) => {
   return plan;
 };
 
+const quickMenuItems = [
+  {
+    to: "/mypage/profile",
+    icon: <UserRound size={16} />,
+    label: "회원정보 변경",
+  },
+  {
+    to: "/mypage/settings",
+    icon: <Settings size={16} />,
+    label: "설정",
+  },
+  {
+    to: "/mypage/plan",
+    icon: <CreditCard size={16} />,
+    label: "요금제 관리",
+  },
+];
+
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const user = useUserStore((s) => s.user);
+  const [isQuickMenuOpen, setIsQuickMenuOpen] = useState(false);
+  const quickMenuRef = useRef<HTMLDivElement>(null);
 
   const displayName = user?.nickname || user?.real_name || "게스트";
   const planText = formatPlanName(user?.plan);
   const initial = displayName.trim().charAt(0).toUpperCase() || "D";
+
+  useEffect(() => {
+    if (!isQuickMenuOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        quickMenuRef.current &&
+        !quickMenuRef.current.contains(e.target as Node)
+      ) {
+        setIsQuickMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isQuickMenuOpen]);
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } finally {
+      localStorage.removeItem("stayLoggedIn");
+      sessionStorage.removeItem("sessionActive");
+      setIsQuickMenuOpen(false);
+      navigate("/login", { replace: true });
+    }
+  };
 
   return (
     <aside className="sidebar">
@@ -72,29 +124,66 @@ const Sidebar: React.FC = () => {
         ))}
       </nav>
 
-      <button
-        type="button"
-        className="sidebar__profile"
-        onClick={() => navigate("/mypage")}
-        aria-label="마이페이지로 이동"
-      >
-        <span className="sidebar__profile-avatar">
-          {user?.profile_img_url ? (
-            <img src={user.profile_img_url} alt="프로필" />
-          ) : (
-            initial
-          )}
-        </span>
+      <div className="sidebar__profile-wrap" ref={quickMenuRef}>
+        {isQuickMenuOpen && (
+          <div className="sidebar__quick-menu" role="menu">
+            {quickMenuItems.map((item) => (
+              <button
+                key={item.to}
+                type="button"
+                className="sidebar__quick-menu-item"
+                role="menuitem"
+                onClick={() => {
+                  setIsQuickMenuOpen(false);
+                  navigate(item.to);
+                }}
+              >
+                <span className="sidebar__quick-menu-icon">{item.icon}</span>
+                {item.label}
+              </button>
+            ))}
 
-        <span className="sidebar__profile-info">
-          <span className="sidebar__profile-name">{displayName}</span>
-          <span className="sidebar__profile-plan">{planText}</span>
-        </span>
+            <div className="sidebar__quick-menu-divider" />
 
-        <span className="sidebar__profile-more" aria-hidden="true">
-          <MoreHorizontal size={17} />
-        </span>
-      </button>
+            <button
+              type="button"
+              className="sidebar__quick-menu-item sidebar__quick-menu-item--danger"
+              role="menuitem"
+              onClick={() => void handleLogout()}
+            >
+              <span className="sidebar__quick-menu-icon">
+                <LogOut size={16} />
+              </span>
+              로그아웃
+            </button>
+          </div>
+        )}
+
+        <button
+          type="button"
+          className="sidebar__profile"
+          onClick={() => setIsQuickMenuOpen((prev) => !prev)}
+          aria-label="마이페이지 퀵메뉴"
+          aria-expanded={isQuickMenuOpen}
+        >
+          <span className="sidebar__profile-avatar">
+            {user?.profile_img_url ? (
+              <img src={user.profile_img_url} alt="프로필" />
+            ) : (
+              initial
+            )}
+          </span>
+
+          <span className="sidebar__profile-info">
+            <span className="sidebar__profile-name">{displayName}</span>
+            <span className="sidebar__profile-plan">{planText}</span>
+          </span>
+
+          <span className="sidebar__profile-more" aria-hidden="true">
+            <MoreHorizontal size={17} />
+          </span>
+        </button>
+      </div>
     </aside>
   );
 };
