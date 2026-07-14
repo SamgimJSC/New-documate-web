@@ -52,3 +52,15 @@
   font-size: var(--font-size-sm);
   pointer-events: none;
 }
+
+/* 모바일: 폰트 16px(iOS 줌 방지) + 터치 높이 확보 */
+@media (max-width: 768px) {
+  .select-field {
+    min-height: 46px;
+  }
+
+  .select-element {
+    height: 44px;
+    font-size: 16px;
+  }
+}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Bell, FileText } from "lucide-react";
+import { Bell, FileText, Menu, Plus } from "lucide-react";
 import "./Header.css";
 import NotificationPanel from "./NotificationPanel";
 import { notificationService } from "../../services/notificationService";
@@ -114,12 +114,14 @@ interface HeaderProps {
   onFabClick?: () => void;
   fabVariant?: "default" | "receipt";
   fabAriaLabel?: string;
+  onMenuClick?: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
   onFabClick,
   fabVariant = "default",
   fabAriaLabel = "업로드",
+  onMenuClick,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -193,6 +195,16 @@ const Header: React.FC<HeaderProps> = ({
   return (
     <>
       <header className={`header${isMyPage ? " header--mypage" : ""}`}>
+        {onMenuClick && (
+          <button
+            type="button"
+            className="header__menu-btn"
+            aria-label="메뉴 열기"
+            onClick={onMenuClick}
+          >
+            <Menu size={22} />
+          </button>
+        )}
         {isMyPage ? (
           <div className="header__mypage-start">
             <button
@@ -268,7 +280,7 @@ const Header: React.FC<HeaderProps> = ({
           aria-label={fabAriaLabel}
           title={fabAriaLabel}
         >
-          +
+          <Plus size={26} strokeWidth={2.25} />
         </button>
       )}
 

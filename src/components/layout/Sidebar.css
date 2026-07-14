@@ -1,32 +1,66 @@
 .sidebar {
-  position: sticky;
-  top: 0;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   width: var(--sidebar-width);
   height: 100vh;
-  min-height: 100vh;
+  min-height: 0;
   overflow-y: auto;
   border-right: 1px solid var(--color-border);
   background-color: #fff;
+  transition: width 0.2s ease;
+}
+
+.sidebar__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 6px;
+  height: var(--header-height);
+  padding: 0 10px 0 16px;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .sidebar__logo {
   display: flex;
   align-items: center;
-  flex-shrink: 0;
+  min-width: 0;
   gap: 9px;
-  height: var(--header-height);
-  padding: 0 16px;
-  border-bottom: 1px solid var(--color-border);
+  padding: 0;
+  border: 0;
+  background: transparent;
   cursor: pointer;
+}
+
+.sidebar__collapse-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: var(--color-muted);
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease;
+}
+
+.sidebar__collapse-toggle svg {
+  transition: transform 0.2s ease;
+}
+
+.sidebar__collapse-toggle:hover {
+  background-color: var(--color-bg-cool);
+  color: var(--color-primary-dark);
 }
 
 .sidebar__logo-mark {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   width: 30px;
   height: 30px;
   border-radius: 10px;
@@ -42,6 +76,7 @@
   font-size: var(--font-size-base);
   font-weight: 850;
   letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 
 .sidebar__nav {
@@ -57,6 +92,7 @@
   gap: 10px;
   min-height: 42px;
   padding: 0 10px;
+  overflow: hidden;
   border-radius: 12px;
   color: var(--color-text-sub);
   font-size: var(--font-size-md);
@@ -87,30 +123,100 @@
 
 .sidebar__nav-label {
   flex: 1;
+  white-space: nowrap;
 }
 /* GPT_FINAL_PROFILE_ROW */
-.sidebar__profile {
-  appearance: none;
+.sidebar__profile-wrap {
+  position: relative;
+  margin-top: auto;
+}
+
+.sidebar__quick-menu {
+  position: absolute;
+  right: 8px;
+  bottom: calc(100% + 6px);
+  left: 8px;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background-color: #fff;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.14);
+}
+
+.sidebar__quick-menu-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  width: calc(100% - 16px);
-  min-height: 50px;
-  margin: auto 8px 14px;
-  padding: 7px 8px;
+  gap: 9px;
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px;
   border: 0;
-  border-radius: 12px;
+  border-radius: 9px;
   background: transparent;
   color: var(--color-text);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.14s ease;
+}
+
+.sidebar__quick-menu-item:hover {
+  background-color: var(--color-bg-cool);
+}
+
+.sidebar__quick-menu-item--danger {
+  color: #d64545;
+}
+
+.sidebar__quick-menu-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--color-muted);
+}
+
+.sidebar__quick-menu-item--danger .sidebar__quick-menu-icon {
+  color: #d64545;
+}
+
+.sidebar__quick-menu-divider {
+  margin: 5px 6px;
+  border-top: 1px solid var(--color-border);
+}
+
+.sidebar__profile {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: calc(100% - 16px);
+  min-height: 50px;
+  margin: 0 8px 14px;
+  padding: 4px;
+  border-radius: 12px;
+  color: var(--color-text);
+  transition: background-color 0.14s ease;
+}
+
+.sidebar__profile-main {
+  appearance: none;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 3px 4px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: inherit;
   text-align: left;
   box-shadow: none;
   cursor: pointer;
-  transition:
-    background-color 0.14s ease,
-    color 0.14s ease;
+  transition: background-color 0.14s ease;
 }
 
-.sidebar__profile:hover {
+.sidebar__profile-main:hover {
   background-color: rgba(15, 23, 42, 0.045);
 }
 
@@ -167,19 +273,98 @@
 }
 
 .sidebar__profile-more {
+  appearance: none;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
+  border: 0;
   border-radius: 8px;
+  background: transparent;
   color: var(--color-muted);
   opacity: 0.7;
+  cursor: pointer;
+  transition:
+    background-color 0.14s ease,
+    color 0.14s ease,
+    opacity 0.14s ease;
 }
 
-.sidebar__profile:hover .sidebar__profile-more {
+.sidebar__profile-more:hover {
   background-color: rgba(15, 23, 42, 0.055);
   color: var(--color-text-sub);
   opacity: 1;
+}
+
+/* =========================================
+   데스크톱 접기 상태 (≥769px, 아이콘 전용 레일)
+========================================= */
+@media (min-width: 769px) {
+  .sidebar--collapsed {
+    width: 72px;
+  }
+
+  .sidebar--collapsed .sidebar__top {
+    justify-content: center;
+    padding: 0 8px;
+  }
+
+  .sidebar--collapsed .sidebar__logo,
+  .sidebar--collapsed .sidebar__logo-text,
+  .sidebar--collapsed .sidebar__nav-label,
+  .sidebar--collapsed .sidebar__nav-item .badge,
+  .sidebar--collapsed .sidebar__profile-info,
+  .sidebar--collapsed .sidebar__profile-more {
+    display: none;
+  }
+
+  .sidebar--collapsed .sidebar__nav {
+    padding: 16px 8px;
+  }
+
+  .sidebar--collapsed .sidebar__nav-item {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .sidebar--collapsed .sidebar__profile {
+    width: calc(100% - 16px);
+    justify-content: center;
+  }
+
+  .sidebar--collapsed .sidebar__profile-main {
+    flex: 0 1 auto;
+    justify-content: center;
+    gap: 0;
+  }
+}
+
+/* =========================================
+   모바일 드로어 (≤768px)
+   데스크톱: sticky 220px / 모바일: 오프캔버스
+========================================= */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 300;
+    height: 100vh;
+    height: 100dvh;
+    transform: translateX(-100%);
+    transition: transform 0.24s ease;
+    box-shadow: none;
+  }
+
+  .sidebar--open {
+    transform: translateX(0);
+    box-shadow: var(--shadow-floating);
+  }
+
+  /* 모바일 드로어는 항상 펼친 상태(레일 접기 미적용) */
+  .sidebar__collapse-toggle {
+    display: none;
+  }
 }

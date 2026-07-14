@@ -57,6 +57,14 @@
   --header-height: 60px;
   --content-max-width: 1460px;
 
+  /* Breakpoints (참고용 — @media에는 직접 값 사용, 아래 기준으로 통일)
+     sm: 480px  / md: 768px  / lg: 1024px  / xl: 1280px
+     주 전환점 768px(사이드바→드로어), 보조 480px(그리드 1열) */
+  --bp-sm: 480px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1280px;
+
   /* Radius */
   --radius-xs: 6px;
   --radius-sm: 10px;

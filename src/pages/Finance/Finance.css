@@ -169,3 +169,44 @@
   color: var(--color-muted);
   font-size: var(--font-size-sm);
 }
+
+/* =========================================
+   모바일 대응
+========================================= */
+@media (max-width: 900px) {
+  .finance__charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .finance__month-nav {
+    gap: var(--space-md);
+  }
+
+  .finance__month-title {
+    min-width: 0;
+    font-size: var(--font-size-lg);
+  }
+
+  .finance__summary-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+
+  .finance__summary-value {
+    font-size: var(--font-size-lg);
+  }
+
+  /* 영수증 행: 컬럼폭·간격 축소로 좁은 화면에서도 한 줄 유지 */
+  .finance__receipt-row {
+    grid-template-columns: 60px minmax(0, 1fr) 84px;
+    gap: var(--space-sm);
+    font-size: var(--font-size-xs);
+  }
+
+  /* 날짜 컬럼은 모바일에서 숨김(금액·상점·분류 우선) */
+  .finance__receipt-date {
+    display: none;
+  }
+}
