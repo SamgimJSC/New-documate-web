@@ -30,7 +30,9 @@
 }
 .receipts__summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* 카드가 최소 폭(240px)을 확보하지 못하면 다음 줄로 흐르게 해서
+     좁은 폭에서 가운데 텍스트 열이 0으로 눌려 글자가 세로로 깨지는 문제 방지 */
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 18px;
 }
 
@@ -502,28 +504,40 @@
   grid-area: value !important;
   margin: 0 !important;
   align-self: end !important;
+  min-width: 0 !important;
   color: var(--color-text) !important;
   font-size: 20px !important;
   line-height: 1.08 !important;
   letter-spacing: -0.04em !important;
   font-weight: 900 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .receipts .receipts__summary-label {
   grid-area: label !important;
   margin: 0 !important;
+  min-width: 0 !important;
   color: var(--color-text-sub) !important;
   font-size: 12.5px !important;
   line-height: 1.25 !important;
   font-weight: 750 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .receipts .receipts__summary-change {
   grid-area: change !important;
+  min-width: 0 !important;
   color: var(--color-muted) !important;
   font-size: 11.5px !important;
   line-height: 1.25 !important;
   font-weight: 700 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 /* 세 번째 카드처럼 change 문구가 없는 카드도 아래가 비어보이지 않게 */

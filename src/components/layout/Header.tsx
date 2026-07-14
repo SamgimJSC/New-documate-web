@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Bell, FileText, Menu } from "lucide-react";
+import { Bell, FileText, Menu, Plus } from "lucide-react";
 import "./Header.css";
 import NotificationPanel from "./NotificationPanel";
 import { notificationService } from "../../services/notificationService";
@@ -280,7 +280,7 @@ const Header: React.FC<HeaderProps> = ({
           aria-label={fabAriaLabel}
           title={fabAriaLabel}
         >
-          +
+          <Plus size={26} strokeWidth={2.25} />
         </button>
       )}
 

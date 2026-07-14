@@ -1,12 +1,10 @@
 .sidebar {
-  position: sticky;
-  top: 0;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   width: var(--sidebar-width);
   height: 100vh;
-  min-height: 100vh;
+  min-height: 0;
   overflow-y: auto;
   border-right: 1px solid var(--color-border);
   background-color: #fff;
@@ -62,6 +60,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   width: 30px;
   height: 30px;
   border-radius: 10px;
@@ -77,6 +76,7 @@
   font-size: var(--font-size-base);
   font-weight: 850;
   letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 
 .sidebar__nav {
@@ -92,6 +92,7 @@
   gap: 10px;
   min-height: 42px;
   padding: 0 10px;
+  overflow: hidden;
   border-radius: 12px;
   color: var(--color-text-sub);
   font-size: var(--font-size-md);
@@ -122,6 +123,7 @@
 
 .sidebar__nav-label {
   flex: 1;
+  white-space: nowrap;
 }
 /* GPT_FINAL_PROFILE_ROW */
 .sidebar__profile-wrap {
@@ -316,10 +318,6 @@
   .sidebar--collapsed .sidebar__profile-info,
   .sidebar--collapsed .sidebar__profile-more {
     display: none;
-  }
-
-  .sidebar--collapsed .sidebar__collapse-toggle svg {
-    transform: rotate(180deg);
   }
 
   .sidebar--collapsed .sidebar__nav {

@@ -10,7 +10,8 @@ import {
   Settings,
   CreditCard,
   LogOut,
-  ChevronLeft,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import Badge from "../common/Badge";
 import { useUserStore } from "../../store/userStore";
@@ -144,7 +145,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
           aria-expanded={!isCollapsed}
           title={isCollapsed ? "사이드바 펼치기" : "사이드바 접기"}
         >
-          <ChevronLeft size={18} />
+          {isCollapsed ? (
+            <PanelLeftOpen size={18} />
+          ) : (
+            <PanelLeftClose size={18} />
+          )}
         </button>
       </div>
 
