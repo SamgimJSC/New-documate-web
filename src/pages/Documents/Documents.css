@@ -387,3 +387,29 @@
   font-size: 10.5px;
   font-weight: 900;
 }
+
+/* =========================================
+   모바일 대응 (≤768px)
+========================================= */
+@media (max-width: 768px) {
+  .documents__search {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .documents__search-input {
+    width: 100%;
+    font-size: 16px;
+  }
+
+  /* 리스트 뷰: 5열 그리드는 좁은 화면에서 가로 스크롤로 보존 */
+  .documents__list {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .documents__list-header,
+  .documents__list-row {
+    min-width: 640px;
+  }
+}
