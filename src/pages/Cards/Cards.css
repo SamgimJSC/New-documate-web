@@ -51,8 +51,53 @@
 .cards-page__hero-chip-row {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
   margin-top: 17px;
+}
+
+.cards-page__hero-cta {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: #fff;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 900;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(31, 111, 89, 0.24);
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.cards-page__hero-cta:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(31, 111, 89, 0.34);
+}
+
+.cards-page__hero-cta:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cards-page__hero-cta-spinner {
+  animation: cards-page-spin 0.9s linear infinite;
+}
+
+.cards-page__hero-hint {
+  margin: 12px 0 0;
+  color: var(--color-text-sub);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
 }
 
 .cards-page__hero-chip-row span {
@@ -309,6 +354,52 @@
   background: var(--color-primary-light);
   border-color: var(--color-primary);
   transform: translateY(-1px);
+}
+
+.cards-page__compare-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+.cards-page__no-receipt-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-warning-light);
+  border: 1px solid #f0d9b8;
+  font-size: var(--font-size-sm);
+  color: var(--color-warning-dark);
+  line-height: 1.5;
+}
+
+.cards-page__no-receipt-banner-icon {
+  flex-shrink: 0;
+  color: var(--color-warning);
+}
+
+.cards-page__request-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 180px;
+  padding: 32px 24px;
+  border: 1px dashed var(--color-border);
+  border-radius: 20px;
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.cards-page__request-empty p {
+  margin: 0;
+  color: var(--color-text-sub);
+  font-size: var(--font-size-sm);
+  font-weight: 750;
 }
 
 /* Recommend cards */

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   BadgeCheck,
   ChevronRight,
@@ -12,11 +12,11 @@ import {
   Wallet,
 } from "lucide-react";
 import { useCardRecommendation } from "../../hooks/useCardRecommendation";
-import { getCategorySummary } from "../../api/report";
 import type { CategorySummaryItem } from "../../types/report";
 import { formatKRW } from "../../utils/formatCurrency";
 import CardDetailModal from "../../components/modal/CardDetailModal";
 import CardCompareModal from "../../components/modal/CardCompareModal";
+import { useToast } from "../../components/common/Toast";
 import "./Cards.css";
 
 const getCategoryName = (item: CategorySummaryItem) =>
@@ -36,9 +36,25 @@ const getThumbLabel = (rank: number) => {
 };
 
 const Cards: React.FC = () => {
-  const { status, cards, isDefault } = useCardRecommendation();
-  const [topCategory, setTopCategory] = useState<CategorySummaryItem | null>(null);
+  const {
+    initialStatus,
+    hasReceipt,
+    cards,
+    defaultCards,
+    requestStatus,
+    requestRecommendation,
+    topCategory,
+  } = useCardRecommendation();
   const [portraitCardIds, setPortraitCardIds] = useState<Record<string, boolean>>({});
+  const { showToast } = useToast();
+
+  const handleAiRequestClick = () => {
+    if (!hasReceipt) {
+      showToast("등록된 영수증이 없습니다. 영수증을 등록하고 카드 추천을 받아보세요.", "info");
+      return;
+    }
+    requestRecommendation();
+  };
 
   const handleCardImageLoad = (recommendationId: string) => (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
@@ -47,50 +63,52 @@ const Cards: React.FC = () => {
     }
   };
 
+  const prevRequestStatusRef = useRef(requestStatus);
+
   useEffect(() => {
-    const now = new Date();
-    getCategorySummary({ year: now.getFullYear(), month: now.getMonth() + 1 })
-      .then((summary) => {
-        const sorted = [...summary.categories].sort((a, b) => b.totalSpend - a.totalSpend);
-        setTopCategory(sorted[0] ?? null);
-      })
-      .catch(() => {});
-  }, []);
+    const prevRequestStatus = prevRequestStatusRef.current;
+    prevRequestStatusRef.current = requestStatus;
+
+    if (prevRequestStatus === "polling" && requestStatus === "idle") {
+      showToast("새로운 소비 패턴으로 카드 추천을 완료했어요!", "success");
+    } else if (requestStatus === "empty") {
+      showToast("추천 결과를 받아오지 못했어요. 잠시 후 다시 시도해주세요.", "error");
+    } else if (requestStatus === "error") {
+      showToast("추천 요청에 실패했어요. 다시 시도해주세요.", "error");
+    } else if (requestStatus === "no-receipt") {
+      showToast("영수증이 삭제되어 추천을 진행할 수 없어요.", "error");
+    }
+  }, [requestStatus, showToast]);
 
   const [detailCardId, setDetailCardId] = useState<string | null>(null);
   const [isCompareOpen, setIsCompareOpen] = useState(false);
 
-  if (status === "loading" || status === "polling") {
+  if (initialStatus === "loading") {
     return (
       <div className="cards-page">
         <section className="cards-page__state">
           <Loader2 size={28} className="cards-page__state-spinner" />
-          <strong>
-            {status === "polling"
-              ? "AI가 소비 패턴을 분석해 카드를 추천하고 있어요"
-              : "카드 추천 정보를 불러오고 있어요"}
-          </strong>
-          <p>잠시만 기다려주세요. 보통 몇 초 정도 걸려요.</p>
+          <strong>카드 추천 정보를 불러오고 있어요</strong>
+          <p>잠시만 기다려주세요.</p>
         </section>
       </div>
     );
   }
 
-  if (status === "error" || status === "empty") {
+  if (initialStatus === "error") {
     return (
       <div className="cards-page">
         <section className="cards-page__state">
           <CircleAlert size={28} className="cards-page__state-alert" />
-          <strong>
-            {status === "error"
-              ? "카드 추천 정보를 불러오지 못했어요"
-              : "아직 추천 결과가 준비되지 않았어요"}
-          </strong>
+          <strong>카드 추천 정보를 불러오지 못했어요</strong>
           <p>잠시 후 페이지를 새로고침해 다시 시도해주세요.</p>
         </section>
       </div>
     );
   }
+
+  const hasResult = cards.length > 0;
+  const displayCards = hasResult ? cards : !hasReceipt ? defaultCards : [];
 
   return (
     <div className="cards-page">
@@ -119,11 +137,27 @@ const Cards: React.FC = () => {
                 이번 달 지출 {formatKRW(topCategory.totalSpend)}
               </span>
             )}
-            <span>
-              <CreditCard size={15} />
-              추천 카드 {cards.length}개
-            </span>
+
+            <button
+              type="button"
+              className="cards-page__hero-cta"
+              onClick={hasResult ? requestRecommendation : handleAiRequestClick}
+              disabled={requestStatus === "polling"}
+            >
+              {requestStatus === "polling" ? (
+                <Loader2 size={16} className="cards-page__hero-cta-spinner" />
+              ) : (
+                <Sparkles size={16} />
+              )}
+              {requestStatus === "polling" ? "분석 중..." : hasResult ? "다시 추천받기" : "AI 신용카드 추천받기"}
+            </button>
           </div>
+
+          {hasResult && (
+            <p className="cards-page__hero-hint">
+              새로운 영수증을 등록하셨으면 새롭게 추천을 받아보세요!
+            </p>
+          )}
         </div>
 
         <div className="cards-page__hero-visual" aria-hidden="true">
@@ -159,11 +193,17 @@ const Cards: React.FC = () => {
             <Wallet size={20} />
           </span>
           <div>
-            <p>{isDefault ? "추천 카드" : "AI 매칭 점수"}</p>
+            <p>{hasResult ? "AI 매칭 점수" : "추천 카드"}</p>
             <strong>
-              {isDefault ? `기본 카드 ${cards.length}종` : `${cards[0]?.matchScore ?? "-"}점`}
+              {hasResult
+                ? `${cards[0]?.matchScore ?? "-"}점`
+                : !hasReceipt
+                  ? `기본 카드 ${defaultCards.length}종`
+                  : "대기 중"}
             </strong>
-            <span>{isDefault ? "영수증 등록 전 기본 추천" : "1위 카드 기준"}</span>
+            <span>
+              {hasResult ? "1위 카드 기준" : !hasReceipt ? "영수증 등록 전 기본 추천" : "AI 추천 요청 대기 중"}
+            </span>
           </div>
         </article>
 
@@ -173,23 +213,13 @@ const Cards: React.FC = () => {
           </span>
           <div>
             <p>추천 기준</p>
-            <strong>{isDefault ? "기본 카드 안내" : "카드 매칭 알고리즘"}</strong>
+            <strong>{hasResult ? "카드 매칭 알고리즘" : !hasReceipt ? "기본 카드 안내" : "AI 추천 대기"}</strong>
             <span>연회비 낮은 순 반영</span>
           </div>
         </article>
       </section>
 
-      {isDefault ? (
-        <section className="cards-page__ai-box" aria-label="추천 안내">
-          <span className="cards-page__ai-icon">
-            <Sparkles size={21} />
-          </span>
-          <div>
-            <strong>아직 등록된 영수증이 없어요</strong>
-            <p>영수증을 등록하면 소비 패턴을 분석해 맞춤 카드를 추천해드려요. 지금은 기본 카드를 보여드리고 있어요.</p>
-          </div>
-        </section>
-      ) : (
+      {hasResult ? (
         <section className="cards-page__ai-box" aria-label="AI 추천 요약">
           <span className="cards-page__ai-icon">
             <Sparkles size={21} />
@@ -202,150 +232,201 @@ const Cards: React.FC = () => {
             </p>
           </div>
         </section>
+      ) : !hasReceipt ? (
+        <section className="cards-page__ai-box" aria-label="추천 안내">
+          <span className="cards-page__ai-icon">
+            <Sparkles size={21} />
+          </span>
+          <div>
+            <strong>아직 등록된 영수증이 없어요</strong>
+            <p>영수증을 등록하면 소비 패턴을 분석해 맞춤 카드를 추천해드려요. 지금은 기본 카드를 보여드리고 있어요.</p>
+          </div>
+        </section>
+      ) : (
+        <section className="cards-page__ai-box" aria-label="추천 안내">
+          <span className="cards-page__ai-icon">
+            <Sparkles size={21} />
+          </span>
+          <div>
+            <strong>영수증이 등록되어 있어요!</strong>
+            <p>아래 버튼을 눌러 AI에게 소비 패턴에 맞는 카드를 추천받아보세요.</p>
+          </div>
+        </section>
       )}
 
       <section className="cards-page__section" aria-labelledby="recommended-card-title">
         <div className="cards-page__section-head">
           <div>
             <p className="cards-page__section-title" id="recommended-card-title">
-              추천 카드 TOP {cards.length}
+              {hasResult ? `추천 카드 TOP ${cards.length}` : !hasReceipt ? "기본 추천 카드" : "AI 카드 추천"}
             </p>
             <p className="cards-page__section-desc">
-              선택한 소비 패턴을 기반으로 예상 혜택이 높은 카드를 추천해드려요.
+              {hasResult
+                ? "선택한 소비 패턴을 기반으로 예상 혜택이 높은 카드를 추천해드려요."
+                : !hasReceipt
+                  ? "영수증 등록 전에는 누구에게나 인기 있는 기본 카드를 보여드려요."
+                  : "AI 신용카드 추천받기를 누르면 소비 패턴에 맞는 카드를 분석해드려요."}
             </p>
           </div>
         </div>
 
-        <div className="cards-page__recommend-grid">
-          {cards.map((card) => (
-            <article
-              key={card.recommendationId}
-              className={`cards-page__recommend-card cards-page__recommend-card--${getTone(card.rank)}`}
-            >
-              <div className={`cards-page__card-visual cards-page__card-visual--${getTone(card.rank)}`}>
-                {card.imgUrl && (
-                  <img
-                    src={card.imgUrl}
-                    alt={card.cardName}
-                    className={`cards-page__card-img${
-                      portraitCardIds[card.recommendationId] ? " cards-page__card-img--rotated" : ""
-                    }`}
-                    onLoad={handleCardImageLoad(card.recommendationId)}
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                )}
-                <span className="cards-page__rank-badge">{card.rank}위</span>
-              </div>
+        {requestStatus === "no-receipt" && (
+          <div className="cards-page__no-receipt-banner">
+            <CircleAlert size={16} className="cards-page__no-receipt-banner-icon" />
+            <span>영수증이 삭제되어 추천을 진행할 수 없어요. 영수증을 다시 등록한 후 재추천을 받아보세요.</span>
+          </div>
+        )}
 
-              <div className="cards-page__recommend-content">
-                <div className="cards-page__recommend-title-row">
-                  <div>
-                    <strong>{card.cardName}</strong>
-                    <span>{card.issuer}</span>
-                  </div>
-                  {card.rank === 1 && <span className="cards-page__best-badge">BEST</span>}
-                </div>
-
-                {card.reason && <p>{card.reason}</p>}
-
-                <div className="cards-page__benefit-grid">
-                  {typeof card.matchScore === "number" && (
-                    <div>
-                      <span>매칭 점수</span>
-                      <strong>{card.matchScore}점</strong>
-                    </div>
+        {displayCards.length > 0 ? (
+          <div className="cards-page__recommend-grid">
+            {displayCards.map((card) => (
+              <article
+                key={card.recommendationId}
+                className={`cards-page__recommend-card cards-page__recommend-card--${getTone(card.rank)}`}
+              >
+                <div className={`cards-page__card-visual cards-page__card-visual--${getTone(card.rank)}`}>
+                  {card.imgUrl && (
+                    <img
+                      src={card.imgUrl}
+                      alt={card.cardName}
+                      className={`cards-page__card-img${
+                        portraitCardIds[card.recommendationId] ? " cards-page__card-img--rotated" : ""
+                      }`}
+                      onLoad={handleCardImageLoad(card.recommendationId)}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.display = "none";
+                      }}
+                    />
                   )}
-                  <div>
-                    <span>연회비</span>
-                    <strong>{formatKRW(card.annualFee)}</strong>
+                  <span className="cards-page__rank-badge">{card.rank}위</span>
+                </div>
+
+                <div className="cards-page__recommend-content">
+                  <div className="cards-page__recommend-title-row">
+                    <div>
+                      <strong>{card.cardName}</strong>
+                      <span>{card.issuer}</span>
+                    </div>
+                    {card.rank === 1 && <span className="cards-page__best-badge">BEST</span>}
+                  </div>
+
+                  {card.reason && <p>{card.reason}</p>}
+
+                  <div className="cards-page__benefit-grid">
+                    {typeof card.matchScore === "number" && (
+                      <div>
+                        <span>매칭 점수</span>
+                        <strong>{card.matchScore}점</strong>
+                      </div>
+                    )}
+                    <div>
+                      <span>연회비</span>
+                      <strong>{formatKRW(card.annualFee)}</strong>
+                    </div>
+                  </div>
+
+                  <div className="cards-page__bottom-row">
+                    <button
+                      type="button"
+                      className="cards-page__detail-button"
+                      onClick={() => setDetailCardId(card.cardId)}
+                    >
+                      상세 보기
+                      <ChevronRight size={16} />
+                    </button>
                   </div>
                 </div>
-
-                <div className="cards-page__bottom-row">
-                  <button
-                    type="button"
-                    className="cards-page__detail-button"
-                    onClick={() => setDetailCardId(card.cardId)}
-                  >
-                    상세 보기
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="cards-page__request-empty">
+            {requestStatus === "polling" && (
+              <>
+                <Loader2 size={24} className="cards-page__state-spinner" />
+                <p>AI가 소비 패턴을 분석해 카드를 추천하고 있어요. 잠시만 기다려주세요.</p>
+              </>
+            )}
+            {requestStatus === "empty" && (
+              <p>아직 추천 결과가 준비되지 않았어요. 잠시 후 다시 시도해주세요.</p>
+            )}
+            {requestStatus === "error" && <p>추천 요청에 실패했어요. 다시 시도해주세요.</p>}
+            {requestStatus === "idle" && (
+              <p>아직 추천받은 카드가 없어요. 위 버튼을 눌러 AI 추천을 받아보세요.</p>
+            )}
+          </div>
+        )}
       </section>
 
-      <section
-        className="cards-page__section cards-page__compare"
-        aria-labelledby="benefit-compare-title"
-      >
-        <div className="cards-page__section-head">
-          <div>
-            <p className="cards-page__section-title" id="benefit-compare-title">
-              혜택 비교 요약
-            </p>
-            <p className="cards-page__section-desc">주요 조건을 한눈에 비교해보세요.</p>
+      {displayCards.length > 0 && (
+        <section
+          className="cards-page__section cards-page__compare"
+          aria-labelledby="benefit-compare-title"
+        >
+          <div className="cards-page__section-head">
+            <div>
+              <p className="cards-page__section-title" id="benefit-compare-title">
+                혜택 비교 요약
+              </p>
+              <p className="cards-page__section-desc">주요 조건을 한눈에 비교해보세요.</p>
+            </div>
+
+            <button
+              type="button"
+              className="cards-page__compare-button"
+              onClick={() => setIsCompareOpen(true)}
+            >
+              <Scale size={15} />
+              혜택 비교하기
+            </button>
           </div>
 
-          <button
-            type="button"
-            className="cards-page__compare-button"
-            onClick={() => setIsCompareOpen(true)}
-          >
-            <Scale size={15} />
-            혜택 비교하기
-          </button>
-        </div>
-
-        <div className="cards-page__compare-table-wrap">
-          <table className="cards-page__compare-table">
-            <thead>
-              <tr>
-                <th>순위</th>
-                <th>카드명</th>
-                <th>카드사</th>
-                <th>매칭 점수</th>
-                <th>연회비</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cards.map((card) => (
-                <tr key={`compare-${card.recommendationId}`}>
-                  <td>
-                    <span className={`cards-page__table-rank cards-page__table-rank--${getTone(card.rank)}`}>
-                      {card.rank}위
-                    </span>
-                  </td>
-                  <td>
-                    <div className="cards-page__table-card">
-                      <span
-                        className={`cards-page__table-thumb cards-page__table-thumb--${getTone(card.rank)}`}
-                        aria-hidden="true"
-                      >
-                        {card.imgUrl ? (
-                          <img src={card.imgUrl} alt="" className="cards-page__table-thumb-img" />
-                        ) : (
-                          getThumbLabel(card.rank)
-                        )}
-                      </span>
-                      <strong>{card.cardName}</strong>
-                    </div>
-                  </td>
-                  <td>{card.issuer}</td>
-                  <td className="cards-page__compare-benefit">
-                    {typeof card.matchScore === "number" ? `${card.matchScore}점` : "-"}
-                  </td>
-                  <td>{formatKRW(card.annualFee)}</td>
+          <div className="cards-page__compare-table-wrap">
+            <table className="cards-page__compare-table">
+              <thead>
+                <tr>
+                  <th>순위</th>
+                  <th>카드명</th>
+                  <th>카드사</th>
+                  <th>매칭 점수</th>
+                  <th>연회비</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+              </thead>
+              <tbody>
+                {displayCards.map((card) => (
+                  <tr key={`compare-${card.recommendationId}`}>
+                    <td>
+                      <span className={`cards-page__table-rank cards-page__table-rank--${getTone(card.rank)}`}>
+                        {card.rank}위
+                      </span>
+                    </td>
+                    <td>
+                      <div className="cards-page__table-card">
+                        <span
+                          className={`cards-page__table-thumb cards-page__table-thumb--${getTone(card.rank)}`}
+                          aria-hidden="true"
+                        >
+                          {card.imgUrl ? (
+                            <img src={card.imgUrl} alt="" className="cards-page__table-thumb-img" />
+                          ) : (
+                            getThumbLabel(card.rank)
+                          )}
+                        </span>
+                        <strong>{card.cardName}</strong>
+                      </div>
+                    </td>
+                    <td>{card.issuer}</td>
+                    <td className="cards-page__compare-benefit">
+                      {typeof card.matchScore === "number" ? `${card.matchScore}점` : "-"}
+                    </td>
+                    <td>{formatKRW(card.annualFee)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <section className="cards-page__notice" aria-label="추천 안내">
         <Info size={18} />
@@ -359,7 +440,7 @@ const Cards: React.FC = () => {
       </section>
 
       {isCompareOpen && (
-        <CardCompareModal isOpen onClose={() => setIsCompareOpen(false)} cards={cards} />
+        <CardCompareModal isOpen onClose={() => setIsCompareOpen(false)} cards={displayCards} />
       )}
 
       {detailCardId && (
