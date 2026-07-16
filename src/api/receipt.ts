@@ -31,8 +31,27 @@ export const createReceipt = (body: CreateReceiptBody, image?: File) => {
   return client.post<Receipt>("/receipts", body).then((r) => r.data);
 };
 
-export const updateReceipt = (id: string, body: UpdateReceiptBody) =>
-  client.patch<Receipt>(`/receipts/${id}`, body).then((r) => r.data);
+export const updateReceipt = (
+  id: string,
+  body: UpdateReceiptBody,
+  image?: File,
+) => {
+  if (image) {
+    const formData = new FormData();
+    (Object.entries(body) as [string, unknown][]).forEach(([key, val]) => {
+      if (val !== undefined && val !== null) {
+        formData.append(key, String(val));
+      }
+    });
+    formData.append("image", image);
+    return client
+      .patch<Receipt>(`/receipts/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((r) => r.data);
+  }
+  return client.patch<Receipt>(`/receipts/${id}`, body).then((r) => r.data);
+};
 
 export const deleteReceipt = (id: string) =>
   client.delete(`/receipts/${id}`);
