@@ -100,34 +100,38 @@ type MatchResult = {
   memo: string;
 };
 
+const MATCH_CANDIDATE_LIMIT = 50;
+
 const matchByFileUrl = async (
   fileUrl: string,
   categories: DocumentCategory[],
 ): Promise<MatchResult | null> => {
   try {
-    const docs = await documentService.getDocuments({ limit: 10 });
+    // 목록 조회 응답에 document_files(파일별 file_url)가 이미 포함되어 있어서,
+    // 문서마다 상세 조회를 따로 호출할 필요가 없다.
+    const docs = await documentService.getDocuments({ limit: MATCH_CANDIDATE_LIMIT });
+    const matchedDoc = docs.find((doc) =>
+      doc.document_files.some((f) => f.file_url === fileUrl),
+    );
 
-    for (const doc of docs) {
-      const detail = await documentService.getDocument(doc.document_id);
-      if (detail.document_files.some((f) => f.file_url === fileUrl)) {
-        const cat = categories.find(
-          (c) => c.category_id === detail.category_id,
-        );
-        return {
-          savedTarget: "documents",
-          finalDocumentId: detail.document_id,
-          category: (cat?.name as UploadDocumentCategory) ?? "기타",
-          pageFileUrls: detail.document_files.map((f) => f.file_url),
-          memo: "AI 분석이 완료되어 디지털 캐비닛에 저장되었습니다.",
-        };
-      }
+    if (matchedDoc) {
+      const cat = categories.find(
+        (c) => c.category_id === matchedDoc.category_id,
+      );
+      return {
+        savedTarget: "documents",
+        finalDocumentId: matchedDoc.document_id,
+        category: (cat?.name as UploadDocumentCategory) ?? "기타",
+        pageFileUrls: matchedDoc.document_files.map((f) => f.file_url),
+        memo: "AI 분석이 완료되어 디지털 캐비닛에 저장되었습니다.",
+      };
     }
   } catch {
     // 문서 조회 실패 시 영수증으로 계속 시도
   }
 
   try {
-    const res = await getReceipts({ size: 10, sort: "latest" });
+    const res = await getReceipts({ size: MATCH_CANDIDATE_LIMIT, sort: "latest" });
     const matchedReceipt = res.receipts.find((r) => r.fileUrl === fileUrl);
 
     if (matchedReceipt) {
@@ -166,6 +170,25 @@ const matchByFileUrl = async (
   return null;
 };
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// aiStatus가 DONE으로 확정된 직후엔 documents/receipts 쪽에 아직 반영이 안 됐을 수 있어서,
+// 짧은 간격으로 몇 번 더 조회해본 뒤에야 매칭 실패로 확정한다.
+const MATCH_RETRY_COUNT = 3;
+const MATCH_RETRY_DELAY_MS = 1500;
+
+const matchByFileUrlWithRetry = async (
+  fileUrl: string,
+  categories: DocumentCategory[],
+): Promise<MatchResult | null> => {
+  for (let attempt = 0; attempt < MATCH_RETRY_COUNT; attempt += 1) {
+    const match = await matchByFileUrl(fileUrl, categories);
+    if (match) return match;
+    if (attempt < MATCH_RETRY_COUNT - 1) await sleep(MATCH_RETRY_DELAY_MS);
+  }
+  return null;
+};
+
 const resolveCompletedItem = async (
   temp: TempDocumentItem,
   categories: DocumentCategory[],
@@ -182,7 +205,7 @@ const resolveCompletedItem = async (
     };
   }
 
-  const match = await matchByFileUrl(primaryFileUrl, categories);
+  const match = await matchByFileUrlWithRetry(primaryFileUrl, categories);
 
   if (!match) {
     return {
