@@ -45,6 +45,7 @@ const ReceiptManualModal: React.FC<Props> = ({
   const [memo, setMemo] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -63,6 +64,7 @@ const ReceiptManualModal: React.FC<Props> = ({
       setMemo(receipt.memo ?? "");
       setImage(null);
       setImagePreview(null);
+      setExistingImageUrl(receipt.fileUrl ?? null);
     } else if (isOpen && mode === "CREATE") {
       setStoreName("");
       setStoreAddress("");
@@ -73,6 +75,7 @@ const ReceiptManualModal: React.FC<Props> = ({
       setMemo("");
       setImage(null);
       setImagePreview(null);
+      setExistingImageUrl(null);
     }
   }, [isOpen, mode, receipt]);
 
@@ -87,6 +90,8 @@ const ReceiptManualModal: React.FC<Props> = ({
     value: String(c.spendCategoryId),
     label: c.name,
   }));
+
+  const displayImage = imagePreview ?? existingImageUrl;
 
   const applyImage = (file?: File) => {
     if (!file) return;
@@ -135,10 +140,11 @@ const ReceiptManualModal: React.FC<Props> = ({
 
       let saved: Receipt;
       if (mode === "EDIT" && receipt) {
-        saved = await updateReceipt(receipt.receiptId, {
-          ...baseBody,
-          memo: memo || null,
-        });
+        saved = await updateReceipt(
+          receipt.receiptId,
+          { ...baseBody, memo: memo || null },
+          image ?? undefined,
+        );
       } else {
         saved = await createReceipt(
           { ...baseBody, inputMethod: "MANUAL", memo: memo || undefined },
@@ -253,27 +259,28 @@ const ReceiptManualModal: React.FC<Props> = ({
           </div>
         </div>
 
-        {mode === "CREATE" && (
-          <div className="receipt-manual-modal__photo-field">
-            <div className="receipt-manual-modal__photo-label">
-              <strong>영수증 사진</strong>
-              <span>선택</span>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png"
-              className="receipt-manual-modal__file-input"
-              onChange={handleImageChange}
-            />
+        <div className="receipt-manual-modal__photo-field">
+          <div className="receipt-manual-modal__photo-label">
+            <strong>영수증 사진</strong>
+            <span>선택</span>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png"
+            className="receipt-manual-modal__file-input"
+            onChange={handleImageChange}
+          />
 
-            {imagePreview ? (
-              <div className="receipt-manual-modal__preview-wrap">
-                <img
-                  src={imagePreview}
-                  alt="영수증 미리보기"
-                  className="receipt-manual-modal__preview"
-                />
+          {displayImage ? (
+            <div className="receipt-manual-modal__preview-wrap">
+              <img
+                src={displayImage}
+                alt="영수증 미리보기"
+                className="receipt-manual-modal__preview"
+                onClick={() => fileInputRef.current?.click()}
+              />
+              {image && (
                 <button
                   type="button"
                   onClick={handleImageRemove}
@@ -282,20 +289,25 @@ const ReceiptManualModal: React.FC<Props> = ({
                 >
                   <X size={14} />
                 </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                className="receipt-manual-modal__photo-drop"
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={handleDrop}
-              >
-                <ImagePlus size={22} />
-                <span>사진 추가 또는 여기에 드래그</span>
-              </button>
-            )}
-          </div>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="receipt-manual-modal__photo-drop"
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleDrop}
+            >
+              <ImagePlus size={22} />
+              <span>사진 추가 또는 여기에 드래그</span>
+            </button>
+          )}
+        </div>
+        {mode === "EDIT" && displayImage && (
+          <p className="receipt-manual-modal__photo-hint">
+            사진을 클릭하면 새 사진으로 교체할 수 있습니다.
+          </p>
         )}
 
         <div className="receipt-manual-modal__actions">
