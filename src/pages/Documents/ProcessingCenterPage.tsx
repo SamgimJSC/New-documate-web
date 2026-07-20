@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useState, type SyntheticEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type SyntheticEvent,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import type {
   UploadProcessItem,
@@ -240,6 +246,7 @@ export function ProcessingCenterPage() {
   const [activeTab, setActiveTab] = useState<ProcessTab>("all");
   const [processQuery, setProcessQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const detailPanelRef = useRef<HTMLElement>(null);
 
   const selectedItem =
     processItems.find((item) => item.id === selectedItemId) ??
@@ -445,10 +452,30 @@ export function ProcessingCenterPage() {
     }
   };
 
+  const selectProcessItem = (itemId: string, revealDetail = false) => {
+    setSelectedItemId(itemId);
+
+    if (!revealDetail || !window.matchMedia("(max-width: 1280px)").matches) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        detailPanelRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
+    });
+  };
+
   const renderDetailPanel = () => {
     if (!selectedItem) {
       return (
-        <aside className="process-detail-panel process-detail-panel--empty">
+        <aside
+          ref={detailPanelRef}
+          className="process-detail-panel process-detail-panel--empty"
+        >
           <strong>선택된 문서가 없어요.</strong>
           <p>왼쪽 목록에서 문서를 선택해 주세요.</p>
           <button type="button" onClick={() => navigate("/upload")}>
@@ -462,7 +489,11 @@ export function ProcessingCenterPage() {
     const pageCount = getPageCount(selectedItem);
 
     return (
-      <aside className="process-detail-panel">
+      <aside
+        key={selectedItem.id}
+        ref={detailPanelRef}
+        className="process-detail-panel process-detail-panel--updated"
+      >
         <section className="process-document-card">
           <div className="process-document-card__icon" aria-hidden="true">
             ▤
@@ -783,7 +814,7 @@ export function ProcessingCenterPage() {
                     className={
                       selectedItem?.id === item.id ? "is-selected" : ""
                     }
-                    onClick={() => setSelectedItemId(item.id)}
+                    onClick={() => selectProcessItem(item.id)}
                   >
                     <div className="process-document-name">
                       <i
@@ -796,12 +827,25 @@ export function ProcessingCenterPage() {
                         <small>{item.fileName}</small>
                       </div>
                     </div>
-                    <span>{getPageCount(item)}장</span>
-                    <span>{formatUploadedAt(item.uploadedAt)}</span>
+                    <span
+                      className="process-cell process-cell--pages"
+                      data-label="페이지"
+                    >
+                      {getPageCount(item)}장
+                    </span>
+                    <span
+                      className="process-cell process-cell--uploaded"
+                      data-label="업로드"
+                    >
+                      {formatUploadedAt(item.uploadedAt)}
+                    </span>
                     <i className={`process-chip process-chip--${item.status}`}>
                       {PROCESS_STATUS_LABEL[item.status]}
                     </i>
-                    <span>
+                    <span
+                      className="process-cell process-cell--category"
+                      data-label="AI 결과"
+                    >
                       {item.status === "analyzing" ? "" : item.category}
                     </span>
                     <div
@@ -829,7 +873,8 @@ export function ProcessingCenterPage() {
                       {item.status === "completed" && (
                         <button
                           type="button"
-                          onClick={() => setSelectedItemId(item.id)}
+                          aria-pressed={selectedItem?.id === item.id}
+                          onClick={() => selectProcessItem(item.id, true)}
                         >
                           상세 보기
                         </button>

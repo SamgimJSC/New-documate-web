@@ -347,20 +347,19 @@ body:has(.processing-center-page) button[class*="fab"] {
 }
 
 .process-table {
+  --process-table-columns: minmax(230px, 1.8fr) 72px 124px 86px 104px 74px;
   display: grid;
   gap: 7px;
+  min-width: 0;
   overflow-x: auto;
 }
 
 .process-table__head,
 .process-table article {
-  min-width: 700px;
-}
-
-.process-table__head,
-.process-table article {
+  width: 100%;
+  min-width: 780px;
   display: grid;
-  grid-template-columns: minmax(230px, 1.8fr) 72px 124px 86px 104px 74px;
+  grid-template-columns: var(--process-table-columns);
   align-items: center;
   column-gap: 10px;
 }
@@ -382,7 +381,9 @@ body:has(.processing-center-page) button[class*="fab"] {
   cursor: pointer;
   transition:
     background 0.16s ease,
-    border-color 0.16s ease;
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
 }
 
 .process-table article:hover,
@@ -396,6 +397,11 @@ body:has(.processing-center-page) button[class*="fab"] {
   grid-template-columns: auto minmax(0, 1fr);
   gap: 10px;
   align-items: center;
+  min-width: 0;
+}
+
+.process-document-name > div {
+  min-width: 0;
 }
 
 .process-document-icon {
@@ -433,8 +439,11 @@ body:has(.processing-center-page) button[class*="fab"] {
 
 .process-table small {
   display: block;
+  overflow: hidden;
   margin-top: 2px;
   color: #94a3b8;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 11.2px;
 }
 
@@ -515,6 +524,16 @@ body:has(.processing-center-page) button[class*="fab"] {
   color: var(--process-primary);
   font-size: 11px;
   white-space: nowrap;
+  transition:
+    color 0.16s ease,
+    background 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.12s ease;
+}
+
+.process-row-actions button:active {
+  transform: scale(0.97);
 }
 
 .process-row-actions button.is-danger {
@@ -573,6 +592,23 @@ body:has(.processing-center-page) button[class*="fab"] {
   min-height: 0;
   max-height: none;
   padding: 16px;
+  scroll-margin-top: 16px;
+}
+
+.process-detail-panel--updated {
+  animation: process-detail-update 0.3s ease-out;
+}
+
+@keyframes process-detail-update {
+  from {
+    opacity: 0.55;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .process-detail-panel--empty {
@@ -1047,8 +1083,17 @@ body:has(.processing-center-page) button[class*="fab"] {
 
 .process-table article.is-selected {
   border-color: #9bd8d2;
-  background: #fbfefe;
-  box-shadow: 0 8px 18px rgba(21, 144, 131, 0.045);
+  background: linear-gradient(135deg, #f5fcfb 0%, #fbfefe 100%);
+  box-shadow:
+    0 0 0 2px rgba(21, 144, 131, 0.1),
+    0 10px 22px rgba(21, 144, 131, 0.08);
+}
+
+.process-table article.is-selected .process-row-actions button:not(.is-danger) {
+  border-color: var(--process-primary);
+  background: var(--process-primary);
+  color: #ffffff;
+  box-shadow: 0 6px 14px rgba(21, 144, 131, 0.18);
 }
 
 .process-status-cards button.is-selected,
@@ -1121,6 +1166,93 @@ body:has(.processing-center-page) button[class*="fab"] {
 
   .processing-center-layout {
     grid-template-columns: 1fr;
+  }
+
+  .process-list-panel {
+    padding: 14px;
+  }
+
+  .process-table {
+    gap: 10px;
+  }
+
+  .process-table article {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "name name"
+      "pages uploaded"
+      "status category"
+      "actions actions";
+    gap: 11px 14px;
+    min-height: 0;
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .process-document-name {
+    grid-area: name;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e8eff2;
+  }
+
+  .process-cell {
+    display: grid;
+    gap: 3px;
+    justify-self: stretch !important;
+    min-width: 0;
+    text-align: left;
+  }
+
+  .process-cell::before {
+    content: attr(data-label);
+    color: #94a3b8;
+    font-size: 10px;
+    font-weight: 850;
+  }
+
+  .process-cell--pages {
+    grid-area: pages;
+  }
+
+  .process-cell--uploaded {
+    grid-area: uploaded;
+  }
+
+  .process-cell--category {
+    grid-area: category;
+  }
+
+  .process-table article > .process-chip {
+    grid-area: status;
+    align-self: end;
+    justify-self: start;
+  }
+
+  .process-table article > .process-row-actions {
+    grid-area: actions;
+    margin-top: 2px;
+  }
+
+  .process-row-actions button {
+    width: 100%;
+    min-height: 40px;
+    font-size: 12px;
+  }
+
+  .process-table article.is-selected {
+    border-color: var(--process-primary);
+    transform: translateY(-1px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .process-detail-panel--updated {
+    animation: none;
+  }
+
+  .process-table article,
+  .process-row-actions button {
+    transition: none;
   }
 }
 /* 처리 센터 상단 키커 점 제거 */
