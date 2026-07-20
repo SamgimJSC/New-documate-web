@@ -1551,10 +1551,57 @@ body:has(.doc-detail) button[class*="fab"] {
   font-weight: 700;
 }
 
+.doc-detail__required-mark {
+  display: inline-flex;
+  margin-left: 6px;
+  color: var(--color-danger, #ef4444);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.doc-detail__empty-text--fields {
+  grid-column: 1 / -1;
+  padding: 18px 0;
+  text-align: center;
+}
+
+.doc-detail__category-warning {
+  padding: 16px;
+  border: 1px solid #fecaca;
+  border-radius: 14px;
+  background: #fff7f7;
+}
+
+.doc-detail__category-warning strong {
+  display: block;
+  color: #991b1b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.doc-detail__category-warning p {
+  margin: 8px 0 0;
+  color: #7f1d1d;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.doc-detail__category-warning-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
 @media (max-width: 760px) {
   .doc-detail__field-note {
     flex-basis: 100%;
     margin-left: 0;
+  }
+
+  .doc-detail__category-warning-actions .btn {
+    flex: 1;
   }
 }
 

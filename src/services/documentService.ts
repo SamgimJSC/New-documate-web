@@ -203,10 +203,11 @@ export const documentService = {
     body: {
       title?: string;
       categoryId?: number;
-      issueDate?: string;
-      expiryDate?: string;
-      renewalDate?: string;
-      extractedData?: Record<string, string>;
+      issueDate?: string | null;
+      expiryDate?: string | null;
+      renewalDate?: string | null;
+      extractedData?: Record<string, unknown>;
+      isConfirmed?: boolean;
     },
   ): Promise<Document> {
     const res = await api.patch<ApiResponse<DocumentApiItem>>(

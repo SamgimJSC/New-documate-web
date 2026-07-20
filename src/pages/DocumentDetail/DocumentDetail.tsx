@@ -16,8 +16,14 @@ import {
   ZoomOut,
 } from "lucide-react";
 import Button from "../../components/common/Button";
+import Modal from "../../components/common/Modal";
 import AlertSettingModal from "../../components/modal/AlertSettingModal";
 import PinVerifyModal from "../../components/modal/PinVerifyModal";
+import {
+  getDocumentCategoryFormConfig,
+  type DocumentCategoryFormConfig,
+  type DocumentCategoryFormField,
+} from "../../data/documentCategoryForms";
 import { documentService } from "../../services/documentService";
 import type { DocumentAlert, DocumentTagItem } from "../../types/document";
 import { useCategories } from "../../hooks/useCategories";
@@ -64,51 +70,44 @@ const getPreviewTitle = (categoryName?: string) => {
 
 const EXCLUDED_EXTRACTED_KEYS = new Set(["_meta"]);
 
-type ExtractedFieldConfig = {
-  key: string;
-  label: string;
-  aliases: string[];
+const toEditableExtractedValue = (value: unknown) => {
+  if (value == null) return "";
+  if (Array.isArray(value)) return value.map(String).join(", ");
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
 };
 
-const createExtractedField = (
-  key: string,
-  label: string,
-  aliases: string[] = [],
-): ExtractedFieldConfig => ({
-  key,
-  label,
-  aliases: [key, label, ...aliases],
-});
-
-const CATEGORY_EXTRACTED_FIELDS: Record<string, ExtractedFieldConfig[]> = {
-  계약서: [
-    createExtractedField("contract_date", "계약일", ["contractDate", "Contract Date"]),
-    createExtractedField("expiry_date", "만료일", ["expiryDate", "Expiration Date", "Expire Date"]),
-    createExtractedField("renewal_date", "갱신일", ["renewalDate", "Renewal Date"]),
-    createExtractedField("contractor", "계약자", ["contractor_name", "Contractor", "Contractor Name"]),
-  ],
-  영수증: [
-    createExtractedField("payment_date", "날짜", ["date", "receipt_date", "purchase_date", "Payment Date", "Purchase Date", "Date"]),
-    createExtractedField("store_name", "가게명", ["merchant_name", "shop_name", "Store Name", "Merchant Name"]),
-    createExtractedField("amount", "금액", ["total_amount", "price", "Total Amount", "Amount", "Price"]),
-    createExtractedField("item_name", "품목", ["items", "product_name", "Item Name", "Product Name", "Items"]),
-  ],
-  "병원/약국": [
-    createExtractedField("hospital_name", "병원명", ["pharmacy_name", "medical_institution", "Medical Institution", "Medical Institution Name", "Hospital Name", "Pharmacy Name"]),
-    createExtractedField("visit_date", "진료일", ["treatment_date", "prescription_date", "Prescription Date", "Treatment Date", "Visit Date"]),
-    createExtractedField("amount", "금액", ["total_amount", "price", "medical_fee", "Total Amount", "Amount", "Price"]),
-    createExtractedField("drug_name", "약품명", ["medication", "medicine_name", "Drug Name", "Medication", "Medicine Name"]),
-  ],
-  "보증서/A·S": [
-    createExtractedField("product_name", "제품명", ["model_name", "Product Name", "Model Name"]),
-    createExtractedField("purchase_date", "구매일", ["Purchase Date", "buy_date", "purchaseDate"]),
-    createExtractedField("warranty_period", "보증기간", ["Warranty Period", "warrantyPeriod"]),
-    createExtractedField("repair_date", "수리일", ["service_date", "Repair Date", "Service Date"]),
-  ],
-  기타: [
-    createExtractedField("title", "제목", ["Title", "document_title"]),
-    createExtractedField("upload_date", "업로드일", ["created_at", "createdAt", "Upload Date", "Created At"]),
-  ],
+const EXTRACTED_LABEL_DICTIONARY: Record<string, string> = {
+  drug_code: "약품 코드",
+  drug_name: "약품명",
+  issue_date: "발급일",
+  visit_date: "진료일",
+  treatment_date: "진료일",
+  patient_age: "환자 나이",
+  patient_height: "환자 키",
+  patient_weight: "환자 체중",
+  prescription_number: "처방전 번호",
+  hospital_name: "병원명",
+  pharmacy_name: "약국명",
+  medical_institution: "의료기관",
+  amount: "금액",
+  total_amount: "금액",
+  contract_date: "계약일",
+  expiry_date: "만료일",
+  renewal_date: "갱신일",
+  contractor: "계약자",
+  store_name: "가게명",
+  merchant_name: "가맹점명",
+  payment_date: "결제일",
+  item_name: "품목",
+  items: "품목",
+  product_name: "제품명",
+  purchase_date: "구매일",
+  warranty_period: "보증기간",
+  repair_date: "수리일",
+  upload_date: "업로드일",
+  issuer: "발행처",
+  memo: "메모",
 };
 
 const normalizeCategoryName = (categoryName?: string) => {
@@ -119,21 +118,32 @@ const normalizeCategoryName = (categoryName?: string) => {
   return "기타";
 };
 
-const getExtractedFieldsByCategory = (categoryName?: string) =>
-  CATEGORY_EXTRACTED_FIELDS[normalizeCategoryName(categoryName)] ?? CATEGORY_EXTRACTED_FIELDS.기타;
-
 const normalizeExtractedKey = (key: string) =>
   key
     .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
-    .replace(/[\s \-]+/g, "_")
+    .replace(/[\s-]+/g, "_")
     .replace(/[^a-zA-Z0-9가-힣_]/g, "")
     .toLowerCase();
 
-const getExtractedValueByField = (
+const formatExtractedLabel = (key: string) => {
+  const normalizedKey = normalizeExtractedKey(key);
+  if (EXTRACTED_LABEL_DICTIONARY[normalizedKey]) {
+    return EXTRACTED_LABEL_DICTIONARY[normalizedKey];
+  }
+  if (/[가-힣]/.test(key)) return key;
+
+  return normalizedKey
+    .split("_")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
+const getExtractedValueByAliases = (
   data: Record<string, string>,
-  field: ExtractedFieldConfig,
+  aliases: string[],
 ) => {
-  const normalizedAliases = new Set(field.aliases.map(normalizeExtractedKey));
+  const normalizedAliases = new Set(aliases.map(normalizeExtractedKey));
   const matchedEntry = Object.entries(data).find(([key]) =>
     normalizedAliases.has(normalizeExtractedKey(key)),
   );
@@ -141,23 +151,59 @@ const getExtractedValueByField = (
   return matchedEntry?.[1] ?? "";
 };
 
-const buildExtractedDataByCategory = (
+const getCategoryFieldValue = (
   data: Record<string, string>,
-  categoryName?: string,
-) =>
-  Object.fromEntries(
-    getExtractedFieldsByCategory(categoryName).map((field) => [
-      field.key,
-      getExtractedValueByField(data, field),
-    ]),
+  field: DocumentCategoryFormField,
+) => getExtractedValueByAliases(data, field.aliases);
+
+const buildCategoryExtractedData = (
+  data: Record<string, string>,
+  config: DocumentCategoryFormConfig,
+) => {
+  const categoryData = Object.fromEntries(
+    config.fields
+      .filter((field) => field.key !== "title")
+      .map((field) => [field.storageKey, getCategoryFieldValue(data, field)])
+      .filter(([, value]) => String(value).trim() !== ""),
   );
+  const memo = getExtractedValueByAliases(data, ["메모", "memo"]);
+
+  return memo.trim() ? { ...categoryData, 메모: memo } : categoryData;
+};
+
+const createEmptyCategoryExtractedData = (
+  config: DocumentCategoryFormConfig,
+) => ({
+  ...Object.fromEntries(
+    config.fields
+      .filter((field) => field.key !== "title")
+      .map((field) => [field.storageKey, ""]),
+  ),
+  메모: "",
+});
+
+const normalizeCategoryExtractedData = (
+  data: Record<string, string>,
+  config: DocumentCategoryFormConfig,
+) => ({
+  ...Object.fromEntries(
+    config.fields
+      .filter((field) => field.key !== "title")
+      .map((field) => [field.storageKey, getCategoryFieldValue(data, field)]),
+  ),
+  메모: getExtractedValueByAliases(data, ["메모", "memo"]),
+});
 
 const formatExtractedValue = (value: string, fieldKey?: string) => {
   if (!value) return "-";
   if (value === "true") return "예";
   if (value === "false") return "아니오";
 
-  if (fieldKey === "amount" && /^-?\d+(\.\d+)?$/.test(value)) {
+  if (
+    fieldKey &&
+    ["amount", "total_amount", "금액"].includes(normalizeExtractedKey(fieldKey)) &&
+    /^-?\d+(\.\d+)?$/.test(value)
+  ) {
     return `${Number(value).toLocaleString("ko-KR")}원`;
   }
 
@@ -199,6 +245,10 @@ const DocumentDetail: React.FC = () => {
   const [pinOpen, setPinOpen] = useState(false);
   const [pinAction, setPinAction] = useState<PinAction>("view");
   const [form, setForm] = useState<EditableDocumentState>(EMPTY_FORM);
+  const [pendingCategoryId, setPendingCategoryId] = useState<number | null>(
+    null,
+  );
+  const [isCategoryFormMode, setIsCategoryFormMode] = useState(false);
 
   useEffect(() => {
     if (!document_id) {
@@ -235,6 +285,8 @@ const DocumentDetail: React.FC = () => {
     setPinOpen(false);
     setPinAction("view");
     setIsEditing(false);
+    setPendingCategoryId(null);
+    setIsCategoryFormMode(false);
   }, [doc?.document_id]);
 
   const initialCategory = useMemo(() => {
@@ -254,7 +306,7 @@ const DocumentDetail: React.FC = () => {
       ? Object.fromEntries(
           Object.entries(doc.extracted_data)
             .filter(([key]) => !EXCLUDED_EXTRACTED_KEYS.has(key))
-            .map(([key, value]) => [key, String(value ?? "")]),
+            .map(([key, value]) => [key, toEditableExtractedValue(value)]),
         )
       : {};
 
@@ -320,6 +372,8 @@ const DocumentDetail: React.FC = () => {
     categories.find(
       (category) => category.category_id === form.categoryId,
     ) ?? initialCategory;
+  const activeFormConfig = getDocumentCategoryFormConfig(activeCategory?.name);
+  const usesCategoryForm = doc.is_confirmed || isCategoryFormMode;
 
   const fileSizeText = formatFileSize(doc.file_size_bytes);
   const docFiles = doc.document_files ?? [];
@@ -465,30 +519,90 @@ const DocumentDetail: React.FC = () => {
       return;
     }
 
-    setForm(initialForm);
+    const categoryConfig = getDocumentCategoryFormConfig(initialCategory?.name);
+    setForm({
+      ...initialForm,
+      extractedData: doc.is_confirmed
+        ? normalizeCategoryExtractedData(
+            initialForm.extractedData,
+            categoryConfig,
+          )
+        : initialForm.extractedData,
+    });
+    setIsCategoryFormMode(doc.is_confirmed);
+    setPendingCategoryId(null);
     setIsEditing(true);
   };
 
   const handleEditCancel = () => {
     setForm(initialForm);
+    setPendingCategoryId(null);
+    setIsCategoryFormMode(false);
     setIsEditing(false);
   };
 
   const handleEditSave = async () => {
     if (!document_id || isContentLocked) return;
+
+    if (!form.title.trim()) {
+      showToast("문서명을 입력해 주세요.", "error");
+      return;
+    }
+
+    if (usesCategoryForm) {
+      const missingField = activeFormConfig.fields
+        .filter((field) => field.key !== "title" && field.required)
+        .find(
+          (field) =>
+            !getCategoryFieldValue(form.extractedData, field).trim(),
+        );
+
+      if (missingField) {
+        showToast(`${missingField.label}을(를) 입력해 주세요.`, "error");
+        return;
+      }
+    }
+
     try {
+      const extractedData: Record<string, unknown> = usesCategoryForm
+        ? buildCategoryExtractedData(form.extractedData, activeFormConfig)
+        : {
+            ...(doc.extracted_data?._meta !== undefined
+              ? { _meta: doc.extracted_data._meta }
+              : {}),
+            ...form.extractedData,
+          };
+      const getFormValue = (key: DocumentCategoryFormField["key"]) => {
+        const field = activeFormConfig.fields.find((item) => item.key === key);
+        return field
+          ? getCategoryFieldValue(form.extractedData, field)
+          : "";
+      };
+      const categoryIssueDate =
+        getFormValue("documentDate") || getFormValue("contractDate");
+      const categoryExpiryDate = getFormValue("expiryDate");
+      const categoryRenewalDate = getFormValue("renewalDate");
+
       const updated = await documentService.updateDocument(document_id, {
-        title: form.title,
+        title: form.title.trim(),
         categoryId: form.categoryId,
-        issueDate: form.issueDate || undefined,
-        expiryDate: form.expiryDate || undefined,
-        renewalDate: form.renewalDate || undefined,
-        extractedData: buildExtractedDataByCategory(
-          form.extractedData,
-          activeCategory?.name,
-        ),
+        issueDate: usesCategoryForm
+          ? categoryIssueDate || null
+          : form.issueDate || undefined,
+        expiryDate: usesCategoryForm
+          ? categoryExpiryDate || null
+          : form.expiryDate || undefined,
+        renewalDate: usesCategoryForm
+          ? categoryRenewalDate || null
+          : form.renewalDate || undefined,
+        extractedData,
+        ...(!doc.is_confirmed && isCategoryFormMode
+          ? { isConfirmed: true }
+          : {}),
       });
       setDoc(updated);
+      setPendingCategoryId(null);
+      setIsCategoryFormMode(false);
       setIsEditing(false);
       showToast("문서 정보가 수정되었습니다.", "success");
     } catch {
@@ -506,11 +620,39 @@ const DocumentDetail: React.FC = () => {
     }));
   };
 
-  const handleCategoryChange = (categoryId: number) => {
+  const applyCategoryChange = (categoryId: number) => {
+    const nextCategory = categories.find(
+      (category) => category.category_id === categoryId,
+    );
+    const nextConfig = getDocumentCategoryFormConfig(nextCategory?.name);
+
     setForm((prev) => ({
       ...prev,
       categoryId,
+      issueDate: "",
+      expiryDate: "",
+      renewalDate: "",
+      extractedData: createEmptyCategoryExtractedData(nextConfig),
     }));
+  };
+
+  const handleCategoryChange = (categoryId: number) => {
+    if (categoryId === form.categoryId) return;
+
+    if (!doc.is_confirmed && !isCategoryFormMode) {
+      setPendingCategoryId(categoryId);
+      return;
+    }
+
+    applyCategoryChange(categoryId);
+  };
+
+  const confirmCategoryChange = () => {
+    if (pendingCategoryId == null) return;
+
+    applyCategoryChange(pendingCategoryId);
+    setIsCategoryFormMode(true);
+    setPendingCategoryId(null);
   };
 
   const renderProtectionCard = (compact = false) => (
@@ -623,7 +765,9 @@ const DocumentDetail: React.FC = () => {
                   </select>
                 </div>
                 <p className="doc-detail__field-note">
-                  문서 유형에 따라 아래 AI 추출 정보 항목이 자동으로 정리됩니다.
+                  {!doc.is_confirmed && !isCategoryFormMode
+                    ? "문서 유형을 변경하면 기존 AI 추출 정보 초기화 확인 후 수기 입력 항목으로 전환됩니다."
+                    : "문서 유형에 따라 아래 수기 입력 항목이 변경됩니다."}
                 </p>
               </>
             ) : (
@@ -640,7 +784,7 @@ const DocumentDetail: React.FC = () => {
           </b>
         </label>
 
-        {!lockedMode && !doc?.is_confirmed && (
+        {!lockedMode && !doc.is_confirmed && !isCategoryFormMode && (
           <>
             <label className="doc-detail__field">
               <span>발급일</span>
@@ -936,32 +1080,117 @@ const DocumentDetail: React.FC = () => {
 
               <section className="doc-detail__form-section">
                 <div className="doc-detail__section-title">
-                  {doc?.is_confirmed ? "수기 입력 정보" : "AI 추출 정보"}
+                  {doc.is_confirmed
+                    ? "수기 입력 정보"
+                    : isCategoryFormMode
+                      ? "카테고리 입력 정보"
+                      : "AI 추출 정보"}
                 </div>
                 <p className="doc-detail__ai-note">
-                  {normalizeCategoryName(activeCategory?.name)} 문서 기준으로 주요 추출 데이터만 표시합니다.
+                  {usesCategoryForm
+                    ? `${normalizeCategoryName(activeCategory?.name)} 수기 등록과 동일한 항목을 입력합니다.`
+                    : "AI가 문서에서 실제로 추출한 항목을 표시합니다."}
                 </p>
 
                 <div className="doc-detail__field-grid doc-detail__field-grid--ai">
-                  {getExtractedFieldsByCategory(activeCategory?.name).map((field) => {
-                    const value = getExtractedValueByField(form.extractedData, field);
+                  {usesCategoryForm ? (
+                    <>
+                      {activeFormConfig.fields
+                        .filter((field) => field.key !== "title")
+                        .map((field) => {
+                          const value = getCategoryFieldValue(
+                            form.extractedData,
+                            field,
+                          );
 
-                    return (
-                      <label key={field.key} className="doc-detail__field">
-                        <span>{field.label}</span>
+                          return (
+                            <label
+                              key={field.key}
+                              className="doc-detail__field"
+                            >
+                              <span>
+                                {field.label}
+                                {isEditing && field.required && (
+                                  <em className="doc-detail__required-mark">
+                                    필수
+                                  </em>
+                                )}
+                              </span>
+                              {isEditing ? (
+                                <input
+                                  type={
+                                    field.type === "date" ? "date" : "text"
+                                  }
+                                  inputMode={
+                                    field.type === "amount"
+                                      ? "numeric"
+                                      : undefined
+                                  }
+                                  placeholder={field.placeholder}
+                                  value={value}
+                                  onChange={(event) =>
+                                    handleExtractedChange(
+                                      field.storageKey,
+                                      event.target.value,
+                                    )
+                                  }
+                                />
+                              ) : (
+                                <b>
+                                  {formatExtractedValue(
+                                    value,
+                                    field.storageKey,
+                                  )}
+                                </b>
+                              )}
+                            </label>
+                          );
+                        })}
+                      <label className="doc-detail__field">
+                        <span>메모</span>
+                        {isEditing ? (
+                          <input
+                            maxLength={500}
+                            placeholder="문서와 관련된 내용을 입력해 주세요."
+                            value={
+                              form.extractedData.메모 ??
+                              form.extractedData.memo ??
+                              ""
+                            }
+                            onChange={(event) =>
+                              handleExtractedChange("메모", event.target.value)
+                            }
+                          />
+                        ) : (
+                          <b>
+                            {form.extractedData.메모 ||
+                              form.extractedData.memo ||
+                              "-"}
+                          </b>
+                        )}
+                      </label>
+                    </>
+                  ) : Object.keys(form.extractedData).length === 0 ? (
+                    <p className="doc-detail__empty-text doc-detail__empty-text--fields">
+                      추출된 정보가 없습니다.
+                    </p>
+                  ) : (
+                    Object.entries(form.extractedData).map(([key, value]) => (
+                      <label key={key} className="doc-detail__field">
+                        <span>{formatExtractedLabel(key)}</span>
                         {isEditing ? (
                           <input
                             value={value}
                             onChange={(event) =>
-                              handleExtractedChange(field.key, event.target.value)
+                              handleExtractedChange(key, event.target.value)
                             }
                           />
                         ) : (
-                          <b>{formatExtractedValue(value, field.key)}</b>
+                          <b>{formatExtractedValue(value, key)}</b>
                         )}
                       </label>
-                    );
-                  })}
+                    ))
+                  )}
                 </div>
               </section>
 
@@ -1111,6 +1340,37 @@ const DocumentDetail: React.FC = () => {
           />
         </div>
       )}
+
+      <Modal
+        isOpen={pendingCategoryId != null}
+        onClose={() => setPendingCategoryId(null)}
+        title="문서 유형 변경"
+        size="sm"
+      >
+        <div className="doc-detail__category-warning">
+          <strong>
+            카테고리를 변경하면 기존에 추출된 내용이 전부 사라집니다.
+          </strong>
+          <p>
+            계속하면 기존 AI 추출 정보를 초기화하고,
+            {" "}
+            <b>
+              {categories.find(
+                (category) => category.category_id === pendingCategoryId,
+              )?.name ?? "선택한 카테고리"}
+            </b>
+            에 맞는 수기 입력 항목으로 변경합니다.
+          </p>
+        </div>
+        <div className="doc-detail__category-warning-actions">
+          <Button variant="ghost" onClick={() => setPendingCategoryId(null)}>
+            취소
+          </Button>
+          <Button variant="danger" onClick={confirmCategoryChange}>
+            변경하고 초기화
+          </Button>
+        </div>
+      </Modal>
 
       <PinVerifyModal
         isOpen={pinOpen}
