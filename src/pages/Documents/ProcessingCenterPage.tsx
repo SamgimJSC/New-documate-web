@@ -302,40 +302,47 @@ export function ProcessingCenterPage() {
     if (analyzingItems.length === 0) return;
 
     const timer = window.setInterval(() => {
-      analyzingItems.forEach((item) => {
-        uploadService
-          .getTempDocument(item.savedRecordId!)
-          .then(async (temp) => {
-            if (temp.aiStatus === "FAILED") {
-              updateItem(item.id, {
-                status: "failed",
-                progress: 0,
-                confidence: 0,
-                errorMessage: "AI 분석에 실패했어요.",
-              });
-              return;
-            }
+      uploadService
+        .getTempList()
+        .then((list) => {
+          const tempById = new Map(
+            list.map((temp) => [temp.tempDocumentId, temp]),
+          );
 
-            if (temp.aiStatus === "DONE") {
-              const resolved = await resolveCompletedItem(temp, categories);
-              updateItem(item.id, resolved);
-            }
-          })
-          .catch((error) => {
-            const status = (error as { response?: { status?: number } })
-              ?.response?.status;
+          return Promise.all(
+            analyzingItems.map(async (item) => {
+              const temp = tempById.get(item.savedRecordId!);
 
-            if (status === 404) {
-              updateItem(item.id, {
-                status: "failed",
-                progress: 0,
-                confidence: 0,
-                errorMessage: "분석 중 삭제됨 (3일 경과 자동 정리)",
-              });
-            }
-            // 그 외 네트워크 오류는 다음 폴링에서 재시도
-          });
-      });
+              if (!temp) {
+                updateItem(item.id, {
+                  status: "failed",
+                  progress: 0,
+                  confidence: 0,
+                  errorMessage: "분석 중 삭제됨 (3일 경과 자동 정리)",
+                });
+                return;
+              }
+
+              if (temp.aiStatus === "FAILED") {
+                updateItem(item.id, {
+                  status: "failed",
+                  progress: 0,
+                  confidence: 0,
+                  errorMessage: "AI 분석에 실패했어요.",
+                });
+                return;
+              }
+
+              if (temp.aiStatus === "DONE") {
+                const resolved = await resolveCompletedItem(temp, categories);
+                updateItem(item.id, resolved);
+              }
+            }),
+          );
+        })
+        .catch(() => {
+          // 네트워크 오류는 다음 폴링에서 재시도
+        });
     }, 5000);
 
     return () => window.clearInterval(timer);
