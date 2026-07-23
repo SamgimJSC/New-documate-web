@@ -902,19 +902,17 @@ code {
 .landing-logo {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  font-size: 21px;
   font-weight: 900;
   color: #223046;
 }
 
-.landing-logo span {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  background: #5b9d99;
-  color: #ffffff;
+.landing-logo img {
+  display: block;
+  width: 30px;
+  height: 40px;
+  object-fit: contain;
 }
 
 .landing-nav {

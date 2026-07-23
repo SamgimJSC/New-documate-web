@@ -51,8 +51,11 @@ const Login: React.FC = () => {
     <div className="login-page">
       <div className="login-box">
         <div className="login-logo">
-          <span className="login-logo__mark">D</span>
-          <span className="login-logo__text">DocuMate</span>
+          <img className="login-logo__mark" src="/favicon.png" alt="" />
+          <span className="login-logo__text brand-wordmark">
+            <span>Docu</span>
+            <span className="brand-wordmark__accent">Mate</span>
+          </span>
         </div>
         <h1 className="login-title">로그인</h1>
         <div className="login-form">

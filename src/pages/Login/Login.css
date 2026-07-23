@@ -26,22 +26,14 @@
 }
 
 .login-logo__mark {
-  width: 32px;
-  height: 32px;
-  background-color: var(--color-primary);
-  color: #fff;
-  font-size: var(--font-size-base);
-  font-weight: 800;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
+  width: 25px;
+  height: 34px;
+  object-fit: contain;
 }
 
 .login-logo__text {
   font-size: var(--font-size-lg);
-  font-weight: 800;
-  color: var(--color-text);
 }
 
 .login-title {

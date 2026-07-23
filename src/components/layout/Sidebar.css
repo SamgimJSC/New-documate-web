@@ -57,25 +57,16 @@
 }
 
 .sidebar__logo-mark {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
   flex-shrink: 0;
-  width: 30px;
+  width: 22px;
   height: 30px;
-  border-radius: 10px;
-  background-color: var(--color-primary);
-  color: #fff;
-  font-size: var(--font-size-md);
-  font-weight: 900;
-  box-shadow: 0 4px 10px rgba(91, 157, 153, 0.16);
+  object-fit: contain;
 }
 
 .sidebar__logo-text {
-  color: var(--color-text);
+  color: #111827;
   font-size: var(--font-size-base);
-  font-weight: 850;
-  letter-spacing: -0.02em;
   white-space: nowrap;
 }
 
