@@ -31,8 +31,11 @@ export function LandingPage() {
     <main className="landing-page">
       <header className="landing-header">
         <Link to="/" className="landing-logo">
-          <span>D</span>
-          DocuMate
+          <img src="/favicon.png" alt="" />
+          <span className="brand-wordmark">
+            <span>Docu</span>
+            <span className="brand-wordmark__accent">Mate</span>
+          </span>
         </Link>
 
         <nav className="landing-nav">

@@ -49,6 +49,20 @@ body {
   white-space: nowrap;
 }
 
+.brand-wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  color: #111827;
+  font-family: "Arial Black", Arial, var(--font-base);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.055em;
+}
+
+.brand-wordmark__accent {
+  color: #33958c;
+}
+
 /* 반응형 유틸: 표/차트 등 넓은 콘텐츠는 이 래퍼로 감싸 가로 스크롤 처리 */
 .scroll-x {
   max-width: 100%;
@@ -95,19 +109,17 @@ table {
 .landing-logo {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  font-size: 21px;
   font-weight: 900;
   color: #223046;
 }
 
-.landing-logo span {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  background: #5b9d99;
-  color: #ffffff;
+.landing-logo img {
+  display: block;
+  width: 30px;
+  height: 40px;
+  object-fit: contain;
 }
 
 .landing-nav {

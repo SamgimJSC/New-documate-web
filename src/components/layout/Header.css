@@ -33,23 +33,16 @@
   cursor: pointer;
 }
 
-.header__brand span {
-  display: grid;
-  place-items: center;
-  width: 30px;
+.header__brand img {
+  display: block;
+  width: 22px;
   height: 30px;
-  border-radius: 10px;
-  background: var(--color-primary);
-  color: #ffffff;
-  font-size: var(--font-size-md);
-  font-weight: 900;
+  object-fit: contain;
 }
 
 .header__brand strong {
   color: var(--color-text);
   font-size: var(--font-size-base);
-  font-weight: 900;
-  letter-spacing: -0.02em;
 }
 
 .header__left {

@@ -134,8 +134,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
             navigate("/dashboard");
           }}
         >
-          <span className="sidebar__logo-mark">D</span>
-          <span className="sidebar__logo-text">DocuMate</span>
+          <img
+            src="/favicon.png"
+            alt=""
+            className="sidebar__logo-mark"
+          />
+          <span className="sidebar__logo-text brand-wordmark">
+            <span>Docu</span>
+            <span className="brand-wordmark__accent">Mate</span>
+          </span>
         </button>
         <button
           type="button"

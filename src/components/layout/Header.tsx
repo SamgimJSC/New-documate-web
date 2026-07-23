@@ -212,8 +212,11 @@ const Header: React.FC<HeaderProps> = ({
               className="header__brand header__brand--mypage"
               onClick={handleLogoClick}
             >
-              <span>D</span>
-              <strong>DocuMate</strong>
+              <img src="/favicon.png" alt="" />
+              <strong className="brand-wordmark">
+                <span>Docu</span>
+                <span className="brand-wordmark__accent">Mate</span>
+              </strong>
             </button>
 
             {breadcrumb ? (
